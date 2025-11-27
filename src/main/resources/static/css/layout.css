@@ -27,7 +27,7 @@
 .page-wrapper {
     position: relative;
     width: 100%;
-    min-width: 1500px;
+    /*min-width: 1500px;*/
     min-height: 100%;
     background-color: #F0F1F2;
 }

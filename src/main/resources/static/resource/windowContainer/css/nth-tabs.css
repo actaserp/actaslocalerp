@@ -45,7 +45,7 @@
 }
 .nth-tabs,.tab-content,.tab-pane{
 	height: calc(100% - 30px);
-	min-width: 1200px;
+	/*min-width: 1200px;*/
 }
 .nth-tabs-content{
 	width:100%;

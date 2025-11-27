@@ -83,6 +83,8 @@ public class HomeController {
 		mv.addObject("userid", userid);
 		mv.addObject("groupname", groupname);
 		session.setAttribute("spjangcd", spjangcd);
+		session.setAttribute("username", username);
+		session.setAttribute("groupid", groupid);
 		mv.addObject("userinfo", user);
 		mv.addObject("system_title", logoTitle);
 		mv.addObject("default_menu_code", "wm_dashboard_summary");

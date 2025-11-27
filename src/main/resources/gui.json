@@ -77,6 +77,8 @@
   "wm_prod_result_prod_site": { "name": "생산실적입력(현장)", "templates": { "default": "production/prod_result_prod_site.html" } },
   "wm_request": { "name": "유지보수 요청", "templates": { "default": "request/request.html" } },
   "wm_receipt": { "name": "유지보수 접수", "templates": { "default": "request/receipt.html" } },
+  "wm_work_report_input": { "name": "업무일지 등록", "templates": { "default": "work_report/work_report_input.html" } },
+  "wm_work_report_list": { "name": "업무일지 현황", "templates": { "default": "work_report/work_report_list.html" } },
 
   "wm_das_config": { "name": "데이터수집설정", "templates": { "default": "system/das_config.html" } },
   "wm_tag_group": { "name": "태그그룹", "templates": { "default": "definition/tag_group.html" } },
