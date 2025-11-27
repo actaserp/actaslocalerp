@@ -106,7 +106,7 @@
                                             <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             신규
                                         </a>
-                                        <a class="btn btn-delete" title="검색" id="btnSearch">
+                                        <a class="btn btn-delete" title="검색" id="btnSave">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
                                             <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             저장
@@ -118,14 +118,14 @@
                     </div>
                     <div>
                         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <dl>
+                            <dl style="width: 32%">
                                 <dt>
                                     <label>
                                         제목<span class="eq"></span>
                                     </label>
                                 </dt>
                                 <dd>
-                                    <input type="text" class="form-control2" id="title" name="title" />
+                                    <input type="text" class="form-control2" id="title" name="title" style="width:100%"/>
                                 </dd>
                             </dl>
                             <dl>
@@ -152,20 +152,25 @@
                         </div>
                     </div>
                     <div class="" id="reqText">
-                        <div class="editor-container" id="editorContainer"></div>
+                        <div class="webEdit" id="webEdit"></div>
                     </div>
-                    <div class="" id="">
-
+                    <div class="" id="" style="display: flex; gap: 10px;">
+                        <input type="text" id="fileText" placeholder="파일 찾기">
+                        <input type="file" id="drawingFile" accept="application" style="display:none;" />
+                        <button type="button" class="btn-excellt" id="btnFile" name="btnFile"
+                                style="width: 100px; height: 36px;">
+                            파일선택
+                        </button>
                     </div>
                 </section>
-
+<!--                요청현황 탭-->
                 <section class="tab-item" id="tab2">
                     <div class="section-top">
                         <div class="search-wrap">
                             <dl>
                                 <dt>
                                     <label>
-                                        기간<span class="eq"></span>
+                                        조회일자<span class="eq"></span>
                                     </label>
                                 </dt>
                                 <dd>
@@ -179,58 +184,28 @@
                             <dl>
                                 <dt>
                                     <label>
-                                        거래처<span class="eq"></span>
+                                        업체명<span class="eq"></span>
                                     </label>
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
-                                        <input type="text" placeholder="해당 칸을 클릭해주세요"  id="cboCompany2" name="cboCompany2"/>
+                                        <input type="text" placeholder=""  id="cboCompany2" name="cboCompany2" readonly/>
                                         <input type="hidden"  id="cboCompanyHidden2" name="cboCompanyHidden2"  />
                                     </div>
                                 </dd>
                             </dl>
-
                             <dl>
                                 <dt>
                                     <label>
-                                        매출구분
-                                    </label>
-                                </dt>
-                                <dd>
-                                    <select class="form-control2" id="sale_type2" name="sale_type2" >
-
-                                    </select>
-                                </dd>
-                            </dl>
-
-                            <dl>
-                                <dt>
-                                    <label>
-                                        과세형태<span class="eq"></span>
+                                        요청구분<span class="eq"></span>
                                     </label>
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
-                                        <div class="radio-wrap">
-                                            <input type="radio" name="taxtype2" id="tax1" value="과세">
-                                            <label for="tax1">과세(10%)</label>
-                                        </div>
-                                        <div class="radio-wrap">
-                                            <input type="radio" name="taxtype2" id="tax2" value="영세">
-                                            <label for="tax2">영세(0%)</label>
-                                        </div>
-                                        <div class="radio-wrap">
-                                            <input type="radio" name="taxtype2" id="tax3" value="면세">
-                                            <label for="tax3">면세 (세액없음)</label>
-                                        </div>
-                                        <div class="radio-wrap">
-                                            <input type="radio" name="taxtype2" id="tax4" value="" checked>
-                                            <label for="tax4">전체</label>
-                                        </div>
+                                        <select id="reqType"></select>
                                     </div>
                                 </dd>
                             </dl>
-
                             <dl>
                                 <dt>&nbsp;</dt>
                                 <dd>
@@ -246,40 +221,6 @@
 
                         </div>
                     </div>
-                    <!--<table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; text-align: center; font-family: sans-serif;">
-                        <thead>
-                        <tr>
-                            <th>구분</th>
-                            <th>매출처수</th>
-                            <th>매수</th>
-                            <th>공급가액</th>
-                            <th>세액</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td><strong style="color: red;">합&nbsp;&nbsp;&nbsp;&nbsp;계</strong></td>
-                            <td id="cltCnt"></td>
-                            <td id="cnt"></td>
-                            <td id="supplySum"></td>
-                            <td id="taxSum"></td>
-                        </tr>
-                        <tr>
-                            <td>사업자등록번호 발행분</td>
-                            <td id="SaupCltSum"></td>
-                            <td id="SaupCntSum"></td>
-                            <td id="SaupSupplySum"></td>
-                            <td id="SaupTaxSum"></td>
-                        </tr>
-                        <tr>
-                            <td>주민등록번호 발행분</td>
-                            <td id="PersonCltSum"></td>
-                            <td id="PersonCntSum"></td>
-                            <td id="PersonSupplySum"></td>
-                            <td id="PersonTaxSum"></td>
-                        </tr>
-                        </tbody>
-                    </table>-->
                     <div id="theGrid_saleList2" style="height: 730px;"></div>
                 </section>
             </div>
@@ -294,16 +235,23 @@
     <th:block th:replace="/common/popup_account :: popup_account" />
     <th:block th:replace="/common/popup_company :: popup_company"></th:block>
     <th:block th:replace="/shipment/trade_stmt/trade_stmt_tmpl :: printTemplate"></th:block>
+    <!-- Toast UI Editor CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+
+    <!-- Toast UI Editor JS -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
     <script type="text/javascript">
 
 
         let sales_type = [];
         let LoadingFlag = false;
+        let editor;
         class SalesList {
             constructor() {
                 this.grid1 = null;
                 this.grid2 = null;
-                this.url = '/api/sales/list';
+                this.url = '/api/request';
 
 
                 this.viewData = new wijmo.collections.CollectionView();
@@ -328,110 +276,110 @@
                 }));
 
                 // 3. FlexGrid 생성
-                this.grid1 = new wijmo.grid.FlexGrid('#theGrid_saleList', {
-                    autoGenerateColumns: false,
-                    showMarquee: true,
-                    allowSorting: 'MultiColumn',
-                    selectionMode: wijmo.grid.SelectionMode.Row,
-                    isReadOnly: true,
-                    groupHeaderFormat: '{value}월 매출 - 총 {count}건',
-                    columns: [
-                        { binding: 'misdate', header: '매출일자', align: 'center', width: 150 },
-                        { binding: 'misgubun', header: '매출구분', align: 'center', width: 120 },
-                        { binding: 'companycode', header: '거래처코드', align: 'left', width: 120},
-                        { binding: 'companyname', header: '거래처명', align: 'left', width: '*' },
-                        { binding: 'itemnm', header: '품명', align: 'left', width: 150 },
-                        { binding: 'spec', header: '규격', align: 'center', width: 150 },
-                        { binding: 'supplycost', header: '공급가', align: 'right', width: 120, aggregate: 'Sum' },
-                        { binding: 'taxtotal', header: '부가세', align: 'right', width: 120, aggregate: 'Sum' },
-                        { binding: 'totalamt', header: '합계', align: 'right', width: 120, aggregate: 'Sum' },
-                    ],
-                    itemsSource: cv,
-
-                });
-                this.grid1.rowHeaders.columns.splice(0, 1);
-                new FlexGridContextMenu(this.grid1);
-                this.grid1.downloadFileName = '매출현황_상세현황';
-
-                this.grid1.allowMerging = wijmo.grid.AllowMerging.All;
-                this.grid1.columns[0].allowMerging = true;
-                this.grid1.columns[1].allowMerging = true;
-
-
-
-
-                this.grid2 = new wijmo.grid.FlexGrid('#theGrid_saleList2', {
-                    autoGenerateColumns: false,
-                    showMarquee: true,
-                    allowSorting: 'MultiColumn',
-                    selectionMode: wijmo.grid.SelectionMode.Row,
-                    isReadOnly: true,
-                    itemsSource: _this.viewData2,
-                    columns: [
-                        { binding: 'ivercorpnum', header: '사업자등록번호', align: 'center', width: '*' },
-                        { binding: 'ivercorpnm', header: '상호', align: 'left', width: '*'},
-                        { binding: 'cnt', header: '매수', align: 'right', width: '*', aggregate: 'Sum' },
-                        { binding: 'supplycost', header: '공급가액', align: 'right', width: '*', aggregate: 'Sum' },
-                        { binding: 'taxtotal', header: '세액', align: 'right', width: 150, aggregate: 'Sum' },
-                    ]
-                });
-
-                this.grid2.rowHeaders.columns.splice(0, 1);
-                new FlexGridContextMenu(this.grid2);
-                this.grid2.downloadFileName = '매출현황_집계현황';
-
-                // 1. footer에 GroupRow 추가
-                this.grid2.columnFooters.rows.push(new wijmo.grid.GroupRow());
-
-                // 2. trade_date 컬럼 인덱스 찾기
-                const tradeDateColIndex = this.grid2.columns.findIndex(c => c.binding === 'ivercorpnum');
-
-                // 3. 푸터에 'Σ' 찍기
-                this.grid2.columnFooters.setCellData(0, tradeDateColIndex, '합계');
+                // this.grid1 = new wijmo.grid.FlexGrid('#theGrid_saleList', {
+                //     autoGenerateColumns: false,
+                //     showMarquee: true,
+                //     allowSorting: 'MultiColumn',
+                //     selectionMode: wijmo.grid.SelectionMode.Row,
+                //     isReadOnly: true,
+                //     groupHeaderFormat: '{value}월 매출 - 총 {count}건',
+                //     columns: [
+                //         { binding: 'misdate', header: '매출일자', align: 'center', width: 150 },
+                //         { binding: 'misgubun', header: '매출구분', align: 'center', width: 120 },
+                //         { binding: 'companycode', header: '거래처코드', align: 'left', width: 120},
+                //         { binding: 'companyname', header: '거래처명', align: 'left', width: '*' },
+                //         { binding: 'itemnm', header: '품명', align: 'left', width: 150 },
+                //         { binding: 'spec', header: '규격', align: 'center', width: 150 },
+                //         { binding: 'supplycost', header: '공급가', align: 'right', width: 120, aggregate: 'Sum' },
+                //         { binding: 'taxtotal', header: '부가세', align: 'right', width: 120, aggregate: 'Sum' },
+                //         { binding: 'totalamt', header: '합계', align: 'right', width: 120, aggregate: 'Sum' },
+                //     ],
+                //     itemsSource: cv,
+                //
+                // });
+                // this.grid1.rowHeaders.columns.splice(0, 1);
+                // new FlexGridContextMenu(this.grid1);
+                // this.grid1.downloadFileName = '매출현황_상세현황';
+                //
+                // this.grid1.allowMerging = wijmo.grid.AllowMerging.All;
+                // this.grid1.columns[0].allowMerging = true;
+                // this.grid1.columns[1].allowMerging = true;
+                //
+                //
+                //
+                //
+                // this.grid2 = new wijmo.grid.FlexGrid('#theGrid_saleList2', {
+                //     autoGenerateColumns: false,
+                //     showMarquee: true,
+                //     allowSorting: 'MultiColumn',
+                //     selectionMode: wijmo.grid.SelectionMode.Row,
+                //     isReadOnly: true,
+                //     itemsSource: _this.viewData2,
+                //     columns: [
+                //         { binding: 'ivercorpnum', header: '사업자등록번호', align: 'center', width: '*' },
+                //         { binding: 'ivercorpnm', header: '상호', align: 'left', width: '*'},
+                //         { binding: 'cnt', header: '매수', align: 'right', width: '*', aggregate: 'Sum' },
+                //         { binding: 'supplycost', header: '공급가액', align: 'right', width: '*', aggregate: 'Sum' },
+                //         { binding: 'taxtotal', header: '세액', align: 'right', width: 150, aggregate: 'Sum' },
+                //     ]
+                // });
+                //
+                // this.grid2.rowHeaders.columns.splice(0, 1);
+                // new FlexGridContextMenu(this.grid2);
+                // this.grid2.downloadFileName = '매출현황_집계현황';
+                //
+                // // 1. footer에 GroupRow 추가
+                // this.grid2.columnFooters.rows.push(new wijmo.grid.GroupRow());
+                //
+                // // 2. trade_date 컬럼 인덱스 찾기
+                // const tradeDateColIndex = this.grid2.columns.findIndex(c => c.binding === 'ivercorpnum');
+                //
+                // // 3. 푸터에 'Σ' 찍기
+                // this.grid2.columnFooters.setCellData(0, tradeDateColIndex, '합계');
 
             }
 
 
             searchMain(){
-                let _this = this;
-
-                let data = {
-                    searchfrdate: $('#searchfrdate').val(),
-                    searchtodate: $('#searchtodate').val(),
-                    cltcd: $('#cboCompany').val().trim() === '' ? '' : $('#cboCompanyHidden').val(),
-                    sale_type: $('#sale_type').val(),
-                    taxtype: $('input[name=taxtype]:checked').val(),
-                    spjangcd: getSpjangcdFromSession(),
-                }
-
-                let result = AjaxUtil.getSyncData(_this.url + '/search', data);
-                console.log()
-                if(result != null){
-                    _this.viewData.sourceCollection = result.data;
-                }
+                // let _this = this;
+                //
+                // let data = {
+                //     searchfrdate: $('#searchfrdate').val(),
+                //     searchtodate: $('#searchtodate').val(),
+                //     cltcd: $('#cboCompany').val().trim() === '' ? '' : $('#cboCompanyHidden').val(),
+                //     sale_type: $('#sale_type').val(),
+                //     taxtype: $('input[name=taxtype]:checked').val(),
+                //     spjangcd: getSpjangcdFromSession(),
+                // }
+                //
+                // let result = AjaxUtil.getSyncData(_this.url + '/search', data);
+                // console.log()
+                // if(result != null){
+                //     _this.viewData.sourceCollection = result.data;
+                // }
             }
 
             searchMain2(type){
-                let _this = this;
-
-                if(type==='load' && LoadingFlag) return;
-
-                let data = {
-                    searchfrdate2: $('#searchfrdate2').val(),
-                    searchtodate2: $('#searchtodate2').val(),
-                    cltcd2: $('#cboCompany2').val().trim() === '' ? '' : $('#cboCompanyHidden2').val(),
-                    sale_type2: $('#sale_type2').val(),
-                    taxtype2: $('input[name=taxtype2]:checked').val(),
-                    spjangcd: getSpjangcdFromSession(),
-                }
-
-                let result = AjaxUtil.getSyncData(_this.url + '/search2', data);
-
-                if(result != null) {
-                    _this.viewData2.sourceCollection = result.data;
-                    //_this.bindingStatisticsField(result.data['Statistics']);
-                    LoadingFlag = true; //서브탭 클릭할때마다 서치 방지
-                }
+                // let _this = this;
+                //
+                // if(type==='load' && LoadingFlag) return;
+                //
+                // let data = {
+                //     searchfrdate2: $('#searchfrdate2').val(),
+                //     searchtodate2: $('#searchtodate2').val(),
+                //     cltcd2: $('#cboCompany2').val().trim() === '' ? '' : $('#cboCompanyHidden2').val(),
+                //     sale_type2: $('#sale_type2').val(),
+                //     taxtype2: $('input[name=taxtype2]:checked').val(),
+                //     spjangcd: getSpjangcdFromSession(),
+                // }
+                //
+                // let result = AjaxUtil.getSyncData(_this.url + '/search2', data);
+                //
+                // if(result != null) {
+                //     _this.viewData2.sourceCollection = result.data;
+                //     //_this.bindingStatisticsField(result.data['Statistics']);
+                //     LoadingFlag = true; //서브탭 클릭할때마다 서치 방지
+                // }
 
             }
 
@@ -462,10 +410,76 @@
                 page.searchMain2('load');
             })
 
+            // 파일선택 버튼 클릭 시, 파일 선택창 실행
+            $(document).on('click', '#btnFile, #fileText', function() {
+                $('#drawingFile').click(); // ✅ 이 한 줄이 핵심
+            });
+
+            // ✅ Toast UI Editor 생성
+            editor = new toastui.Editor({
+                el: document.querySelector('#webEdit'),  // 에디터 붙일 요소
+                height: '500px',                         // 높이
+                initialEditType: 'wysiwyg',              // 'markdown' 도 가능
+                previewStyle: 'vertical',                // 미리보기 스타일
+                initialValue: '',                        // 초기 내용
+                placeholder: '요청 내용을 입력하세요...',
+                toolbarItems: [                             // 툴바 설정
+                    ['heading', 'bold', 'italic', 'strike'],
+                    ['hr', 'quote'],
+                    ['ul', 'ol', 'task', 'indent', 'outdent'],
+                    ['table', 'link'],
+                    ['code', 'codeblock']
+                ]
+            });
+
             page.searchMain();
 
 
         })
+
+        // 설계도 첨부 파일 선택 완료후 화면에 표시
+        $('#drawingFile').on('change', function() {
+            const file = this.files[0];
+            // 파일이 선택되지 않은 경우
+            if (!file) return;
+
+            // 파일 확장자 검사
+            const fileName = file.name.toLowerCase();
+
+            // 경고 메시지 표시
+
+            // 파일 선택 초기화 (바인딩 해제)
+
+            Alert.alert('', '선택된 파일: ' + file.name);
+            document.getElementById('fileText').value = file.name;
+        });
+
+        // 요청사항 저장 버튼 클릭 이벤트
+        $('#btnSearch').on('click', function() {
+            const content = editor.getHTML(); // 또는 editor.getMarkdown()
+            console.log("작성된 내용:", content);
+
+            // Ajax 저장 시
+            const data = {
+                reqDate: $('#searchDate').val(),
+                title: $('#title').val(),
+                reqType: $('#reqType').val(),
+                content: content
+            };
+            AjaxUtil.postAsyncData('/api/your/save', data, function(res) {
+                if (res.success) {
+                    Notify.success('저장되었습니다.');
+                }
+            });
+        });
+
+        // 요청사항 불러오기
+        function loadRequestDetail(reqId) {
+            const result = AjaxUtil.getSyncData('/api/your/detail', { id: reqId });
+            if (result.success && result.data) {
+                editor.setHTML(result.data.content || '');
+            }
+        }
     </script>
 
 </th:block>
