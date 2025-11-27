@@ -75,6 +75,19 @@
                 opacity: 1;
             }
         }
+        /* help 버튼 */
+        a.help {
+            background-color: #0056b3;
+            color: #fff;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 13px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        a.help:hover {
+            background-color: #0066cc;
+        }
 
     </style>
 </head>
@@ -169,6 +182,9 @@
                     <div id="spjangSelectWrapper">
                         <!-- 사업장 리스트 -->
                     </div>
+                    <a class="help" title="유지보수" href="#" id="btnMaintenance">
+                        유지보수
+                    </a>
                     <a class="user" title="사용자">
                         <span style="padding:0 5px">·</span>
                         <span th:text="${ groupname }"></span>
@@ -297,6 +313,14 @@
                                     </ul>
                                 </li>
                                 <li class="dep1-1">
+                                    <a href="#a" title="유지보수" class="ico-lnb04">
+                                        유지보수
+                                    </a>
+                                    <ul class="dep2" id="dep2-request">
+
+                                    </ul>
+                                </li>
+                                <li class="dep1-1">
                                     <a href="#a" title="시스템설정" class="ico-lnb05">
                                         시스템 설정
                                     </a>
@@ -391,8 +415,10 @@
             8: '#dep2-transaction',
             9: '#dep2-system-settings',
             10: '#dep2-clock-inout',
+            11: '#dep2-clock-inout',
             12: '#dep2-approval',
             13: '#dep2-inventory-materials',
+            14: '#dep2-request',
         };
 
         function loadMenu(FrontFolderId, $FrontFolderElement) {
@@ -801,6 +827,26 @@
     //         }
     //     }
     // });
+
+    // 유지보수 클릭 이벤트(유지보수 접수 새창)
+    $('#btnMaintenance').on('click', function (e) {
+        e.preventDefault();
+
+        // ✅ 팝업 창 크기와 위치 설정
+        const width = 900;
+        const height = 700;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+
+        // ✅ 유지보수 접수 화면 오픈 (서버에서 이 URL 제공해야 함)
+        const url = '/maintenance/register';
+
+        window.open(
+            url,
+            'maintenanceRegister',
+            `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
+        );
+    });
 </script>
 
 <script type="text/javascript">
