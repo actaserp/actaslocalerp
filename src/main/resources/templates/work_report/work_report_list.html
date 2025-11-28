@@ -310,7 +310,7 @@
                             <tr>
                                 <th><label for="rptdate">날짜</label></th>
                                 <td>
-                                    <input class="form-control2" type="date" id="rptdate" name="rptdate" style="min-width:130px;">
+                                    <input class="form-control2" type="date" id="rptdate" name="rptdate" style="min-width:135px;">
                                 </td>
                                 <th><label for="datetype">주차</label></th>
                                 <td>
@@ -358,7 +358,7 @@
                             <tr>
                                 <th><label for="asdv">구분</label></th>
                                 <td>
-                                    <input class="form-control2" type="text" id="asdv" name="asdv">
+                                    <select class="form-control2" type="text" id="asdv" name="asdv"></select>
                                 </td>
                                 <th><label for="recyn">진행상태</label></th>
                                 <td colspan="3">
@@ -565,8 +565,21 @@
                 $content.find('#stdate').val(initDateStr);
 
                 AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', '', 'fixflag');
-                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', '', 'actflag');
+                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', 'weekday', 'actflag');
+                if (data.actflag) {
+                    $content.find('#actflag').val(data.actflag);
+                }
+
                 AjaxUtil.fillSelectOptions($content.find('#recyn'), 'system_code', '', 'finished', 'recyn');
+                if (data.recyn) {
+                    $content.find('#recyn').val(data.recyn);
+                }
+
+                // asdv: data에 값 없으면 new
+                AjaxUtil.fillSelectOptions($content.find('#asdv'), 'system_code', '', 'new', 'asdv');
+                if (data.asdv) {
+                    $content.find('#asdv').val(data.asdv);
+                }
 
                 // -----------------------
                 // 2) week 계산 로직 실행
@@ -582,7 +595,6 @@
                 // -----------------------
                 $content.find('#rptdate').on('change', function () {
                     let dateStr = $(this).val();
-                    console.log('rptdate change', dateStr);
 
                     // 기준 날짜만 변경되었으니, 그냥 다시 week 계산
                     $content.find('#datetype').trigger('change');
