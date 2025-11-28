@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class TbAs020 extends AbstractAuditModel {
+public class TbAs020 {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -9,6 +9,85 @@
         input[type="date"][readonly] {
             background-color: #EDEFF5;
         }
+        /* ============================================
+   FlexGrid 셀 기본 폰트 & 패딩 확대 (UPGRADE)
+   ============================================ */
+        #workReportPage .wj-flexgrid .wj-cell {
+            font-size: 14px !important;       /* 13 → 14 */
+            padding: 8px 10px !important;     /* 6→8, 8→10 */
+        }
+
+        /* ============================================
+           그룹행 Row 전체 높이 증가 (핵심!)
+           ============================================ */
+        #workReportPage .wj-flexgrid .wj-row[aria-level] {
+            height: 30px !important;          /* 26 → 30 */
+        }
+
+        /* 그룹 셀 높이 맞춤 */
+        #workReportPage .wj-flexgrid .wj-cell.wj-group {
+            display: flex !important;
+            align-items: center !important;
+            height: 35px !important;          /* 30 → 32 */
+            line-height: 32px !important;
+            padding: 0 10px !important;       /* 좌우 패딩 살짝 증가 */
+            font-weight: 500;
+            font-size: 14px !important;       /* 그룹셀 폰트도 같이 증가 */
+        }
+
+        /* ============================================
+           그룹 화살표 버튼 크기 (조금 확대)
+           ============================================ */
+        #workReportPage .wj-flexgrid .wj-group .wj-btn-glyph {
+            height: 20px !important;          /* 18 → 20 */
+            width: 20px !important;           /* 18 → 20 */
+            margin-right: 8px !important;     /* 6 → 8 */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* 아이콘 보정 */
+        #workReportPage .wj-flexgrid .wj-group .wj-btn-glyph .wj-glyph-right,
+        #workReportPage .wj-flexgrid .wj-group .wj-btn-glyph .wj-glyph-down {
+            margin: 0 !important;
+            top: 0 !important;
+        }
+
+        /* 그룹 패널 전체 */
+        #workReportPage #theGridPanel {
+            height: 48px;               /* 기본은 45~55px → 줄임 */
+            padding: 4px 8px !important;
+            font-size: 12px !important; /* FlexGrid와 동일하게 */
+            display: flex;
+            align-items: center;        /* 텍스트 및 아이콘 가운데 정렬 */
+            border: 1px solid #dcdcdc;
+            border-bottom: none;        /* 그리드와 붙여보이도록 */
+            background-color: #f8f8f8;  /* 그룹패널 느낌 유지 */
+        }
+
+        /* Panel 내부 placeholder 텍스트 */
+        #workReportPage #theGridPanel .wj-grouppanel-placeholder {
+            font-size: 12px !important;
+            color: #777 !important;
+        }
+
+        /* Panel 내부 field chip (그룹 기준 필드) */
+        #workReportPage #theGridPanel .wj-grouppanel-field {
+            padding: 2px 6px !important;
+            font-size: 12px !important;
+            margin-right: 5px !important;
+            height: 20px !important;
+            display: flex;
+            align-items: center;
+        }
+
+        #workReportPage #theGridPanel .wj-grouppanel .wj-groupmarker {
+            padding: 4px 6px 3px 6px;
+        }
+
+
+
     </style>
 </head>
 <th:block layout:fragment="content">
@@ -103,8 +182,9 @@
                     </ul>
                 </div>
             </div>
-            <div class="container-fluid">
-                <div id="theGrid" style="height: calc(100vh - 350px);"></div>
+            <div class="container-fluid"  id="workReportPage">
+                <div id="theGridPanel"></div>
+                <div id="theGrid" style="height: calc(100vh - 390px);"></div>
             </div>
             <div class="container-fluid" style="margin-top: 10px;">
                 <div class="search-wrap" style="display: flex; gap: 20px;">
@@ -286,11 +366,38 @@
                 background: #fff;
                 border-top: 1px solid #ddd;
             }
+            .clt-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .clt-wrapper #cltnm {
+                flex: 1;
+            }
+
+            .clt-wrapper #btnCompanySearch {
+                flex-shrink: 0;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: 32px;
+                height: 32px;
+                border: 1px solid #B3B3B3;
+                border-radius: 4px;
+                background-color: #fff;
+            }
+
+            .clt-wrapper #btnCompanySearch img {
+                width: 16px;
+                height: 16px;
+            }
+
         </style>
 
         <div class="content_wrap popup">
             <div class="table-wrap">
-                <form id="planForm">
+                <form id="reportForm">
                     <table class="write-table">
                         <colgroup>
                             <col style="width:80px">
@@ -328,7 +435,7 @@
 
                                 <th><label for="fixperid">본사담당</label></th>
                                 <td>
-                                    <input type="text" id="fixperid" name="fixperid" hidden>
+                                    <input type="hidden" id="fixperid" name="fixperid">
                                     <input type="text" id="fixpernm" name="fixpernm" readonly>
                                 </td>
                             </tr>
@@ -336,7 +443,15 @@
                             <tr>
                                 <th><label for="cltnm">업체명</label></th>
                                 <td colspan="3">
-                                    <input class="form-control2" type="text" id="cltnm" name="cltnm">
+                                    <div class="clt-wrapper">
+                                        <input class="form-control2" type="hidden" id="cltcd" name="cltcd">
+                                        <input class="form-control2" type="text" id="cltnm" name="cltnm"
+                                            placeholder="엔터 눌러서 검색 또는 입력 후 엔터">
+
+                                        <a class="btn" title="검색" id="btnCompanySearch">
+                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                        </a>
+                                    </div>
                                 </td>
                                 <th><label for="fixflag">업무구분</label></th>
                                 <td>
@@ -393,6 +508,7 @@
 
             <div class="popup-button" style="margin-top:0px;">
                 <button type="button" class="btn-popup y_write_auth" id="btnPopSave">저장</button>
+                <button type="button" class="btn-popup y_write_auth" id="btnEdit" style="display:none;">수정</button>
                 <button type="button" class="btn-popup" id="modal-close-button">닫기</button>
                 <button type="button" class="btn-popup y_write_auth" id="btnDelete" style="display:none;">삭제</button>
             </div>
@@ -401,20 +517,13 @@
 
 </th:block>
 
-
-
-
 <th:block layout:fragment="scripts">
-    <!--<th:block th:replace="/common/columns_setting :: columns_setting"></th:block>-->
-    <th:block th:replace="/common/multiform_material :: multiform_material"></th:block>
-
+    <th:block th:replace="/common/popup_company_all :: popup_company_all"></th:block>
     <script type="text/javascript">
 
-        let isInternalFormatting = false;
-
-        class JobPlanPage {
+        class WorkReportPage {
             constructor() {
-                this.url = '/api/production/job_plan';
+                this.url = '/api/report/work_report';
                 this.grid = null;
                 this.$btnEdit = $('#btnEdit');
                 this.$btnAddNew = $('#btnAddNew');
@@ -439,48 +548,114 @@
                     autoGenerateColumns: false,
                     showMarquee: true,
                     isReadOnly: true,
-                    formatItem: (sender, e) => {
-                        const col = e.getColumn();
+                    formatItem: (s, e) => {
                         if (e.panel.cellType === wijmo.grid.CellType.ColumnHeader) {
                             e.cell.style.textAlign = 'center';
                         }
-                        if (e.panel.cellType === wijmo.grid.CellType.Cell) {
-                            // 날짜 포맷 처리
-                            if (col.binding === 'stdate' || col.binding === 'eddate') {
-                                const raw = e.cell.textContent?.trim();
-                                if (/^\d{8}$/.test(raw)) {
-                                    e.cell.textContent = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
-                                }
-                            }
+                        if (e.panel.cellType === wijmo.grid.CellType.Cell &&
+                            s.rows[e.row] instanceof wijmo.grid.GroupRow) {
+
+                            // 현재 HTML 예:  주차: <b>2025년 48주차</b> (3 items)
+                            let html = e.cell.innerHTML;
+
+                            // " (숫자 items)" 를 " (숫자 건)" 으로 치환
+                            html = html.replace(/\((\d+)\s+items\)/, '($1 건)');
+
+                            e.cell.innerHTML = html;
                         }
                     },
                     columns: [
+                        {binding: 'id', visible:false},
+                        {binding: 'rptdate', header: '작성일자', width: 120, align: 'center'},
                         {binding: 'rptweek', header: '주차', width: 140, align: 'center'},
-                        {binding: 'fixflag', header: '구분', width: 100, align: 'center'},
-                        {binding: 'actnm', header: '사원명', width: 120, align: 'center'},
-                        {binding: 'cmcode', header: '작성일자', width: 120, align: 'center'},
-                        {binding: 'description', header: '업체명', width: 150, align: 'center'},
-                        {binding: 'mat_code', header: '화면명', width: 200, align: 'left'},
-                        {binding: 'mat_name', header: '업무내용', width: 300, align: 'left'},
-                        {binding: 'qty', header: '진행상태', width: 100, align: 'center'},
-                        {binding: 'remark', header: '근무구분', width: 100, align: 'center'},
+                        {binding: 'fixflag_nm', header: '업무구분', width: 100, align: 'center'},
+                        {binding: 'fixpernm', header: '사원명', width: 120, align: 'center'},
+                        {binding: 'cltnm', header: '업체명', width: 150, align: 'center'},
+                        {binding: 'asmenu', header: '화면명', width: 200, align: 'left'},
+                        {binding: 'rptremark', header: '업무내용', width: 300, align: 'left'},
+                        {binding: 'recyn_nm', header: '진행상태', width: 100, align: 'center'},
+                        {binding: 'asdv_nm', header: '근무구분', width: 100, align: 'center'},
+                        {binding: 'inputdate', header: '입력일자', width: 150, align: 'center'},
                     ],
-                    itemsSource: this.viewData, // 데이터를 설정할 배열
+
+                    itemsSource: this.viewData
                 });
 
                 new FlexGridContextMenu(this.grid);
-                this.grid.downloadFileName = '생산 계획 내역';
+                this.grid.downloadFileName = '업무보고 내역';
 
-                this.grid.hostElement.addEventListener('dblclick', function (e) {
-                    let items = _this.grid.selectedItems;
-                    if (items.length === 0) {
-                        return false;
-                    }
-                    _this.$btnEdit.trigger('click');
+                // -----------------------------
+                // 2) GroupPanel 생성
+                // -----------------------------
+                this.groupPanel = new wijmo.grid.grouppanel.GroupPanel('#theGridPanel', {
+                    grid: this.grid,
+                    placeholder: '여기에 필드를 끌어서 그룹화할 수 있습니다.'
                 });
 
-                let nowDate = CommonUtil.getYYYYMMDD();
-                let dueDate = CommonUtil.getYYYYMMDD(10);
+                // -----------------------------
+                // 3) 기본 그룹 설정
+                // -----------------------------
+                this.viewData.groupDescriptions.clear();
+
+                // 1단계 그룹: 주차
+                this.viewData.groupDescriptions.push(
+                    new wijmo.collections.PropertyGroupDescription('rptweek')
+                );
+
+                // 2단계 그룹: 사원명
+                this.viewData.groupDescriptions.push(
+                    new wijmo.collections.PropertyGroupDescription('fixpernm')
+                );
+
+
+                new FlexGridContextMenu(this.grid);
+                this.grid.downloadFileName = '업무일지 내역';
+
+                this.grid.selectionChanged.addHandler((s, e) => {
+                    const row = s.selection.row;
+                    if (row < 0) return;
+
+                    const item = s.rows[row].dataItem;
+                    if (!item) return;
+
+                    $("#rptremark").val(item.rptremark || "");
+                    $("#etcremark").val(item.etcremark || "");
+                    $("#remark").val(item.remark || "");
+                });
+
+
+                // 🔵 FlexGrid 더블클릭 → 상세 조회 & 수정 팝업 열기
+                this.grid.hostElement.addEventListener('dblclick', (e) => {
+                    const view = this.grid;                  // grid 참조
+                    const selected = view.selectedItems;     // 선택된 행들
+
+                    // 선택된 행이 없으면 중단
+                    if (!selected || selected.length !== 1) {
+                        Alert.alert('', '선택된 데이터가 없습니다.');
+                        return;
+                    }
+
+                    const item = selected[0];
+
+                    // 🔵 뒤에서 재선택하기 위해 ID 저장
+                    window.selectedGridId = item.id;
+
+                    // 🔵 상세 조회 요청
+                    const params = {
+                        id: item.id,
+                        action: 'detail'
+                    };
+
+                    AjaxUtil.getAsyncData(this.url + '/detail', params, (result) => {
+                        if (!result || !result.data) {
+                            Alert.alert('', '데이터를 불러오지 못했습니다.');
+                            return;
+                        }
+
+                        result.data.mode = 'edit';       // 수정 모드 지정
+                        this.showReportForm(result.data); // 팝업 열기
+                    });
+                });
 
                 //수주등록 클릭
                 this.$btnAddNew.click(function (e) {
@@ -488,29 +663,7 @@
                         id: '',
                         mode: 'new'
                     };
-                    _this.showPlanForm(defaultData);
-                });
-
-                // 수주 수정 클릭
-                this.$btnEdit.click(function (e) {
-                    let selectedItems = _this.grid.selectedItems;
-                    const it = _this.grid.selectedItems && _this.grid.selectedItems[0];
-                    console.log('it', it);
-                    if (selectedItems.length === 1) {
-                        window.selectedGridId = it.mat_code;
-                        let data = {
-                            head_id: selectedItems[0].head_id,
-                            action: 'detail'
-                        };
-                        let fnsuccess = function (result) {
-                            result.data['mode'] = 'edit';
-                            _this.showPlanForm(result.data);
-                        };
-                        AjaxUtil.getAsyncData(_this.url + '/detail', data, fnsuccess);
-                    } else {
-                        Alert.alert('', '선택된 데이터가 없습니다.');
-                    }
-
+                    _this.showReportForm(defaultData);
                 });
 
                 // 엔터키 검색
@@ -521,22 +674,27 @@
                 });
             }
 
-            showPlanForm(data) {
+            showReportForm(data) {
 
                 let _this = this;
                 let content = tmpl('planTemplate', data);
                 let $content = $(content);
+                let $btnPopSave = $content.find('#btnPopSave');
+                let $btnEdit = $content.find('#btnEdit');
                 let $btnDelete = $content.find('#btnDelete');
-                let $planForm = $content.find('#planForm');
+                let $reportForm = $content.find('#reportForm');
                 $content.find('#datetype').val('week').hide();
-                // 저장버튼
-                let $btnPopSave = $('#btnPopSave');
 
                 let modalContainer = null;
                 if (data.mode === 'new') {
                     modalContainer = new PopupDraggable('등록');
+                    $btnPopSave.show();
+                    $btnEdit.hide();
+                    $btnDelete.hide();
                 } else {
                     modalContainer = new PopupDraggable('수정');
+                    $btnPopSave.hide();
+                    $btnEdit.show();
                     $btnDelete.show();
                 }
                 modalContainer.open({width: 1100, height: 600, $content});
@@ -565,18 +723,18 @@
                 $content.find('#stdate').val(initDateStr);
 
                 AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', '', 'fixflag');
-                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', 'weekday', 'actflag');
+                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', '3', 'actflag');
                 if (data.actflag) {
                     $content.find('#actflag').val(data.actflag);
                 }
 
-                AjaxUtil.fillSelectOptions($content.find('#recyn'), 'system_code', '', 'finished', 'recyn');
+                AjaxUtil.fillSelectOptions($content.find('#recyn'), 'system_code', '', '1', 'recyn');
                 if (data.recyn) {
                     $content.find('#recyn').val(data.recyn);
                 }
 
                 // asdv: data에 값 없으면 new
-                AjaxUtil.fillSelectOptions($content.find('#asdv'), 'system_code', '', 'new', 'asdv');
+                AjaxUtil.fillSelectOptions($content.find('#asdv'), 'system_code', '', '4', 'asdv');
                 if (data.asdv) {
                     $content.find('#asdv').val(data.asdv);
                 }
@@ -600,97 +758,84 @@
                     $content.find('#datetype').trigger('change');
                 });
 
-
-
                 // -----------------------
                 // 4) 기존 데이터 바인딩 (수정 모드)
                 // -----------------------
                 setTimeout(() => {
-                    FormUtil.BindDataPlanForm(data, $planForm);
+                    FormUtil.BindDataForm(data, $reportForm);
                 }, 100);
+
+                $content.find('#cltnm').on('keydown', function (e) {
+                    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+                    e.preventDefault();
+                    _this.searchCompany($content);
+                });
+
+                $content.find('#btnCompanySearch').on('click', function () {
+                    _this.searchCompany($content);
+                });
+
+                $content.find('#cltnm').on('input', function () {
+                    $content.find('#cltcd').val('');
+                });
 
                 // 수주등록 팝업 저장버튼 클릭
                 $btnPopSave.click(function (e) {
 
-                    let data = FormUtil.extractForm($planForm);
-
-                    if (!data.material_id_0) {
-                        Alert.alert('', '품목을 선택하세요.');
-                        return;
-                    }
-
-                    // 2. 각 행의 유효성 체크
-                    let index = 0;
-                    while (true) {
-                        const materialId = data[`material_id_${index}`];
-
-                        if (materialId === undefined) break; // 끝까지 체크
-
-                        if (materialId !== null && materialId !== '') {
-                            const qty = data[`qty_${index}`];
-
-                            if (!qty) {
-                                Alert.alert('', `(${index + 1}번째 행) 수량을 입력하세요.`);
-                                return;
-                            }
-                        }
-
-                        index++;
-                    }
+                    let data = FormUtil.extractForm($reportForm);
 
                     Alert.confirm('', '저장하시겠습니까?', function () {
-                        const items = [];
-                        for (let i = 0; i < page.planListIndex; i++) {
-                            const materialId = data[`material_id_${i}`];
-                            if (!materialId) continue;
 
-                            items.push({
-                                id: data[`id_${i}`] || '',
-                                material_id: materialId,
-                                txtProductName: data[`txtProductName_${i}`] || '',
-                                qty: (data[`qty_${i}`] || '0').replace(/,/g, ''),
-                                remark: data[`remark_${i}`] || '',
-                            });
-                        }
-
-
-                        // 공통 정보 + 리스트 전송
-                        const payload = {
-                            head_id: data.head_id,
-                            actnm: data.actnm,
-                            stdate: data.stdate,
-                            eddate: data.eddate,
-                            datetype: data.datetype,
-                            // cmcode: data.cmcode,
-                            spjangcd: data.spjangcd,
-                            description: data.description,
-                            items: items
-                        };
-
-                        console.log('payload', payload);
-
-                        AjaxUtil.postJsonData(_this.url + '/save', payload, function (res) {
+                        AjaxUtil.postJsonData(_this.url + '/save', data, function (res) {
                             if (res.success) {
                                 Notify.success("저장되었습니다.");
                                 _this.searchMainData();
-                                modalContainer.close();
+                                $content.find('#cltcd').val('');
+                                $content.find('#cltnm').val('');
+                                $content.find('#asmenu').val('');
+                                $content.find('#rptremark').val('');
+                                $content.find('#etcremark').val('');
+                                $content.find('#remark').val('');
                             } else {
-                                Alert.alert('저장 실패', res.message || '알 수 없는 오류');
+                                Alert.alert('저장 실패', res.message || '관리자에게 문의하세요.');
                             }
                         });
 
                     });
-
                 });
+
+                $btnEdit.click(function (e) {
+
+                    let data = FormUtil.extractForm($reportForm);
+
+                    Alert.confirm('', '수정하시겠습니까?', function () {
+
+                        AjaxUtil.postJsonData(_this.url + '/save', data, function (res) {
+                            if (res.success) {
+                                Notify.success("수정되었습니다.");
+                                _this.searchMainData();
+
+                            } else {
+                                Alert.alert('수정 실패', res.message || '관리자에게 문의하세요.');
+                            }
+                        });
+
+                    });
+                    modalContainer.close();
+                });
+
 
                 // 삭제 버튼
                 $btnDelete.click(function (e) {
-                    let data = FormUtil.extractForm($planForm);
+                    let data = FormUtil.extractForm($reportForm);
 
-                    Alert.confirm('', '전체 삭제하시겠습니까?',
+                    Alert.confirm('', '삭제하시겠습니까?',
                         function () {
-                            let id = data.head_id;
-                            _this.deletePlanData(id);
+                            let id = data.id;
+                            _this.deleteReportData(id);
+                            $("#rptremark").val("");
+                            $("#etcremark").val("");
+                            $("#remark").val("");
                         },
                         function () {
                         }
@@ -701,7 +846,41 @@
 
             }
 
-            deletePlanData(id) {
+            searchCompany($content) {
+                const keyword = $content.find('#cltnm').val().trim();
+                const poppage = new PopCompComponentAll();
+
+                const searchcallback = function (item) {
+                    console.log('item', item);
+                    $content.find('#cltnm').val(item.compname);
+                    $content.find('#cltcd').val(item.id);
+                };
+
+                if (!keyword) {
+                    poppage.focusAfterClose = $content.find('#cltnm')[0];
+                    poppage.show(searchcallback);
+                    return;
+                }
+
+                const result = AjaxUtil.getSyncData('/api/popup/search_Comp_all', {
+                    compCode: '',
+                    compName: keyword,
+                    business_number: ''
+                });
+                const rows = result?.data || [];
+
+                if (rows.length === 1) {
+                    searchcallback(rows[0]);
+                } else {
+                    poppage.show(searchcallback);
+                    setTimeout(() => {
+                        poppage.$compName.val(keyword);
+                        poppage.$btnCompSearch.trigger('click');
+                    }, 50);
+                }
+            }
+
+            deleteReportData(id) {
                 let _this = this;
                 let url = _this.url + '/delete';
                 let data = {'id': id}
@@ -719,26 +898,29 @@
 
             searchMainData() {
                 let _this = this;
-                let date_kind = $('#cboDateKind').val();
                 let start = $('#srchStartDt').val();
                 let end = $('#srchEndDt').val();
+                let txtName = $('#txtName').val();
                 let url = this.url + '/read';
 
                 let data = {
-                    'date_kind': date_kind,
                     'start': start,
                     'end': end,
+                    'txtName': txtName,
                     'action': 'read'
                 };
 
                 let fnsuccess = function (result) {
                     if (result != null) {
-                        console.log('result', result.data);
                         _this.viewData.sourceCollection = result.data;
+
+                        setTimeout(() => {
+                            _this.grid.collapseGroupsToLevel(0);
+                        }, 10);
 
                         if (window.selectedGridId) {
                             // GridUtil.selectRowById(_this.grid, window.selectedGridId);
-                            GridUtil.selectRowById(_this.grid, window.selectedGridId, {idField: 'mat_code'});
+                            GridUtil.selectRowById(_this.grid, window.selectedGridId, {idField: 'id'});
                             window.selectedGridId = null;
                         }
                     }
@@ -746,8 +928,6 @@
                 AjaxUtil.getAsyncData(url, data, fnsuccess);
 
             }
-
-
         }
 
         // 팝업 날짜 계산 로직
@@ -776,13 +956,13 @@
                 $eddate.prop('readOnly', false);
 
                 if (type === 'week') {
-                    const $weekSelect = $('<select id="popupWeekSelector" style="min-width: 140px;"></select>');
+                    const $weekSelect = $('<select id="popupWeekSelector" name="popupWeekSelector" style="min-width: 140px;"></select>');
 
                     const year = targetDate.getFullYear();
                     const currentWeek = getISOWeekNumber(targetDate);
 
                     for (let i = 1; i <= 52; i++) {
-                        const value = `${year}-W${String(i).padStart(2, "0")}`;
+                        const value = `${year}년 ${i}주차`;
                         const text = `${year}년 ${i}주차`;
                         const $option = $(`<option value="${value}">${text}</option>`);
                         if (i === currentWeek) {
@@ -792,11 +972,15 @@
                     }
 
                     $weekSelect.on('change', function () {
-                        const [y, w] = $(this).val().split('-W');
-                        const weekNum = parseInt(w, 10);
-                        const start = getDateOfISOWeek(weekNum, y);
+                        const val = $(this).val(); // 예: "2025년 11주차"
+
+                        const y = parseInt(val.split("년")[0].trim());
+                        const w = parseInt(val.split("년")[1].replace("주차", "").trim());
+
+                        const start = getDateOfISOWeek(w, y);
                         const end = new Date(start);
                         end.setDate(start.getDate() + 6);
+
                         $stdate.val(formatDate(start)).prop('readOnly', true);
                         $eddate.val(formatDate(end)).prop('readOnly', true);
                     });
@@ -888,7 +1072,7 @@
 
         $(document).ready(function (e) {
 
-            page = new JobPlanPage();
+            page = new WorkReportPage();
 
             $('#srchStartDt').val(CommonUtil.getYYYYMMDD(-7));
             $('#srchEndDt').val(CommonUtil.getYYYYMMDD());
@@ -928,7 +1112,7 @@
                     const currentWeek = getISOWeekNumber(now);
                     for (let i = 1; i <= 52; i++) {
                         const option = document.createElement("option");
-                        option.value = `${currentYear}-W${String(i).padStart(2, "0")}`;
+                        option.value = `${currentYear}년 ${i}주차`;
                         option.textContent = `${currentYear}년 ${i}주차`;
                         if (i === currentWeek) {
                             option.selected = true; // ← 현재 주차 자동 선택
@@ -937,9 +1121,13 @@
                     }
 
                     select.addEventListener("change", function () {
-                        const week = this.value;
-                        const [year, weekNumStr] = week.split("-W");
-                        const weekNum = parseInt(weekNumStr, 10);
+                        const weekText = this.value; // 예: "2025년 11주차"
+
+                        // 🔥 한국어 문자열에서 숫자만 추출
+                        const year = parseInt(weekText.split("년")[0].trim());
+                        const weekNum = parseInt(
+                            weekText.split("년")[1].replace("주차", "").trim()
+                        );
 
                         const start = getDateOfISOWeek(weekNum, year);
                         const end = new Date(start);
@@ -947,6 +1135,7 @@
 
                         srchStartDt.value = formatDate(start);
                         srchEndDt.value = formatDate(end);
+
                         srchStartDt.readOnly = true;
                         srchEndDt.readOnly = true;
                     });
