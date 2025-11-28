@@ -24,7 +24,10 @@
 
     <script th:inline="javascript">
         var spjangList = /*[[${session.spjangList}]]*/ [];
-
+        sessionStorage.setItem("username", [[${session.username}]] );
+        sessionStorage.setItem("userid", [[${session.userid}]] );
+        sessionStorage.setItem("groupid", [[${session.groupid}]] );
+        sessionStorage.setItem("spjangcd", [[${session.spjangcd}]] );
     </script>
 
     <style>

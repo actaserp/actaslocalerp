@@ -84,6 +84,7 @@ public class HomeController {
 		mv.addObject("groupname", groupname);
 		session.setAttribute("spjangcd", spjangcd);
 		session.setAttribute("username", username);
+		session.setAttribute("userid", userid);
 		session.setAttribute("groupid", groupid);
 		mv.addObject("userinfo", user);
 		mv.addObject("system_title", logoTitle);

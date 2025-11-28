@@ -225,25 +225,11 @@
                 margin-right: 5px;
             }
 
-            .input-with-button {
-                display: flex;
-                gap: 4px; /* 버튼과 input 사이 여백 */
-                align-items: center;
-            }
-
-            .input-with-button input {
-                flex: 1; /* 나머지 영역 차지 */
-                min-width: 0;
-                padding: 4px;
-            }
-
-            .input-with-button .btn.in_btn {
-                flex-shrink: 0;
-            }
-
+            /* 모달 구조 */
             .content_wrap.popup {
                 display: flex;
                 flex-direction: column;
+                width: 100%;
                 height: 100%;
             }
 
@@ -251,6 +237,47 @@
                 flex: 1;
                 overflow-y: auto;
                 padding-right: 5px;
+                width: 100%;
+            }
+
+            /* 테이블 전체 반응형 */
+            .write-table,
+            .item-table {
+                width: 100%;
+                table-layout: fixed;
+                border-collapse: collapse;
+            }
+
+            /* colgroup 지정된 th 열 좁게 설정 */
+            .write-table col.col-th {
+                width: 80px !important;
+            }
+
+            .write-table col.col-td {
+                width: auto;
+            }
+
+            .write-table input,
+            .write-table select,
+            .write-table textarea,
+            .item-table input,
+            .item-table select,
+            .item-table textarea {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            /* 기본 셀 스타일 */
+            .write-table th,
+            .write-table td {
+                border: 1px solid #ccc;
+                padding: 6px;
+            }
+
+            /* th 텍스트 줄바꿈 방지 */
+            .write-table th {
+                white-space: nowrap;
+                text-align: center;
             }
 
             .popup-button {
@@ -259,143 +286,123 @@
                 background: #fff;
                 border-top: 1px solid #ddd;
             }
-
-            .input-with-checkbox {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-
-            .input-with-checkbox input[type="number"] {
-                flex: 1;
-                min-width: 0;
-                padding: 4px;
-            }
-
-            .input-with-checkbox input[type="checkbox"] {
-                flex-shrink: 0;
-                width: 18px;
-                height: 18px;
-            }
         </style>
+
         <div class="content_wrap popup">
             <div class="table-wrap">
-            <form id="planForm">
-                <table class="write-table">
-                    <caption>계획 등록 테이블</caption>
-                    <input type="hidden" id="head_id" name="head_id">
-                    <tbody>
-                        <tr>
-                            <th style="text-align: center">
-                                <label for="datetype">계획일자</label>
-                            </th>
-                            <td>
-                                <div class="input-group" id="prod_datepicker">
-                                    <select id="datetype" name="datetype">
-                                        <option value="selectDate" selected>기간</option>
-                                        <option value="week">주간</option>
-                                        <option value="month">월간</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <th style="text-align: center">
-                                <label>납기일*</label>
-                            </th>
-                            <td>
-                                <div class="input-group" id="prod_datepicker">
-                                    <input type="date" id="stdate" name="stdate" style="margin-right: 5px;" readOnly>
-                                    ~
-                                    <input type="date" id="eddate" name="eddate" style="margin-right: 5px;" readOnly>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th style="text-align: center">
-                                <label for="actnm">현장명</label>
-                            </th>
-                            <td>
-                                <input class="form-control2" type="text" id="actnm" name="actnm">
-                            </td>
-<!--                            <th style="text-align: center">-->
-<!--                                <label for="cmcode">통신</label>-->
-<!--                            </th>-->
-<!--                            <td colspan="3">-->
-<!--                                <select id="cmcode" name="cmcode">-->
-<!--                                </select>-->
-<!--                            </td>-->
-                        </tr>
+                <form id="planForm">
+                    <table class="write-table">
+                        <colgroup>
+                            <col style="width:80px">
+                            <col style="width:14%">
 
-                        <tr>
-                            <th style="text-align: center">
-                                <label for="description">비고</label>
-                            </th>
-                            <td colspan="3">
-                                <textarea id="description" name="description" style="height:40px;"></textarea>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="item-table">
+                            <col style="width:80px">
+                            <col style="width:48%">
 
-                    <table class="item-table">
+                            <col style="width:80px">
+                            <col style="width:14%">
+                        </colgroup>
 
-                    <colgroup>
-                        <col style="width: 10%">
-                        <col style="width: 30%">
-                        <col style="width: 10%">
-                        <col style="width: 45%">
-                        <col style="width: 5%">
-                    </colgroup>
-                    <thead>
-                    <tr id="itemHeaderRow">
-                        <th>코드</th>
-                        <th>품목</th>
-                        <th>수량(kg)</th>
-                        <th>메모</th>
-                        <th>
-                            <a class="btn in_btn plus" id="addRemark" title="추가">
-                                <img src="/images/icon/ico-plus.svg" alt="등록 아이콘" />
-                            </a>
-                        </th>
-                    </tr>
-                    </thead>
-                    <tr class="item-template-row" style="display: none;">
-                        <td>
-                            <input type="text" name="product_code" readOnly/>
-                        </td>
-                        <td>
-                            <div class="input-with-button">
-                                <input type="hidden" name="id" />
-                                <input type="text" name="txtProductName" placeholder="코드 또는 품명 입력 후 엔터" autocomplete="off" />
-                                <input type="hidden" name="material_id" />
-                                <a class="btn in_btn" title="품목 검색" id="btnProductSearch" >
-                                    <img src="/images/icon/btn-srch-black.svg" alt="검색 아이콘" />
-                                </a>
-                            </div>
-                        </td>
-                        <td><input type="text" name="qty" placeholder="수량(kg)" /></td>
+                        <caption>등록 테이블</caption>
+                        <input type="hidden" id="id" name="id">
 
-                        <td><input type="text" name="remark" /></td>
+                        <tbody>
+                            <tr>
+                                <th><label for="rptdate">날짜</label></th>
+                                <td>
+                                    <input class="form-control2" type="date" id="rptdate" name="rptdate" style="min-width:130px;">
+                                </td>
+                                <th><label for="datetype">주차</label></th>
+                                <td>
+                                    <div class="input-group" style="display:flex; align-items:center; gap:5px;">
+                                        <!-- datetype 숨김 -->
+                                        <select id="datetype" name="datetype" style="display:none;">
+                                            <option value="week">주간</option>
+                                        </select>
+                                        <!-- 시작일 종료일 -->
+                                        <input type="date" id="stdate" name="stdate" style="max-width:120px;" readonly>
+                                        ~
+                                        <input type="date" id="eddate" name="eddate" style="max-width:120px;" readonly>
+                                    </div>
+                                </td>
 
-                        <td class="al_c item_border">
-                            <a class="btn in_btn" title="삭제" onclick="removeItemRow(this)">
-                                <img src="/images/icon/ico-delete.svg" alt="삭제 아이콘" />
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </form>
+                                <th><label for="fixperid">본사담당</label></th>
+                                <td>
+                                    <input type="text" id="fixperid" name="fixperid" hidden>
+                                    <input type="text" id="fixpernm" name="fixpernm" readonly>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="cltnm">업체명</label></th>
+                                <td colspan="3">
+                                    <input class="form-control2" type="text" id="cltnm" name="cltnm">
+                                </td>
+                                <th><label for="fixflag">업무구분</label></th>
+                                <td>
+                                    <select class="form-control2" id="fixflag" name="fixflag"></select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="asmenu">화면명</label></th>
+                                <td colspan="3">
+                                    <input class="form-control2" type="text" id="asmenu" name="asmenu">
+                                </td>
+                                <th><label for="actflag">근무구분</label></th>
+                                <td>
+                                    <select class="form-control2" id="actflag" name="actflag"></select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="asdv">구분</label></th>
+                                <td>
+                                    <input class="form-control2" type="text" id="asdv" name="asdv">
+                                </td>
+                                <th><label for="recyn">진행상태</label></th>
+                                <td colspan="3">
+                                    <select class="form-control2" id="recyn" name="recyn" style="max-width:140px;"></select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="rptremark">업무내용</label></th>
+                                <td colspan="5">
+                                    <textarea id="rptremark" name="rptremark" style="height:110px;"></textarea>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="etcremark">야근/특근 <br>업무</label></th>
+                                <td colspan="5">
+                                    <textarea id="etcremark" name="etcremark" style="height:70px;"></textarea>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="remark">특이사항</label></th>
+                                <td colspan="5">
+                                    <textarea id="remark" name="remark" style="height:70px;"></textarea>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
             </div>
-            <div class="popup-button">
-                    <button type="button" class="btn-popup y_write_auth" id="btnPopSave">저장</button>
-                    <button type="button" class="btn-popup" id="modal-close-button">닫기</button>
-                    <button type="button" class="btn-popup y_write_auth" id="btnDelete" style="display:none;">전체 삭제</button>
+
+            <div class="popup-button" style="margin-top:0px;">
+                <button type="button" class="btn-popup y_write_auth" id="btnPopSave">저장</button>
+                <button type="button" class="btn-popup" id="modal-close-button">닫기</button>
+                <button type="button" class="btn-popup y_write_auth" id="btnDelete" style="display:none;">삭제</button>
             </div>
         </div>
     </script>
 
 </th:block>
+
+
+
 
 <th:block layout:fragment="scripts">
     <!--<th:block th:replace="/common/columns_setting :: columns_setting"></th:block>-->
@@ -479,9 +486,7 @@
                 this.$btnAddNew.click(function (e) {
                     let defaultData = {
                         id: '',
-                        mode: 'new',
-                        JumunDate: nowDate,
-                        DueDate: dueDate,
+                        mode: 'new'
                     };
                     _this.showPlanForm(defaultData);
                 });
@@ -523,7 +528,9 @@
                 let $content = $(content);
                 let $btnDelete = $content.find('#btnDelete');
                 let $planForm = $content.find('#planForm');
-                // let $cmcode = $content.find('#cmcode');
+                $content.find('#datetype').val('week').hide();
+                // 저장버튼
+                let $btnPopSave = $('#btnPopSave');
 
                 let modalContainer = null;
                 if (data.mode === 'new') {
@@ -532,35 +539,62 @@
                     modalContainer = new PopupDraggable('수정');
                     $btnDelete.show();
                 }
-                modalContainer.open({width: 1100, height: 550, $content});
+                modalContainer.open({width: 1100, height: 600, $content});
 
-                // 저장버튼
-                let $btnPopSave = $('#btnPopSave');
+                let initDateStr = "";
 
-                //수주구분
-                // AjaxUtil.fillSelectOptions($cmcode, 'system_code', 'choose', '', 'comunication_type');
+                if (data.mode === 'new') {
+                    // 신규 → 오늘 날짜
+                    initDateStr = new Date().toISOString().slice(0, 10);
+                    const username = sessionStorage.getItem("username");
+                    const userid = sessionStorage.getItem("userid");
+                    $content.find('#fixperid').val(userid);
+                    // 값이 있으면 fixperid 자동 입력
+                    if (username) {
+                        $content.find('#fixpernm').val(username);
+                    }
+                } else {
+                    // 수정 → 기존 날짜
+                    initDateStr = data.rptdate;
+                }
+
+                // 입력창에 넣음
+                $content.find('#rptdate').val(initDateStr);
+
+                // stdate에도 기준 설정
+                $content.find('#stdate').val(initDateStr);
+
+                AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', '', 'fixflag');
+                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', '', 'actflag');
+                AjaxUtil.fillSelectOptions($content.find('#recyn'), 'system_code', '', 'finished', 'recyn');
+
+                // -----------------------
+                // 2) week 계산 로직 실행
+                // -----------------------
                 initPopupDateKindHandler($content);
 
+                // datetype 강제 트리거 (week 로직 실행)
+                $content.find('#datetype').trigger('change');
+
+
+                // -----------------------
+                // 3) 날짜 변경 시 주간 자동 재계산
+                // -----------------------
+                $content.find('#rptdate').on('change', function () {
+                    let dateStr = $(this).val();
+                    console.log('rptdate change', dateStr);
+
+                    // 기준 날짜만 변경되었으니, 그냥 다시 week 계산
+                    $content.find('#datetype').trigger('change');
+                });
+
+
+
+                // -----------------------
+                // 4) 기존 데이터 바인딩 (수정 모드)
+                // -----------------------
                 setTimeout(() => {
                     FormUtil.BindDataPlanForm(data, $planForm);
-
-                    const datetype = $content.find('#datetype').val();
-
-                    if (datetype === 'week' || datetype === 'month') {
-                        $content.find('#datetype').trigger('change');
-
-                        // select box가 생성되기까지 잠시 기다린 뒤 값 설정
-                        setTimeout(() => {
-                            if (datetype === 'week') {
-                                $content.find('#popupWeekSelector').val(data.popupWeekSelector);
-                                $content.find('#stdate').val(data.stdate);
-                                $content.find('#eddate').val(data.eddate);
-                            } else if (datetype === 'month') {
-                                $content.find('#stdate').val(data.stdate);
-                                $content.find('#eddate').val(data.eddate);
-                            }
-                        }, 10); // 너무 길게 줄 필요 없이 10~50ms 정도면 충분
-                    }
                 }, 100);
 
                 // 수주등록 팝업 저장버튼 클릭
@@ -637,214 +671,6 @@
 
                 });
 
-                // 숫자 포맷 (input 중 formatting)
-                $content.on('input', 'input[name^="qty_"]', function () {
-                    if (isInternalFormatting) return;
-                    isInternalFormatting = true;
-
-                    const $this = $(this);
-                    const input = this;
-                    const raw = $this.val().replace(/[^0-9]/g, '');
-                    const cursor = input.selectionStart;
-                    const prevLength = input.value.length;
-
-                    if (raw === '') {
-                        $this.val('');
-                    } else {
-                        const formatted = Number(raw).toLocaleString();
-                        $this.val(formatted);
-
-                        const diff = formatted.length - prevLength;
-                        input.setSelectionRange(cursor + diff, cursor + diff);
-                    }
-
-                    isInternalFormatting = false;
-                });
-
-                // 검색 버튼 클릭 시 팝업
-                $content.on('click', 'a[title="품목 검색"]', function () {
-                    const $row = $(this).closest('tr');
-
-                    const $productInput = $row.find('input[name^="txtProductName_"]');
-                    const $productId = $row.find('input[name^="material_id_"]');
-                    const $productCode = $row.find('input[name^="product_code_"]');
-
-                    const pop = new PopMatComponent();
-                    pop.material_type = 'product,sangpum';
-
-                    pop.show(function (item) {
-                        $productInput.val(item.Name);
-                        $productId.val(item.id);
-                        $productCode.val(item.Code);
-                    });
-
-
-                });
-
-                $content.on('keydown', 'input[name^="txtProductName_"]', function (e) {
-                    if (e.key !== 'Enter' && e.keyCode !== 13) return;
-
-                    e.preventDefault();
-
-                    const $field = $(this);
-                    const $row = $field.closest('tr');
-
-                    const $productInput = $row.find('input[name^="txtProductName_"]');
-                    const $productId = $row.find('input[name^="material_id_"]');
-                    const $productCode = $row.find('input[name^="product_code_"]');
-
-                    const keyword = $field.val().trim();
-                    const pop = new PopMatComponent();
-                    pop.material_type = 'product,sangpum';
-
-                    const callback = function (item) {
-                        $productId.val(item.id || '');
-                        $productInput.val(item.Name || '');
-                        $productCode.val(item.Code || '');
-                    };
-
-                    if (!keyword) {
-                        pop.focusAfterClose = $field[0];
-                        pop.show(callback);
-                        return;
-                    }
-
-                    const data = {
-                        keyword: keyword,
-                        spjangcd: sessionStorage.getItem('spjangcd')
-                    };
-
-                    const result = AjaxUtil.getSyncData('/api/popup/search_material', data);
-                    const rows = result?.data || [];
-
-                    if (rows.length === 1) {
-                        callback(rows[0]);
-                    } else {
-                        pop.show(callback);
-                        setTimeout(() => {
-                            pop.$keyword.val(keyword);
-                            pop.$btnMaterialSearch.trigger('click');
-                        }, 50);
-                    }
-                });
-
-                // 품목명 지우면 코드들도 같이 지워지게
-                $content.on('input', 'input[name^="txtProductName_"]', function () {
-                    const $field = $(this);
-                    const $row = $field.closest('tr');
-
-                    const $productId = $row.find('input[name^="material_id_"]');
-                    const $productCode = $row.find('input[name^="product_code_"]');
-
-                    if ($field.val().trim() === '') {
-                        // 값이 비었을 경우 연관된 필드 초기화
-                        $productId.val('');
-                        $productCode.val('');
-                    }
-                });
-
-                $content.find('#addRemark').click(function () {
-                    const $tbody = $content.find('.item-table tbody');
-                    const $template = $tbody.find('.item-template-row');
-
-                    for (let i = 0; i < 3; i++) {
-                        const $newRow = $template.clone().removeClass('item-template-row').show();
-                        const index = page.nextPlanListIndex();
-                        $newRow.find('input').each(function () {
-                            const baseName = $(this).attr('name');
-                            if (baseName) {
-                                $(this).attr('name', `${baseName}_${index}`);
-                            }
-                        });
-
-                        $newRow.find('a[title="삭제"]').attr('id', `btnDelItem_${index}`);
-                        $tbody.append($newRow);
-                    }
-                });
-
-                // 포커스 자동 이동: Enter + 방향키(←→↑↓)
-                $content.on('keydown', 'input', function (e) {
-                    const key = e.key;
-
-                    if (!['Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
-                    e.preventDefault();
-
-                    const $input = $(this);
-                    const $row = $input.closest('tr');
-                    const nameAttr = $input.attr('name') || '';
-
-                    const focusOrder = [
-                        'txtProductName_',
-                        'qty_',
-                        'remark_',
-                    ];
-
-                    const currentIndex = focusOrder.findIndex(prefix => nameAttr.startsWith(prefix));
-                    if (currentIndex === -1) return;
-
-                    let $nextInput = null;
-
-                    // ↔️ 좌우 이동
-                    if (key === 'ArrowRight' && currentIndex < focusOrder.length - 1) {
-                        const nextPrefix = focusOrder[currentIndex + 1];
-                        $nextInput = $row.find(`input[name^="${nextPrefix}"]`);
-                    } else if (key === 'ArrowLeft' && currentIndex > 0) {
-                        const prevPrefix = focusOrder[currentIndex - 1];
-                        $nextInput = $row.find(`input[name^="${prevPrefix}"]`);
-                    }
-
-                    // ↕️ 상하 이동
-                    if (key === 'ArrowDown' || key === 'ArrowUp') {
-                        const $targetRow = key === 'ArrowDown'
-                            ? $row.nextAll('tr:visible').first()
-                            : $row.prevAll('tr:visible').first();
-
-                        const allowAutoAdd = ['txtProductName_', 'remark_'];
-                        const isAllowedField = allowAutoAdd.some(prefix => nameAttr.startsWith(prefix));
-
-                        // ⬇️ 방향키 + 현재 행이 마지막 + 허용된 필드일 경우 → 행 자동 추가
-                        if (key === 'ArrowDown' && !$targetRow.length && isAllowedField) {
-                            $content.find('#addRemark').trigger('click');
-
-                            setTimeout(() => {
-                                const $rows = $content.find('.item-table tbody tr:visible').not('.item-template-row');
-                                const $newRow = $rows.last();
-                                const $newInput = $newRow.find('input[name^="txtProductName_"]');
-                                if ($newInput.length) $newInput.focus().select();
-                            }, 50);
-                            return;
-                        }
-                        // 일반 상하 이동
-                        $nextInput = $targetRow.find(`input[name^="${focusOrder[currentIndex]}"]`);
-                    }
-
-                    // ↵ Enter 키: 현재 행 내 다음 필드
-                    if (key === 'Enter' && currentIndex < focusOrder.length - 1) {
-                        const nextPrefix = focusOrder[currentIndex + 1];
-                        $nextInput = $row.find(`input[name^="${nextPrefix}"]`);
-                    } else if (key === 'Enter' && nameAttr.startsWith('description_')) {
-                        const $nextRow = $row.nextAll('tr:visible').first();
-                        if (!$nextRow.length) {
-                            //console.log('다음 행 없음. 행 자동 추가 트리거.');
-                            $content.find('#addRemark').trigger('click');
-
-                            setTimeout(() => {
-                                const $rows = $content.find('.item-table tbody tr:visible').not('.item-template-row');
-                                const $newRow = $rows.last();
-                                const $newInput = $newRow.find('input[name^="txtProductName_"]');
-                                if ($newInput.length) $newInput.focus().select();
-                            }, 50);
-                            return;
-                        } else {
-                            $nextInput = $nextRow.find('input[name^="txtProductName_"]');
-                        }
-                    }
-
-                    if ($nextInput && $nextInput.length) {
-                        $nextInput.focus().select();
-                    }
-                });
-
                 // 삭제 버튼
                 $btnDelete.click(function (e) {
                     let data = FormUtil.extractForm($planForm);
@@ -912,56 +738,33 @@
 
         }
 
-        //행 삭제 함수
-        function removeItemRow(el) {
-            const $tbody = $(el).closest('tbody');
-            const $rows = $tbody.find('tr:not(.item-template-row)');
-            const $targetRow = $(el).closest('tr');
-
-            if ($rows.length <= 3) {
-                // 입력값이 있으면 초기화만 하고 리턴
-                const hasData = $targetRow.find('input[type="text"], input[type="number"]').filter(function () {
-                    return $(this).val().trim() !== '';
-                }).length > 0;
-
-                if (hasData) {
-                    $targetRow.find('input[type="text"], input[type="number"]').val('');
-                    // hidden 값도 초기화하고 싶다면 아래 추가
-                    $targetRow.find('input[type="hidden"]').val('');
-                }
-
-                return;
-            }
-
-            // 4개 이상이면 정상 삭제
-            $targetRow.remove();
-        }
-
         // 팝업 날짜 계산 로직
         function initPopupDateKindHandler($content) {
             const $datetype = $content.find('#datetype');
-            const $extraSelectBox = $('<span style="margin-top:10px;" id="extraSelectBox"></span>');
+            const $extraSelectBox = $('<span id="extraSelectBox"></span>');
             const $stdate = $content.find('#stdate');
             const $eddate = $content.find('#eddate');
-            console.log('$stdate', $stdate.val());
-            console.log('$eddate', $eddate.val());
+            const $rptdate = $content.find('#rptdate'); // ✅ 추가
 
             $datetype.after($extraSelectBox);
 
             $datetype.on('change', function () {
                 const type = $(this).val();
                 $extraSelectBox.empty();
-                $stdate.val('').prop('readOnly', false);
-                $eddate.val('').prop('readOnly', false);
+
+                // ✅ 먼저 기준 날짜를 구한다 (rptdate → stdate 순)
+                const rptdateStr = $rptdate.val();   // ex: "2025-08-01"
+                const stdateStr  = $stdate.val();    // 혹시 이미 값이 있다면
+                const baseStr    = rptdateStr || stdateStr;
+                const now        = new Date();
+                const targetDate = baseStr ? parseDate(baseStr) : now;
+
+                // 그 다음에 초기화
+                $stdate.prop('readOnly', false);
+                $eddate.prop('readOnly', false);
 
                 if (type === 'week') {
-                    const $weekSelect = $('<select id="popupWeekSelector"></select>');
-                    const now = new Date();
-                    // 👉 stdate가 있으면 그것 기준, 없으면 오늘 기준
-                    const stdateStr = $stdate.val(); // ex: "2025-08-01" 또는 "20250801"
-                    const targetDate = stdateStr
-                        ? parseDate(stdateStr)
-                        : now;
+                    const $weekSelect = $('<select id="popupWeekSelector" style="min-width: 140px;"></select>');
 
                     const year = targetDate.getFullYear();
                     const currentWeek = getISOWeekNumber(targetDate);
@@ -971,7 +774,7 @@
                         const text = `${year}년 ${i}주차`;
                         const $option = $(`<option value="${value}">${text}</option>`);
                         if (i === currentWeek) {
-                            $option.prop("selected", true); // ✅ selected 설정
+                            $option.prop("selected", true); // ✅ 기준 날짜가 속한 주차 선택
                         }
                         $weekSelect.append($option);
                     }
@@ -987,11 +790,10 @@
                     });
 
                     $extraSelectBox.append($weekSelect);
-                    $weekSelect.trigger('change');
+                    $weekSelect.trigger('change'); // ✅ 현재 선택된 주차로 stdate/eddate 세팅
+
                 } else if (type === 'month') {
                     const $monthSelect = $('<select id="popupMonthSelector"></select>');
-                    const stdateStr = $stdate.val();
-                    const targetDate = stdateStr ? parseDate(stdateStr) : new Date();
 
                     const year = targetDate.getFullYear();
                     const selectedMonth = targetDate.getMonth() + 1;
@@ -1016,19 +818,20 @@
 
                     $extraSelectBox.append($monthSelect);
                     $monthSelect.trigger('change');
+
                 } else {
+                    // 기본: 최근 7일
                     const startVal = CommonUtil.getYYYYMMDD(-7);
                     const endVal = CommonUtil.getYYYYMMDD();
-
                     $stdate.val(startVal).prop('readOnly', false);
                     $eddate.val(endVal).prop('readOnly', false);
                 }
-
             });
 
             // 최초 적용
             $datetype.trigger('change');
         }
+
 
         // ISO 주차 계산
         function getDateOfISOWeek(week, year) {
