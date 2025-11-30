@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class TbAs010 extends AbstractAuditModel {
+public class TbAs010 {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,4 +72,7 @@ public class TbAs010 extends AbstractAuditModel {
 
     @Column(name = "inputdate")
     private Timestamp inputdate; // 입력일자
+
+    @Column(name = "cltcd", length = 30)
+    private String cltcd; // 거래처코드
 }

@@ -1,44 +1,26 @@
 package mes.app.request;
 
 import lombok.extern.slf4j.Slf4j;
-import mes.app.request.service.RequestService;
-import mes.domain.entity.TbAs011;
+import mes.app.request.service.RequestCurrentService;
 import mes.domain.entity.User;
-import mes.domain.entity.commute.TB_PB201;
 import mes.domain.model.AjaxResult;
-import mes.domain.repository.TbAs010Repository;
-import mes.domain.repository.TbAs011Repository;
-import mes.domain.repository.TbAs020Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/request")
-public class RequestController {
-
+@RequestMapping("/api/request_current")
+public class RequestCurrentController {
     @Autowired
-    RequestService requestService;
+    RequestCurrentService requestCurrentService;
 
-    @Autowired
-    private TbAs011Repository tbAs011Repository;
-
-    @Autowired
-    private TbAs010Repository tbAs010Repository;
-
-    @Autowired
-    private TbAs020Repository tbAs020Repository;
-
-    // 사용자 정보 조회(부서 이름 출근여부)
+    // 요청사항 조회 (처리 대기 목록)
     @GetMapping("/search")
     public AjaxResult searchDatas(
             HttpServletRequest request,
@@ -49,10 +31,8 @@ public class RequestController {
             @RequestParam(value="spjangcd", required=false) String spjangcd,
             Authentication auth) {
         AjaxResult result = new AjaxResult();
-        User user = (User)auth.getPrincipal();
-        String username = user.getUsername();
 
-        List<Map<String, Object>> searchDatas  = requestService.searchDatas(
+        List<Map<String, Object>> searchDatas = requestCurrentService.searchDatas(
                 searchfrdate
                 , searchtodate
                 , searchCompCd
@@ -68,25 +48,25 @@ public class RequestController {
     // 상세정보 조회
     @GetMapping("/detail")
     public AjaxResult getRequestDetail(
-            @RequestParam("id") Integer id,
+            @RequestParam("asid") Integer asid,
             HttpServletRequest request) {
         AjaxResult result = new AjaxResult();
         
-        Map<String, Object> item = requestService.getDetail(id);
+        Map<String, Object> item = requestCurrentService.getDetail(asid);
         result.data = item;
         
         return result;
     }
 
-    // 저장
+    // 처리내용 저장
     @PostMapping("/save")
     @Transactional
-    public AjaxResult saveRequest(@RequestBody Map<String, Object> payload, Authentication auth) {
+    public AjaxResult saveProcess(@RequestBody Map<String, Object> payload, Authentication auth) {
         User user = (User) auth.getPrincipal();
         AjaxResult result = new AjaxResult();
 
         try {
-            result = requestService.saveRequest(payload, user);
+            result = requestCurrentService.saveProcess(payload, user);
         } catch (Exception e) {
             e.printStackTrace();
             result.success = false;
@@ -95,5 +75,4 @@ public class RequestController {
 
         return result;
     }
-
 }

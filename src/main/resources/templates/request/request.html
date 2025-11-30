@@ -50,6 +50,8 @@
             <div class="tab-contents">
                 <section class="tab-item" id="tab1">
                     <div class="section-top">
+                        <input type="hidden" id="id" name="id" readonly>
+                        <!--첨부 파일 바인드 input-->
                         <div class="search-wrap">
                             <dl>
                                 <dt>
@@ -312,7 +314,8 @@
 
                 $('#searchfrdate2').val(getNowDateMinus7());
                 $('#searchDate, #searchtodate2').val(getNowDate());
-                AjaxUtil.fillSelectOptions($('#reqType'), 'system_code', 'choose', false, 'sale_type');
+                AjaxUtil.fillSelectOptions($('#reqType'), 'system_code', 'choose', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'asdv');
 
                 this.init();
             }
@@ -322,9 +325,10 @@
 
                 const cv = _this.viewData
 
-                cv.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('misdate', function (item, prop) {
-                    return item[prop].substring(0, 7); // '2025-04'
-                }));
+                // 그룹화 제거 (필요시 주석 해제)
+                // cv.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('asdate', function (item, prop) {
+                //     return item[prop] ? item[prop].substring(0, 7) : ''; // '2025-04'
+                // }));
 
                 // 3. FlexGrid 생성
                 this.grid1 = new wijmo.grid.FlexGrid('#theGrid_reqList', {
@@ -333,17 +337,17 @@
                     allowSorting: 'MultiColumn',
                     selectionMode: wijmo.grid.SelectionMode.Row,
                     isReadOnly: true,
-                    groupHeaderFormat: '{value}월 매출 - 총 {count}건',
                     columns: [
-                        { binding: 'asdate', header: '요청일자', align: 'center', width: 150 },
-                        { binding: 'cltnm', header: '업체명', align: 'left', width: 120 },
+                        { binding: 'id', header: 'ID', visible: false },
+                        { binding: 'asdate', header: '요청일자', align: 'center', width: 120 },
+                        { binding: 'cltnm', header: '업체명', align: 'left', width: 150 },
                         { binding: 'usernm', header: '요청자', align: 'left', width: 120},
-                        { binding: 'companyname', header: '연락처', align: 'left', width: 200 },
                         { binding: 'retitle', header: '제목', align: 'left', width: '*' },
-                        { binding: 'asdv', header: '요청구분', align: 'center', width: 150 },
-                        { binding: 'aspernm', header: '본사담당', align: 'left', width: 120, aggregate: 'Sum' },
-                        { binding: 'recyn', header: '진행구분', align: 'center', width: 120, aggregate: 'Sum' },
-                        { binding: 'totalamt', header: '첨부파일', align: 'center', width: 120, aggregate: 'Sum' },
+                        { binding: 'asdv_nm', header: '요청구분', align: 'center', width: 120 },
+                        { binding: 'asmenu', header: '화면명', align: 'left', width: 150 },
+                        { binding: 'aspernm', header: '본사담당', align: 'left', width: 120 },
+                        { binding: 'recyn_nm', header: '진행구분', align: 'center', width: 120 },
+                        { binding: 'inputdate', header: '입력일자', align: 'center', width: 150 },
                     ],
                     itemsSource: cv,
 
@@ -352,12 +356,38 @@
                 new FlexGridContextMenu(this.grid1);
                 this.grid1.downloadFileName = '유지보수_요청현황';
 
-                this.grid1.allowMerging = wijmo.grid.AllowMerging.All;
-                this.grid1.columns[0].allowMerging = true;
-                this.grid1.columns[1].allowMerging = true;
+                // 그룹 병합 설정 제거 (필요시 주석 해제)
+                // this.grid1.allowMerging = wijmo.grid.AllowMerging.All;
+                // this.grid1.columns[0].allowMerging = true;
+                // this.grid1.columns[1].allowMerging = true;
 
+                // 그리드 선택 이벤트 - 상세 정보 표시
+                this.grid1.selectionChanged.addHandler((s, e) => {
+                    const row = s.selection.row;
+                    if (row < 0) return;
 
+                    const item = s.rows[row].dataItem;
+                    if (!item) return;
 
+                    // 요청현황 탭의 상세 정보 영역에 데이터 표시
+                    $('#reqtextf').val(item.content || item.reqtext || '');
+                    $('#reqtextf2').val(item.procContent || item.procText || '');
+                    $('#enddate').val(item.endDate || item.enddate || '');
+                });
+
+                // 그리드 더블클릭 이벤트 - 상세 조회 및 수정
+                this.grid1.hostElement.addEventListener('dblclick', (e) => {
+                    const view = this.grid1;
+                    const selected = view.selectedItems;
+
+                    if (!selected || selected.length !== 1) {
+                        Alert.alert('', '선택된 데이터가 없습니다.');
+                        return;
+                    }
+
+                    const item = selected[0];
+                    this.loadRequestDetail(item);
+                });
 
             }
 
@@ -373,11 +403,115 @@
                     spjangcd: getSpjangcdFromSession(),
                 }
 
-                let result = AjaxUtil.getSyncData(_this.url + '/search', data);
-                console.log()
-                if(result != null){
-                    _this.viewData.sourceCollection = result.data;
+                let url = _this.url + '/search';
+                let fnsuccess = function (result) {
+                    if (result != null && result.data) {
+                        _this.viewData.sourceCollection = result.data;
+                    } else {
+                        _this.viewData.sourceCollection = [];
+                    }
+                };
+                AjaxUtil.getAsyncData(url, data, fnsuccess);
+            }
+
+            saveRequest() {
+                let _this = this;
+                
+                // Toast UI Editor에서 HTML 내용 가져오기
+                const content = editor.getHTML();
+                
+                // 폼 데이터 수집
+                let data = {
+                    id: $('#id').val() || '',
+                    reqDate: $('#searchDate').val(),
+                    spNum: $('#spNum').val(),
+                    cboCompanyHidden: $('#cboCompanyHidden').val(),
+                    reqPer: $('#reqPer').val(),
+                    telNum: $('#telNum').val(),
+                    title: $('#title').val(),
+                    reqType: $('#reqType').val(),
+                    scrNum: $('#scrNum').val(),
+                    content: content,
+                    spjangcd: getSpjangcdFromSession(),
+                };
+
+                // 파일이 선택된 경우 파일명만 전송 (실제 파일 업로드는 별도 처리 필요)
+                const fileInput = document.getElementById('drawingFile');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    data.fileName = fileInput.files[0].name;
+                    // TODO: 실제 파일 업로드는 별도 API로 처리하거나 FormData로 전송 필요
                 }
+
+                // JSON 데이터로 저장
+                AjaxUtil.postJsonData(_this.url + '/save', data, function(res) {
+                    if (res.success) {
+                        Notify.success('저장되었습니다.');
+                        _this.clearForm();
+                        _this.searchMain();
+                    } else {
+                        Alert.alert('저장 실패', res.message || '관리자에게 문의하세요.');
+                    }
+                });
+            }
+
+            clearForm() {
+                $('#id').val('');
+                $('#searchDate').val(getNowDate());
+                $('#spNum').val('');
+                $('#cboCompanyHidden').val('');
+                $('#reqPer').val('');
+                $('#telNum').val('');
+                $('#title').val('');
+                $('#reqType').val('');
+                $('#scrNum').val('');
+                $('#fileText').val('');
+                $('#drawingFile').val('');
+                if (editor) {
+                    editor.setHTML('');
+                }
+            }
+
+            loadRequestDetail(item) {
+                let _this = this;
+                
+                if (!item || !item.id) {
+                    return;
+                }
+
+                let params = {
+                    id: item.id,
+                    action: 'detail'
+                };
+
+                AjaxUtil.getAsyncData(_this.url + '/detail', params, function(result) {
+                    if (result && result.data) {
+                        const data = result.data;
+                        
+                        // 폼에 데이터 바인딩
+                        $('#id').val(data.id || '');
+                        $('#searchDate').val(data.reqDate || getNowDate());
+                        $('#spNum').val(data.spNum || '');
+                        $('#cboCompanyHidden').val(data.cboCompanyHidden || '');
+                        $('#reqPer').val(data.reqPer || '');
+                        $('#telNum').val(data.telNum || '');
+                        $('#title').val(data.title || '');
+                        $('#reqType').val(data.reqType || '');
+                        $('#scrNum').val(data.scrNum || '');
+                        
+                        // 에디터에 내용 설정
+                        if (editor && data.content) {
+                            editor.setHTML(data.content);
+                        }
+                        
+                        // 파일명 표시 (파일이 있는 경우)
+                        if (data.fileName) {
+                            $('#fileText').val(data.fileName);
+                        }
+                        
+                        // 탭 전환
+                        $('#listTabLink').trigger('click');
+                    }
+                });
             }
 
 
@@ -397,13 +531,38 @@
             //     companyPopupOpen('cboCompany2', 'cboCompanyHidden2');
             // });
 
-            $('#btnSearch').click(function(){
+            // 조회 버튼 (요청현황 탭)
+            $('#btnSearch2').click(function(){
                 page.searchMain();
+            });
+
+            // 저장 버튼
+            $('#btnSave').on('click', function() {
+                // 필수 필드 검증
+                if (!$('#searchDate').val()) {
+                    Alert.alert('', '요청일자를 입력하세요.');
+                    return;
+                }
+                if (!$('#title').val()) {
+                    Alert.alert('', '제목을 입력하세요.');
+                    return;
+                }
+
+                Alert.confirm('', '저장하시겠습니까?', function() {
+                    page.saveRequest();
+                });
+            });
+
+            // 신규 버튼
+            $('#btnClear').on('click', function() {
+                Alert.confirm('', '새로 작성하시겠습니까?', function() {
+                    page.clearForm();
+                });
             });
 
             // 파일선택 버튼 클릭 시, 파일 선택창 실행
             $(document).on('click', '#btnFile, #fileText', function() {
-                $('#drawingFile').click(); // ✅ 이 한 줄이 핵심
+                $('#drawingFile').click();
             });
 
             // ✅ Toast UI Editor 생성
@@ -423,54 +582,20 @@
                 ]
             });
 
+            // 초기 조회 실행
             page.searchMain();
-
 
         })
 
-        // 설계도 첨부 파일 선택 완료후 화면에 표시
+        // 파일첨부 저장 로직
         $('#drawingFile').on('change', function() {
             const file = this.files[0];
             // 파일이 선택되지 않은 경우
             if (!file) return;
 
-            // 파일 확장자 검사
-            const fileName = file.name.toLowerCase();
-
-            // 경고 메시지 표시
-
-            // 파일 선택 초기화 (바인딩 해제)
-
-            Alert.alert('', '선택된 파일: ' + file.name);
+            // 파일명 표시
             document.getElementById('fileText').value = file.name;
         });
-
-        // 요청사항 저장 버튼 클릭 이벤트
-        $('#btnSearch').on('click', function() {
-            const content = editor.getHTML(); // 또는 editor.getMarkdown()
-            console.log("작성된 내용:", content);
-
-            // Ajax 저장 시
-            const data = {
-                reqDate: $('#searchDate').val(),
-                title: $('#title').val(),
-                reqType: $('#reqType').val(),
-                content: content
-            };
-            AjaxUtil.postAsyncData('/api/your/save', data, function(res) {
-                if (res.success) {
-                    Notify.success('저장되었습니다.');
-                }
-            });
-        });
-
-        // 요청현황 detail
-        function loadRequestDetail(reqId) {
-            const result = AjaxUtil.getSyncData('/api/your/detail', { id: reqId });
-            if (result.success && result.data) {
-                editor.setHTML(result.data.content || '');
-            }
-        }
     </script>
 
 </th:block>

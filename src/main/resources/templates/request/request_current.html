@@ -123,7 +123,7 @@
                                 <dt>&nbsp;</dt>
                                 <dd>
                                     <li>
-                                        <a class="btn btn-delete" title="검색" id="btnSearch2">
+                                        <a class="btn btn-delete" title="검색" id="btnReceipt">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
                                             <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             접수
@@ -151,7 +151,7 @@
                     </div>
                     <div style="margin-top: 10px; display:flex; gap: 15px;">
                         <dl style="width: 45%;">
-                            <dt>
+                            <dt style="margin-bottom: 21px;">
                                 <label>
                                     요청내용<span class="eq"></span>
                                 </label>
@@ -166,8 +166,12 @@
                         </dl>
                         <dl style="width: 45%;">
                             <dt>
-                                <label>
+                                <label style="display: flex;">
                                     처리내용<span class="eq"></span>
+                                    <button type="button" class="btn-excellt" id="download" name="download"
+                                            style="width: 100px; height: 36px; margin-left: auto; margin-bottom: 5px;">
+                                        다운로드
+                                    </button>
                                 </label>
                             </dt>
                             <dd>
@@ -176,29 +180,6 @@
 
                                     </textarea>
                                 </div>
-                            </dd>
-                        </dl>
-                        <dl>
-                            <dt>
-                                <label>
-                                    완료일자<span class="eq"></span>
-                                </label>
-                            </dt>
-                            <dd>
-                                <div class="srch-box">
-                                    <input placeholder=""  id="enddate" name="enddate" readonly/>
-                                </div>
-                            </dd>
-                            <dt>
-                                <label>
-                                    <span class="eq"></span>
-                                </label>
-                            </dt>
-                            <dd>
-                                <button type="button" class="btn-excellt" id="download" name="download"
-                                        style="width: 100px; height: 36px;">
-                                    다운로드
-                                </button>
                             </dd>
                         </dl>
                     </div>
@@ -458,7 +439,7 @@
         class SalesList {
             constructor() {
                 this.grid1 = null;
-                this.url = '/api/request';
+                this.url = '/api/request_current';
                 this.$btnAddNew = $('#btnAddNew');
 
 
@@ -467,7 +448,7 @@
 
                 $('#searchfrdate2').val(getNowDateMinus7());
                 $('#searchDate, #searchtodate2').val(getNowDate());
-                AjaxUtil.fillSelectOptions($('#reqType'), 'system_code', 'choose', false, 'sale_type');
+                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'sale_type');
 
                 this.init();
             }
@@ -477,10 +458,6 @@
 
                 const cv = _this.viewData
 
-                cv.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('misdate', function (item, prop) {
-                    return item[prop].substring(0, 7); // '2025-04'
-                }));
-
                 // 3. FlexGrid 생성
                 this.grid1 = new wijmo.grid.FlexGrid('#theGrid_reqList', {
                     autoGenerateColumns: false,
@@ -488,37 +465,63 @@
                     allowSorting: 'MultiColumn',
                     selectionMode: wijmo.grid.SelectionMode.Row,
                     isReadOnly: true,
-                    groupHeaderFormat: '{value}월 매출 - 총 {count}건',
                     columns: [
-                        { binding: 'asdate', header: '요청일자', align: 'center', width: 150 },
-                        { binding: 'cltnm', header: '업체명', align: 'left', width: 120 },
+                        { binding: 'id', header: 'ID', visible: false },
+                        { binding: 'asdate', header: '요청일자', align: 'center', width: 120 },
+                        { binding: 'cltnm', header: '업체명', align: 'left', width: 150 },
                         { binding: 'usernm', header: '요청자', align: 'left', width: 120},
-                        { binding: 'companyname', header: '연락처', align: 'left', width: 200 },
                         { binding: 'retitle', header: '제목', align: 'left', width: '*' },
-                        { binding: 'asdv', header: '요청구분', align: 'center', width: 150 },
-                        { binding: 'aspernm', header: '본사담당', align: 'left', width: 120, aggregate: 'Sum' },
-                        { binding: 'recyn', header: '진행구분', align: 'center', width: 120, aggregate: 'Sum' },
-                        { binding: 'totalamt', header: '첨부파일', align: 'center', width: 120, aggregate: 'Sum' },
+                        { binding: 'asdv_nm', header: '요청구분', align: 'center', width: 120 },
+                        { binding: 'asmenu', header: '화면명', align: 'left', width: 150 },
+                        { binding: 'aspernm', header: '본사담당', align: 'left', width: 120 },
+                        { binding: 'recyn_nm', header: '진행구분', align: 'center', width: 120 },
+                        { binding: 'hasProcess', header: '처리여부', align: 'center', width: 100 },
+                        { binding: 'inputdate', header: '입력일자', align: 'center', width: 150 },
                     ],
                     itemsSource: cv,
 
                 });
                 this.grid1.rowHeaders.columns.splice(0, 1);
                 new FlexGridContextMenu(this.grid1);
-                this.grid1.downloadFileName = '유지보수_요청현황';
+                this.grid1.downloadFileName = '요청사항_처리현황';
 
-                this.grid1.allowMerging = wijmo.grid.AllowMerging.All;
-                this.grid1.columns[0].allowMerging = true;
-                this.grid1.columns[1].allowMerging = true;
+                // 그리드 선택 이벤트 - 상세 정보 표시
+                this.grid1.selectionChanged.addHandler((s, e) => {
+                    const row = s.selection.row;
+                    if (row < 0) return;
+
+                    const item = s.rows[row].dataItem;
+                    if (!item) return;
+
+                    // 요청현황 탭의 상세 정보 영역에 데이터 표시
+                    $('#reqtextf').val(item.content || '');
+                    // 처리내용은 별도 조회 필요
+                });
+
+                // 그리드 더블클릭 이벤트 - 상세 조회 및 처리등록
+                this.grid1.hostElement.addEventListener('dblclick', (e) => {
+                    const view = this.grid1;
+                    const selected = view.selectedItems;
+
+                    if (!selected || selected.length !== 1) {
+                        Alert.alert('', '선택된 데이터가 없습니다.');
+                        return;
+                    }
+
+                    const item = selected[0];
+                    this.loadRequestDetail(item);
+                });
 
 
                 //처리등록 클릭
                 this.$btnAddNew.click(function (e) {
-                    let defaultData = {
-                        id: '',
-                        mode: 'new'
-                    };
-                    _this.showPlanForm(defaultData);
+                    const selected = _this.grid1.selectedItems;
+                    if (!selected || selected.length !== 1) {
+                        Alert.alert('', '처리할 요청사항을 선택하세요.');
+                        return;
+                    }
+                    const item = selected[0];
+                    _this.loadRequestDetail(item);
                 });
 
 
@@ -537,11 +540,35 @@
                     spjangcd: getSpjangcdFromSession(),
                 }
 
-                let result = AjaxUtil.getSyncData(_this.url + '/search', data);
-                console.log()
-                if(result != null){
-                    _this.viewData.sourceCollection = result.data;
+                let url = _this.url + '/search';
+                let fnsuccess = function (result) {
+                    if (result != null && result.data) {
+                        _this.viewData.sourceCollection = result.data;
+                    } else {
+                        _this.viewData.sourceCollection = [];
+                    }
+                };
+                AjaxUtil.getAsyncData(url, data, fnsuccess);
+            }
+
+            loadRequestDetail(item) {
+                let _this = this;
+                
+                if (!item || !item.id) {
+                    return;
                 }
+
+                let params = {
+                    asid: item.id,
+                    action: 'detail'
+                };
+
+                AjaxUtil.getAsyncData(_this.url + '/detail', params, function(result) {
+                    if (result && result.data) {
+                        const data = result.data;
+                        _this.showPlanForm(data);
+                    }
+                });
             }
 
 
@@ -549,23 +576,25 @@
             showPlanForm(data) {
 
                 let _this = this;
-                let content = tmpl('planTemplate', data);
+                let formData = data; // 클로저를 위한 변수명 변경
+                let content = tmpl('planTemplate', formData);
                 let $content = $(content);
 
                 // 팝업 열기
                 let modalContainer = new PopupDraggable('처리등록');
                 modalContainer.open({ width: 1100, height: 600, $content });
 
-                // ✅ 팝업 렌더링 후 Editor 생성
+                // ✅ 팝업 렌더링 후 Editor 생성 (외부 스코프에서 선언)
+                let popupEditor = null;
                 setTimeout(() => {
                     const webEditEl = $content.find('#webEdit')[0];
                     if (webEditEl) {
-                        editor = new toastui.Editor({
+                        popupEditor = new toastui.Editor({
                             el: webEditEl,
                             height: '290px',
                             initialEditType: 'wysiwyg',
                             previewStyle: 'vertical',
-                            placeholder: '요청 내용을 입력하세요...',
+                            placeholder: '처리 내용을 입력하세요...',
                             toolbarItems: [
                                 ['heading', 'bold', 'italic', 'strike'],
                                 ['hr', 'quote'],
@@ -574,157 +603,96 @@
                                 ['code', 'codeblock']
                             ]
                         });
+                        
+                        // 기존 처리내용이 있으면 설정
+                        if (formData.processContent) {
+                            popupEditor.setHTML(formData.processContent);
+                        }
                     }
                 }, 200);
 
                 let $btnDelete = $content.find('#btnDelete');
                 let $planForm = $content.find('#planForm');
-                $content.find('#datetype').val('week').hide();
                 // 저장버튼
-                let $btnPopSave = $('#btnPopSave');
+                let $btnPopSave = $content.find('#btnSave');
 
-
-
-                let initDateStr = "";
-
-                if (data.mode === 'new') {
-                    // 신규 → 오늘 날짜
-                    initDateStr = new Date().toISOString().slice(0, 10);
-                    const username = sessionStorage.getItem("username");
-                    const userid = sessionStorage.getItem("userid");
-                    $content.find('#fixperid').val(userid);
-                    // 값이 있으면 fixperid 자동 입력
-                    if (username) {
-                        $content.find('#fixpernm').val(username);
-                    }
-                } else {
-                    // 수정 → 기존 날짜
-                    initDateStr = data.rptdate;
-                }
-
-                // 입력창에 넣음
+                // 처리일자 설정 (오늘 날짜)
+                let initDateStr = new Date().toISOString().slice(0, 10);
                 $content.find('#rptdate').val(initDateStr);
 
-                // stdate에도 기준 설정
-                $content.find('#stdate').val(initDateStr);
-
-                AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', '', 'fixflag');
-                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', 'weekday', 'actflag');
-                if (data.actflag) {
-                    $content.find('#actflag').val(data.actflag);
+                // 본사담당 설정
+                const username = sessionStorage.getItem("username");
+                if (username) {
+                    $content.find('#aspernm').val(username);
                 }
 
-                AjaxUtil.fillSelectOptions($content.find('#recyn'), 'system_code', '', 'finished', 'recyn');
-                if (data.recyn) {
-                    $content.find('#recyn').val(data.recyn);
+                // 기존 데이터 바인딩
+                if (formData.id) {
+                    $content.find('#id').val(formData.id);
+                    $content.find('#cltnm').val(formData.title || formData.retitle || '');
+                    // 요청구분, 화면명 등은 readonly로 표시만
                 }
 
-                // asdv: data에 값 없으면 new
-                AjaxUtil.fillSelectOptions($content.find('#asdv'), 'system_code', '', 'new', 'asdv');
-                if (data.asdv) {
-                    $content.find('#asdv').val(data.asdv);
+                // 진행구분 셀렉트 박스 초기화
+                AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', '1', 'recyn');
+                if (formData.recyn) {
+                    $content.find('#actflag').val(formData.recyn);
                 }
 
-                // -----------------------
-                // 2) week 계산 로직 실행
-                // -----------------------
-                initPopupDateKindHandler($content);
-
-                // datetype 강제 트리거 (week 로직 실행)
-                $content.find('#datetype').trigger('change');
-
-
-                // -----------------------
-                // 3) 날짜 변경 시 주간 자동 재계산
-                // -----------------------
-                $content.find('#rptdate').on('change', function () {
-                    let dateStr = $(this).val();
-
-                    // 기준 날짜만 변경되었으니, 그냥 다시 week 계산
-                    $content.find('#datetype').trigger('change');
-                });
-
-
-
-                // -----------------------
-                // 4) 기존 데이터 바인딩 (수정 모드)
-                // -----------------------
-                setTimeout(() => {
-                    FormUtil.BindDataPlanForm(data, $planForm);
-                }, 100);
-
-                // 수주등록 팝업 저장버튼 클릭
-                $btnPopSave.click(function (e) {
-
-                    let data = FormUtil.extractForm($planForm);
-
-                    if (!data.material_id_0) {
-                        Alert.alert('', '품목을 선택하세요.');
+                // 처리등록 팝업 저장버튼 클릭
+                $btnPopSave.off('click').on('click', function (e) {
+                    e.preventDefault();
+                    
+                    // 필수 필드 검증
+                    const asid = $content.find('#id').val();
+                    if (!asid) {
+                        Alert.alert('', '요청사항을 선택하세요.');
                         return;
                     }
 
-                    // 2. 각 행의 유효성 체크
-                    let index = 0;
-                    while (true) {
-                        const materialId = data[`material_id_${index}`];
-
-                        if (materialId === undefined) break; // 끝까지 체크
-
-                        if (materialId !== null && materialId !== '') {
-                            const qty = data[`qty_${index}`];
-
-                            if (!qty) {
-                                Alert.alert('', `(${index + 1}번째 행) 수량을 입력하세요.`);
-                                return;
-                            }
-                        }
-
-                        index++;
+                    const fixdate = $content.find('#rptdate').val();
+                    if (!fixdate) {
+                        Alert.alert('', '처리일자를 입력하세요.');
+                        return;
                     }
 
                     Alert.confirm('', '저장하시겠습니까?', function () {
-                        const items = [];
-                        for (let i = 0; i < page.planListIndex; i++) {
-                            const materialId = data[`material_id_${i}`];
-                            if (!materialId) continue;
-
-                            items.push({
-                                id: data[`id_${i}`] || '',
-                                material_id: materialId,
-                                txtProductName: data[`txtProductName_${i}`] || '',
-                                qty: (data[`qty_${i}`] || '0').replace(/,/g, ''),
-                                remark: data[`remark_${i}`] || '',
-                            });
+                        // Toast UI Editor에서 처리내용 가져오기
+                        let processContent = '';
+                        if (popupEditor) {
+                            try {
+                                processContent = popupEditor.getHTML();
+                            } catch (e) {
+                                console.error('Editor getHTML error:', e);
+                            }
                         }
+                        
+                        // 진행구분
+                        const recyn = $content.find('#actflag').val() || '1';
 
-
-                        // 공통 정보 + 리스트 전송
                         const payload = {
-                            head_id: data.head_id,
-                            actnm: data.actnm,
-                            stdate: data.stdate,
-                            eddate: data.eddate,
-                            datetype: data.datetype,
-                            // cmcode: data.cmcode,
-                            spjangcd: data.spjangcd,
-                            description: data.description,
-                            items: items
+                            fixid: formData.fixid || '',
+                            asid: asid,
+                            fixdate: fixdate,
+                            rptdate: fixdate, // 호환성
+                            remark: processContent,
+                            processContent: processContent,
+                            recyn: recyn,
+                            spjangcd: getSpjangcdFromSession(),
                         };
 
-                        console.log('payload', payload);
+                        console.log('Save payload:', payload);
 
                         AjaxUtil.postJsonData(_this.url + '/save', payload, function (res) {
                             if (res.success) {
                                 Notify.success("저장되었습니다.");
-                                _this.searchMainData();
+                                _this.searchMain();
                                 modalContainer.close();
                             } else {
                                 Alert.alert('저장 실패', res.message || '알 수 없는 오류');
                             }
                         });
-
                     });
-
                 });
 
                 // 삭제 버튼
@@ -759,7 +727,8 @@
             //     companyPopupOpen('cboCompany2', 'cboCompanyHidden2');
             // });
 
-            $('#btnSearch').click(function(){
+            // 조회 버튼
+            $('#btnSearch2').click(function(){
                 page.searchMain();
             });
 
@@ -790,32 +759,6 @@
             document.getElementById('fileText').value = file.name;
         });
 
-        // 요청사항 저장 버튼 클릭 이벤트
-        $('#btnSearch').on('click', function() {
-            const content = editor.getHTML(); // 또는 editor.getMarkdown()
-            console.log("작성된 내용:", content);
-
-            // Ajax 저장 시
-            const data = {
-                reqDate: $('#searchDate').val(),
-                title: $('#title').val(),
-                reqType: $('#reqType').val(),
-                content: content
-            };
-            AjaxUtil.postAsyncData('/api/your/save', data, function(res) {
-                if (res.success) {
-                    Notify.success('저장되었습니다.');
-                }
-            });
-        });
-
-        // 요청현황 detail
-        function loadRequestDetail(reqId) {
-            const result = AjaxUtil.getSyncData('/api/your/detail', { id: reqId });
-            if (result.success && result.data) {
-                editor.setHTML(result.data.content || '');
-            }
-        }
     </script>
 
 </th:block>

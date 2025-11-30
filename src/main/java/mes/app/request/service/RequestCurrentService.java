@@ -1,9 +1,11 @@
 package mes.app.request.service;
 
 import mes.domain.entity.TbAs010;
+import mes.domain.entity.TbAs011;
 import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
 import mes.domain.repository.TbAs010Repository;
+import mes.domain.repository.TbAs011Repository;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -15,14 +17,17 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class RequestService {
+public class RequestCurrentService {
     @Autowired
     SqlRunner sqlRunner;
 
     @Autowired
+    TbAs011Repository tbAs011Repository;
+
+    @Autowired
     TbAs010Repository tbAs010Repository;
 
-    // 요청사항 조회
+    // 요청사항 조회 (처리 대기 목록)
     public List<Map<String, Object>> searchDatas(
             String searchfrdate
             , String searchtodate
@@ -68,7 +73,8 @@ public class RequestService {
                     a."endperid",
                     a."endpernm",
                     TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
-                    TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
+                    TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate,
+                    CASE WHEN f."fixid" IS NOT NULL THEN 'Y' ELSE 'N' END AS hasProcess
                 FROM "tb_as010" a
                 LEFT JOIN "sys_code" sc1
                     ON sc1."Code" = a."asdv"
@@ -76,6 +82,8 @@ public class RequestService {
                 LEFT JOIN "sys_code" sc2
                     ON sc2."Code" = a."recyn"
                    AND sc2."CodeType" = 'recyn'
+                LEFT JOIN "tb_as011" f
+                    ON f."asid" = a."asid"
                 WHERE 1=1
         		""";
 
@@ -87,7 +95,7 @@ public class RequestService {
             sql += " AND a.\"asdate\" <= :searchtodate ";
         }
 
-        // 업체 조건 추가 (searchCompCd가 있으면 cltnm으로 검색)
+        // 업체 조건 추가
         if (searchCompCd != null) {
             sql += " AND a.\"cltnm\" IN (SELECT \"Name\" FROM company WHERE id = :searchCompCd) ";
         }
@@ -104,19 +112,20 @@ public class RequestService {
         return item;
     }
 
-    // 상세정보 조회
-    public Map<String, Object> getDetail(Integer id) {
+    // 상세정보 조회 (요청사항 + 처리내용)
+    public Map<String, Object> getDetail(Integer asid) {
         MapSqlParameterSource paramMap = new MapSqlParameterSource();
-        paramMap.addValue("id", id);
+        paramMap.addValue("asid", asid);
 
+        // 요청사항 조회
         String sql = """
             SELECT
                 a."asid" AS id,
-                TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS reqDate,
+                TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS asdate,
                 a."cltnm",
                 a."cltcd",
                 a."userid",
-                a."usernm" AS reqPer,
+                a."usernm",
                 a."asperid",
                 a."aspernm",
                 a."retitle" AS title,
@@ -140,110 +149,113 @@ public class RequestService {
             LEFT JOIN "sys_code" sc2
                 ON sc2."Code" = a."recyn"
                AND sc2."CodeType" = 'recyn'
-            WHERE a."asid" = :id
+            WHERE a."asid" = :asid
             """;
 
         Map<String, Object> item = this.sqlRunner.getRow(sql, paramMap);
 
+        // 처리내용 조회
+        if (item != null) {
+            String fixSql = """
+                SELECT
+                    f."fixid",
+                    TO_CHAR(TO_DATE(f."fixdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS fixdate,
+                    f."asperid",
+                    f."aspernm",
+                    f."remark" AS processContent,
+                    TO_CHAR(f."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
+                FROM "tb_as011" f
+                WHERE f."asid" = :asid
+                ORDER BY f."inputdate" DESC
+                LIMIT 1
+                """;
+            Map<String, Object> fixData = this.sqlRunner.getRow(fixSql, paramMap);
+            if (fixData != null) {
+                item.put("fixid", fixData.get("fixid"));
+                item.put("fixdate", fixData.get("fixdate"));
+                item.put("processContent", fixData.get("processContent"));
+            }
+        }
+
         return item;
     }
 
-    // 저장
+    // 처리내용 저장
     @Transactional
-    public AjaxResult saveRequest(Map<String, Object> payload, User user) {
+    public AjaxResult saveProcess(Map<String, Object> payload, User user) {
         AjaxResult result = new AjaxResult();
 
         try {
-            // id 체크
-            Integer id = payload.get("id") != null && !payload.get("id").toString().isEmpty()
-                    ? Integer.parseInt(payload.get("id").toString())
+            // asid 필수 체크
+            Integer asid = payload.get("asid") != null && !payload.get("asid").toString().isEmpty()
+                    ? Integer.parseInt(payload.get("asid").toString())
                     : null;
 
-            TbAs010 entity = null;
+            if (asid == null) {
+                result.success = false;
+                result.message = "요청사항 ID가 필요합니다.";
+                return result;
+            }
+
+            // 요청사항 존재 확인
+            TbAs010 request = tbAs010Repository.findById(asid)
+                    .orElseThrow(() -> new RuntimeException("요청사항을 찾을 수 없습니다."));
+
+            // fixid 체크 (수정 모드)
+            Integer fixid = payload.get("fixid") != null && !payload.get("fixid").toString().isEmpty()
+                    ? Integer.parseInt(payload.get("fixid").toString())
+                    : null;
+
+            TbAs011 entity = null;
 
             // 수정 모드
-            if (id != null) {
-                entity = tbAs010Repository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("데이터를 찾을 수 없습니다."));
+            if (fixid != null) {
+                entity = tbAs011Repository.findById(fixid)
+                        .orElseThrow(() -> new RuntimeException("처리내용을 찾을 수 없습니다."));
             }
             // 신규 등록 모드
             else {
-                entity = new TbAs010();
+                entity = new TbAs011();
+                entity.setAsid(asid);
                 entity.setInputdate(new Timestamp(System.currentTimeMillis()));
-                entity.setUserid(String.valueOf(user.getId()));
-                entity.setUsernm(user.getUsername());
             }
 
-            // 공통 필드 매핑
-            String reqDate = cleanDate(payload.get("reqDate"));
-            if (reqDate != null) {
-                entity.setAsdate(reqDate);
+            // 처리일자
+            String fixdate = cleanDate(payload.get("fixdate") != null ? payload.get("fixdate") : payload.get("rptdate"));
+            if (fixdate != null) {
+                entity.setFixdate(fixdate);
             }
 
-            // 업체명 및 업체코드 설정 (cboCompanyHidden이 있으면 company 테이블에서 조회)
-            Object cboCompanyHiddenObj = payload.get("cboCompanyHidden");
-            if (cboCompanyHiddenObj != null && !cboCompanyHiddenObj.toString().isEmpty()) {
-                try {
-                    Integer compId = null;
-                    if (cboCompanyHiddenObj instanceof Integer) {
-                        compId = (Integer) cboCompanyHiddenObj;
-                    } else if (cboCompanyHiddenObj instanceof String) {
-                        compId = Integer.parseInt((String) cboCompanyHiddenObj);
-                    }
-                    
-                    if (compId != null) {
-                        MapSqlParameterSource paramMap = new MapSqlParameterSource();
-                        paramMap.addValue("compId", compId);
-                        String compSql = "SELECT \"Name\", \"Code\" FROM company WHERE id = :compId";
-                        Map<String, Object> compData = this.sqlRunner.getRow(compSql, paramMap);
-                        if (compData != null) {
-                            if (compData.get("Name") != null) {
-                                entity.setCltnm(compData.get("Name").toString());
-                            }
-                            if (compData.get("Code") != null) {
-                                entity.setCltcd(compData.get("Code").toString());
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    // 업체 조회 실패 시 무시
-                }
-            } else if (payload.get("cltnm") != null) {
-                entity.setCltnm((String) payload.get("cltnm"));
-            }
+            // 처리자 정보
+            entity.setAsperid(String.valueOf(user.getId()));
+            entity.setAspernm(user.getUsername());
 
-            // 요청자 정보
-            if (payload.get("reqPer") != null) {
-                entity.setUsernm((String) payload.get("reqPer"));
-            }
-
-            // 제목
-            if (payload.get("title") != null) {
-                entity.setRetitle((String) payload.get("title"));
-            }
-
-            // 요청구분
-            if (payload.get("reqType") != null) {
-                entity.setAsdv(payload.get("reqType").toString());
-            }
-
-            // 화면명
-            if (payload.get("scrNum") != null) {
-                entity.setAsmenu((String) payload.get("scrNum"));
-            }
-
-            // 요청내용 (Toast UI Editor HTML)
-            if (payload.get("content") != null) {
-                entity.setRemark((String) payload.get("content"));
+            // 처리내용 (Toast UI Editor HTML)
+            if (payload.get("remark") != null) {
+                entity.setRemark((String) payload.get("remark"));
+            } else if (payload.get("processContent") != null) {
+                entity.setRemark((String) payload.get("processContent"));
             }
 
             // 수정일자 업데이트
             entity.setInputdate(new Timestamp(System.currentTimeMillis()));
 
-            tbAs010Repository.save(entity);
+            tbAs011Repository.save(entity);
+
+            // 요청사항의 진행구분 업데이트 (처리 완료로 변경)
+            if (payload.get("recyn") != null) {
+                request.setRecyn(payload.get("recyn").toString());
+                request.setEndperid(String.valueOf(user.getId()));
+                request.setEndpernm(user.getUsername());
+                String enddate = cleanDate(payload.get("fixdate") != null ? payload.get("fixdate") : payload.get("rptdate"));
+                if (enddate != null) {
+                    request.setEnddate(enddate);
+                }
+                tbAs010Repository.save(request);
+            }
 
             result.success = true;
-            result.data = entity.getAsid();
+            result.data = entity.getFixid();
 
         } catch (Exception e) {
             e.printStackTrace();
