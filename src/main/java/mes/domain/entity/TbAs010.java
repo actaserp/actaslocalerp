@@ -75,4 +75,7 @@ public class TbAs010 {
 
     @Column(name = "cltcd", length = 30)
     private String cltcd; // 거래처코드
+
+    @Column(name = "as_file")
+    private String asFile;
 }

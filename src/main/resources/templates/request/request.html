@@ -51,6 +51,10 @@
                 <section class="tab-item" id="tab1">
                     <div class="section-top">
                         <input type="hidden" id="id" name="id" readonly>
+<!--                        본사담당자-->
+                        <input type="hidden" id="OurManager" name="OurManager" readonly>
+<!--                        거래처 코드-->
+                        <input type="hidden" id="Code" name="Code" readonly>
                         <!--첨부 파일 바인드 input-->
                         <div class="search-wrap">
                             <dl>
@@ -274,7 +278,7 @@
                             <dd>
                                 <button type="button" class="btn-excellt" id="download" name="download"
                                         style="width: 100px; height: 36px;">
-                                    다운로드
+                                    완료첨부
                                 </button>
                             </dd>
                         </dl>
@@ -315,7 +319,7 @@
                 $('#searchfrdate2').val(getNowDateMinus7());
                 $('#searchDate, #searchtodate2').val(getNowDate());
                 AjaxUtil.fillSelectOptions($('#reqType'), 'system_code', 'choose', false, 'asdv');
-                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'all', false, 'asdv');
 
                 this.init();
             }
@@ -369,9 +373,13 @@
                     const item = s.rows[row].dataItem;
                     if (!item) return;
 
+                    // ✅ HTML 태그 제거 (웹에디터 내용에서 순수 텍스트만 추출)
+                    const plainContent = (item.content || '').replace(/<[^>]+>/g, '');
+                    const plainRemark = (item.remark || '').replace(/<[^>]+>/g, '');
+
                     // 요청현황 탭의 상세 정보 영역에 데이터 표시
-                    $('#reqtextf').val(item.content || item.reqtext || '');
-                    $('#reqtextf2').val(item.procContent || item.procText || '');
+                    $('#reqtextf').val(plainContent);
+                    $('#reqtextf2').val(plainRemark);
                     $('#enddate').val(item.endDate || item.enddate || '');
                 });
 
@@ -431,18 +439,49 @@
                     title: $('#title').val(),
                     reqType: $('#reqType').val(),
                     scrNum: $('#scrNum').val(),
+                    Code: $('#Code').val(),
+                    OurManager: $('#OurManager').val(),
                     content: content,
                     spjangcd: getSpjangcdFromSession(),
                 };
 
-                // 파일이 선택된 경우 파일명만 전송 (실제 파일 업로드는 별도 처리 필요)
-                const fileInput = document.getElementById('drawingFile');
-                if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                    data.fileName = fileInput.files[0].name;
-                    // TODO: 실제 파일 업로드는 별도 API로 처리하거나 FormData로 전송 필요
-                }
+                // 파일 확인
+                let file = $('#drawingFile')[0].files[0];
 
-                // JSON 데이터로 저장
+                if (file) {
+                    // ✅ 파일 업로드 먼저 수행
+                    let formData = new FormData();
+                    formData.append('uploadFile', file);
+
+                    $.ajax({
+                        url: '/api/request/uploadFile',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (res) {
+                            if (res.success) {
+                                console.log("업로드 성공:", res.data);
+                                data.as_file = res.data; // 업로드된 파일명
+
+                                // ✅ 파일 업로드 성공 후 본 데이터 저장
+                                _this.saveRequestData(data);
+                            } else {
+                                Alert.alert('', '파일 업로드 실패: ' + res.message);
+                            }
+                        },
+                        error: function () {
+                            Alert.alert('', '파일 업로드 중 오류 발생');
+                        }
+                    });
+                } else {
+                    // 파일 없으면 바로 저장
+                    _this.saveRequestData(data);
+                }
+            }
+
+            saveRequestData(data) {
+                let _this = this;
                 AjaxUtil.postJsonData(_this.url + '/save', data, function(res) {
                     if (res.success) {
                         Notify.success('저장되었습니다.');
@@ -455,28 +494,28 @@
             }
 
             clearForm() {
+                // 🔹 폼 전체 클리어 (유지 대상 제외)
                 $('#id').val('');
                 $('#searchDate').val(getNowDate());
-                $('#spNum').val('');
-                $('#cboCompanyHidden').val('');
-                $('#reqPer').val('');
-                $('#telNum').val('');
                 $('#title').val('');
                 $('#reqType').val('');
                 $('#scrNum').val('');
                 $('#fileText').val('');
                 $('#drawingFile').val('');
-                if (editor) {
-                    editor.setHTML('');
-                }
+                if (editor) editor.setHTML('');
+
+                // 🔹 유지할 필드: 세션 기반 / 자동 바인딩된 정보
+                // 그대로 둠:
+                // #spNum
+                // #reqPer
+                // #cboCompany2
+                // #cboCompanyHidden / #cboCompanyHidden2
+                // #Code / #OurManager
             }
 
             loadRequestDetail(item) {
                 let _this = this;
-                
-                if (!item || !item.id) {
-                    return;
-                }
+                if (!item || !item.id) return;
 
                 let params = {
                     id: item.id,
@@ -486,33 +525,64 @@
                 AjaxUtil.getAsyncData(_this.url + '/detail', params, function(result) {
                     if (result && result.data) {
                         const data = result.data;
-                        
-                        // 폼에 데이터 바인딩
+
+                        // ✅ 기본정보 바인딩 (저장 시 전송된 모든 필드 복원)
                         $('#id').val(data.id || '');
                         $('#searchDate').val(data.reqDate || getNowDate());
-                        $('#spNum').val(data.spNum || '');
-                        $('#cboCompanyHidden').val(data.cboCompanyHidden || '');
-                        $('#reqPer').val(data.reqPer || '');
-                        $('#telNum').val(data.telNum || '');
+                        $('#spNum').val(data.userid || '');
+                        $('#cboCompanyHidden').val(data.Code || '');
+                        $('#reqPer').val(data.reqper || '');
+                        $('#telNum').val(data.TelNumber || '');
                         $('#title').val(data.title || '');
-                        $('#reqType').val(data.reqType || '');
-                        $('#scrNum').val(data.scrNum || '');
-                        
-                        // 에디터에 내용 설정
-                        if (editor && data.content) {
-                            editor.setHTML(data.content);
+                        $('#reqType').val(data.reqtype || '');
+                        $('#scrNum').val(data.scrnum || '');
+                        $('#Code').val(data.Code || '');
+                        $('#OurManager').val(data.ourmanager || '');
+                        $('#spjangcd').val(data.spjangcd || '');
+
+                        // ✅ 에디터 내용 바인딩 (HTML 그대로)
+                        if (editor) {
+                            editor.setHTML(data.content || '');
                         }
-                        
-                        // 파일명 표시 (파일이 있는 경우)
-                        if (data.fileName) {
-                            $('#fileText').val(data.fileName);
+
+                        // ✅ 파일 표시 로직 (있을 경우 미리보기)
+                        const $fileBox = $('#fileText').closest('div');
+                        if (data.as_file && data.as_file.trim() !== '') {
+                            const fileName = data.as_file;
+                            $fileBox.html(`
+                                <span
+                                    id="previewFile"
+                                    style="cursor:pointer; color:#007BFF; text-decoration:underline;"
+                                    data-filename="${fileName}">
+                                    📄 첨부파일 미리보기
+                                </span>
+                            `);
+
+                            // 클릭 이벤트 등록
+                            $('#previewFile').on('click', function() {
+                                const file = $(this).data('filename');
+                                if (file) {
+                                    // 새 창으로 미리보기 (백엔드에서 previewFile API 제공)
+                                    window.open('/api/request/previewFile?fileName=' + encodeURIComponent(file), '_blank');
+                                }
+                            });
+                        } else {
+                            // ❌ 파일이 없을 경우 input 필드로 복원
+                            $fileBox.html(`
+                                <input type="text" id="fileText" placeholder="파일 찾기" readonly />
+                                <input type="file" id="drawingFile" accept="application/pdf" style="display:none;" />
+                                <button type="button" class="btn-excellt" id="btnFile" name="btnFile"
+                                    style="width: 100px; height: 36px;">파일선택</button>
+                            `);
                         }
-                        
-                        // 탭 전환
+                        console.log($('#listTabLink').length); // 0이면 존재하지 않음
+                        console.log($('#listTabLink').is(':visible')); // false면 숨겨져 있음
+                        // ✅ 탭 전환 (요청등록 탭으로 이동)
                         $('#listTabLink').trigger('click');
                     }
                 });
             }
+
 
 
 
@@ -523,6 +593,43 @@
 
         $(document).ready(function (e) {
             page = new SalesList();
+
+            // ✅ 세션에서 로그인 정보 불러오기
+            const userId = sessionStorage.getItem('userid');     // 사업자번호
+            const userName = sessionStorage.getItem('username'); // 업체명
+
+            // ✅ 기본 표시
+            if (userId) {
+                $('#spNum').val(userId); // 사업자번호만 표시 (hidden에는 안 넣음)
+            }
+            if (userName) {
+                $('#reqPer').val(userName);
+                $('#cboCompany2').val(userName);
+            }
+
+            // ✅ 회사 ID 조회 후 반영 및 조회 실행
+            if (userId) {
+                $.ajax({
+                    url: '/api/request/searchUser',
+                    type: 'GET',
+                    data: { compid: userId },
+                    success: function (res) {
+                        if (res && res.data) {
+                            const c = res.data;
+                            $('#cboCompanyHidden').val(c.Code);
+                            $('#cboCompanyHidden2').val(c.Code);
+                            $('#cboCompany2').val(c.Name || '');
+                            $('#telNum').val(c.TelNumber || '');
+                            $('#Code').val(c.Code || '');
+                            $('#OurManager').val(c.OurManager || '');
+                            page.searchMain(); // ✅ 이제 안전
+                        }
+                    }
+                });
+            }
+
+
+
 
             // $('#cboCompany').click(function(){
             //     companyPopupOpen('cboCompany', 'cboCompanyHidden');
@@ -581,9 +688,6 @@
                     ['code', 'codeblock']
                 ]
             });
-
-            // 초기 조회 실행
-            page.searchMain();
 
         })
 

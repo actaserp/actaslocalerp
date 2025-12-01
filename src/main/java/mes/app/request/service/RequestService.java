@@ -22,11 +22,30 @@ public class RequestService {
     @Autowired
     TbAs010Repository tbAs010Repository;
 
+    // 거래처 정보 조회
+    public Map<String, Object> searchUserInfo(
+            String compid
+    ) {
+        MapSqlParameterSource dicParam = new MapSqlParameterSource();
+        dicParam.addValue("compid", compid);
+
+        String sql = """
+                SELECT
+                    *
+                FROM company
+                WHERE "BusinessNumber"=:compid
+        		""";
+
+
+        Map<String, Object> item = this.sqlRunner.getRow(sql, dicParam);
+
+        return item;
+    }
     // 요청사항 조회
     public List<Map<String, Object>> searchDatas(
             String searchfrdate
             , String searchtodate
-            , Integer searchCompCd
+            , String searchCompCd
             , String reqType
             , String spjangcd
     ) {
@@ -72,7 +91,7 @@ public class RequestService {
                 FROM "tb_as010" a
                 LEFT JOIN "sys_code" sc1
                     ON sc1."Code" = a."asdv"
-                   AND sc1."CodeType" = 'sale_type'
+                   AND sc1."CodeType" = 'asdv'
                 LEFT JOIN "sys_code" sc2
                     ON sc2."Code" = a."recyn"
                    AND sc2."CodeType" = 'recyn'
@@ -89,7 +108,7 @@ public class RequestService {
 
         // 업체 조건 추가 (searchCompCd가 있으면 cltnm으로 검색)
         if (searchCompCd != null) {
-            sql += " AND a.\"cltnm\" IN (SELECT \"Name\" FROM company WHERE id = :searchCompCd) ";
+            sql += " AND a.\"cltnm\" IN (SELECT \"Name\" FROM company WHERE \"Code\" = :searchCompCd) ";
         }
 
         // 요청구분 조건 추가
@@ -110,43 +129,51 @@ public class RequestService {
         paramMap.addValue("id", id);
 
         String sql = """
-            SELECT
-                a."asid" AS id,
-                TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS reqDate,
-                a."cltnm",
-                a."cltcd",
-                a."userid",
-                a."usernm" AS reqPer,
-                a."asperid",
-                a."aspernm",
-                a."retitle" AS title,
-                a."remark" AS content,
-                a."asdv" AS reqType,
-                sc1."Value" AS reqType_nm,
-                a."asmenu" AS scrNum,
-                a."recyn",
-                sc2."Value" AS recyn_nm,
-                a."recperid",
-                a."recpernm",
-                a."recdate",
-                a."endperid",
-                a."endpernm",
-                TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS endDate,
-                TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
-            FROM "tb_as010" a
-            LEFT JOIN "sys_code" sc1
-                ON sc1."Code" = a."asdv"
-               AND sc1."CodeType" = 'sale_type'
-            LEFT JOIN "sys_code" sc2
-                ON sc2."Code" = a."recyn"
-               AND sc2."CodeType" = 'recyn'
-            WHERE a."asid" = :id
-            """;
+        SELECT
+            a."asid" AS id,
+            TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS reqDate,
+            a."cltnm",
+            a."cltcd" AS "Code",
+            a."userid",
+            a."usernm" AS reqPer,
+            a."asperid",
+            a."aspernm" AS OurManager,
+            a."retitle" AS title,
+            a."remark" AS content,
+            a."asdv" AS reqType,
+            sc1."Value" AS reqType_nm,
+            a."asmenu" AS scrNum,
+            a."recyn",
+            sc2."Value" AS recyn_nm,
+            a."recperid",
+            a."recpernm",
+            a."recdate",
+            a."endperid",
+            a."endpernm",
+            TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS endDate,
+            TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate,
+            a."as_file" AS as_file,
+            c."spjangcd" AS spjangcd,
+            c."TelNumber",
+            -- ⚙️ company id가 필요할 경우 join
+            c.id AS cboCompanyHidden,
+            c."BusinessNumber" AS spNum
+        FROM "tb_as010" a
+        LEFT JOIN "company" c
+            ON c."Code" = a."cltcd"
+        LEFT JOIN "sys_code" sc1
+            ON sc1."Code" = a."asdv"
+           AND sc1."CodeType" = 'sale_type'
+        LEFT JOIN "sys_code" sc2
+            ON sc2."Code" = a."recyn"
+           AND sc2."CodeType" = 'recyn'
+        WHERE a."asid" = :id
+        """;
 
         Map<String, Object> item = this.sqlRunner.getRow(sql, paramMap);
-
         return item;
     }
+
 
     // 저장
     @Transactional
@@ -161,26 +188,24 @@ public class RequestService {
 
             TbAs010 entity = null;
 
-            // 수정 모드
+            // 수정 or 신규 등록
             if (id != null) {
                 entity = tbAs010Repository.findById(id)
                         .orElseThrow(() -> new RuntimeException("데이터를 찾을 수 없습니다."));
-            }
-            // 신규 등록 모드
-            else {
+            } else {
                 entity = new TbAs010();
                 entity.setInputdate(new Timestamp(System.currentTimeMillis()));
-                entity.setUserid(String.valueOf(user.getId()));
+                entity.setUserid(String.valueOf(user.getUserProfile().getName()));
                 entity.setUsernm(user.getUsername());
             }
 
-            // 공통 필드 매핑
+            // 요청일자
             String reqDate = cleanDate(payload.get("reqDate"));
             if (reqDate != null) {
                 entity.setAsdate(reqDate);
             }
 
-            // 업체명 및 업체코드 설정 (cboCompanyHidden이 있으면 company 테이블에서 조회)
+            // 업체명 및 코드 설정
             Object cboCompanyHiddenObj = payload.get("cboCompanyHidden");
             if (cboCompanyHiddenObj != null && !cboCompanyHiddenObj.toString().isEmpty()) {
                 try {
@@ -190,36 +215,32 @@ public class RequestService {
                     } else if (cboCompanyHiddenObj instanceof String) {
                         compId = Integer.parseInt((String) cboCompanyHiddenObj);
                     }
-                    
+
                     if (compId != null) {
                         MapSqlParameterSource paramMap = new MapSqlParameterSource();
                         paramMap.addValue("compId", compId);
                         String compSql = "SELECT \"Name\", \"Code\" FROM company WHERE id = :compId";
                         Map<String, Object> compData = this.sqlRunner.getRow(compSql, paramMap);
                         if (compData != null) {
-                            if (compData.get("Name") != null) {
+                            if (compData.get("Name") != null)
                                 entity.setCltnm(compData.get("Name").toString());
-                            }
-                            if (compData.get("Code") != null) {
+                            if (compData.get("Code") != null)
                                 entity.setCltcd(compData.get("Code").toString());
-                            }
                         }
                     }
                 } catch (Exception e) {
                     // 업체 조회 실패 시 무시
                 }
-            } else if (payload.get("cltnm") != null) {
-                entity.setCltnm((String) payload.get("cltnm"));
             }
 
-            // 요청자 정보
+            // 요청자
             if (payload.get("reqPer") != null) {
-                entity.setUsernm((String) payload.get("reqPer"));
+                entity.setUsernm(payload.get("reqPer").toString());
             }
 
             // 제목
             if (payload.get("title") != null) {
-                entity.setRetitle((String) payload.get("title"));
+                entity.setRetitle(payload.get("title").toString());
             }
 
             // 요청구분
@@ -229,15 +250,47 @@ public class RequestService {
 
             // 화면명
             if (payload.get("scrNum") != null) {
-                entity.setAsmenu((String) payload.get("scrNum"));
+                entity.setAsmenu(payload.get("scrNum").toString());
             }
 
-            // 요청내용 (Toast UI Editor HTML)
+            // 요청내용
             if (payload.get("content") != null) {
-                entity.setRemark((String) payload.get("content"));
+                entity.setRemark(payload.get("content").toString());
             }
 
-            // 수정일자 업데이트
+            // 파일명 저장
+            if (payload.get("as_file") != null) {
+                entity.setAsFile(payload.get("as_file").toString());
+            }
+
+            // ✅ OurManager → person 테이블 매핑 추가
+            if (payload.get("OurManager") != null && !payload.get("OurManager").toString().isEmpty()) {
+                String managerName = payload.get("OurManager").toString();
+
+                MapSqlParameterSource personParam = new MapSqlParameterSource();
+                personParam.addValue("name", managerName);
+
+                String personSql = """
+                    SELECT id, "Name"
+                    FROM person
+                    WHERE "Name" = :name
+                    """;
+
+                Map<String, Object> personData = this.sqlRunner.getRow(personSql, personParam);
+                if (personData != null) {
+                    Object personId = personData.get("id");
+                    Object personName = personData.get("Name");
+
+                    if (personId != null) {
+                        entity.setAsperid(String.valueOf(Integer.parseInt(personId.toString()))); // ✅ asperid 설정
+                    }
+                    if (personName != null) {
+                        entity.setAspernm(personName.toString()); // ✅ aspernm 설정
+                    }
+                }
+            }
+
+            // 수정일자
             entity.setInputdate(new Timestamp(System.currentTimeMillis()));
 
             tbAs010Repository.save(entity);
@@ -253,6 +306,7 @@ public class RequestService {
 
         return result;
     }
+
 
     private String cleanDate(Object v) {
         if (v == null) return null;

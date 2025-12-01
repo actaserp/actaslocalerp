@@ -170,7 +170,7 @@
                                     처리내용<span class="eq"></span>
                                     <button type="button" class="btn-excellt" id="download" name="download"
                                             style="width: 100px; height: 36px; margin-left: auto; margin-bottom: 5px;">
-                                        다운로드
+                                        완료첨부
                                     </button>
                                 </label>
                             </dt>
@@ -719,13 +719,17 @@
 
         $(document).ready(function (e) {
             page = new SalesList();
-
-            // $('#cboCompany').click(function(){
-            //     companyPopupOpen('cboCompany', 'cboCompanyHidden');
-            // });
-            // $('#cboCompany2').click(function(){
-            //     companyPopupOpen('cboCompany2', 'cboCompanyHidden2');
-            // });
+            // ✅ 세션 스토리지에서 로그인 정보 불러오기
+            // const userId = sessionStorage.getItem('userid');     // 사업자번호
+            // const userName = sessionStorage.getItem('username'); // 업체명
+            //
+            // // ✅ 값 존재 시 자동 바인딩
+            // if (userId) {
+            //     $('#cboCompanyHidden2').val(userId);  // 거래처 코드(사업자번호)
+            // }
+            // if (userName) {
+            //     $('#cboCompany2').val(userName);      // 업체명
+            // }
 
             // 조회 버튼
             $('#btnSearch2').click(function(){

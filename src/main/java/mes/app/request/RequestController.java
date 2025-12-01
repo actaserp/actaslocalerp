@@ -9,17 +9,17 @@ import mes.domain.model.AjaxResult;
 import mes.domain.repository.TbAs010Repository;
 import mes.domain.repository.TbAs011Repository;
 import mes.domain.repository.TbAs020Repository;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -38,13 +38,30 @@ public class RequestController {
     @Autowired
     private TbAs020Repository tbAs020Repository;
 
-    // 사용자 정보 조회(부서 이름 출근여부)
+    // 거래처 정보 조회
+    @GetMapping("/searchUser")
+    public AjaxResult getUserInfo(
+            HttpServletRequest request,
+            @RequestParam(value="compid") String compid,
+            Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User)auth.getPrincipal();
+        String username = user.getUsername();
+
+        Map<String, Object> searchData  = requestService.searchUserInfo( compid );
+
+        result.data = searchData;
+
+        return result;
+    }
+
+    // 요청사항 조회
     @GetMapping("/search")
     public AjaxResult searchDatas(
             HttpServletRequest request,
             @RequestParam(value="searchfrdate") String searchfrdate,
             @RequestParam(value="searchtodate") String searchtodate,
-            @RequestParam(value="searchCompCd", required=false) Integer searchCompCd,
+            @RequestParam(value="searchCompCd", required=false) String searchCompCd,
             @RequestParam(value="reqType", required=false) String reqType,
             @RequestParam(value="spjangcd", required=false) String spjangcd,
             Authentication auth) {
@@ -95,5 +112,41 @@ public class RequestController {
 
         return result;
     }
+
+    @PostMapping("/uploadFile")
+    public AjaxResult uploadFile(@RequestParam("uploadFile") MultipartFile file) {
+        AjaxResult result = new AjaxResult();
+        try {
+            if (file.isEmpty()) {
+                result.success = false;
+                result.message = "파일이 비어 있습니다.";
+                return result;
+            }
+
+            String uuid = UUID.randomUUID().toString();
+            String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+            if (!"pdf".equalsIgnoreCase(ext)) {
+                result.success = false;
+                result.message = "PDF 파일만 업로드 가능합니다.";
+                return result;
+            }
+
+            String newFileName = uuid + ".pdf";
+            File dir = new File("C:\\temp\\as_request\\files");
+            if (!dir.exists()) dir.mkdirs();
+
+            File dest = new File(dir, newFileName);
+            file.transferTo(dest);
+
+            result.success = true;
+            result.data = newFileName; // 프론트에 반환
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.success = false;
+            result.message = "파일 업로드 실패: " + e.getMessage();
+        }
+        return result;
+    }
+
 
 }
