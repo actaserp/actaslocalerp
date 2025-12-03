@@ -109,13 +109,16 @@
                                     <li>
                                         <a class="btn btn-delete" title="검색" id="btnClear">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
-                                            신규
+                                            신규 초기화
                                         </a>
                                         <a class="btn btn-delete" title="검색" id="btnSave">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
                                             <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             저장
+                                        </a>
+                                        <a class="btn btn-delete" title="검색" id="btnDelete">
+                                            <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
+                                            삭제
                                         </a>
                                     </li>
                                 </dd>
@@ -160,7 +163,7 @@
                     <div class="" id="reqText">
                         <div class="webEdit" id="webEdit"></div>
                     </div>
-                    <div class="" id="" style="display: flex; gap: 10px;">
+                    <div class="" id="fileBoxArea" style="display: flex; gap: 10px;">
                         <input type="text" id="fileText" placeholder="파일 찾기">
                         <input type="file" id="drawingFile" accept="application" style="display:none;" />
                         <button type="button" class="btn-excellt" id="btnFile" name="btnFile"
@@ -424,11 +427,8 @@
 
             saveRequest() {
                 let _this = this;
-                
-                // Toast UI Editor에서 HTML 내용 가져오기
                 const content = editor.getHTML();
-                
-                // 폼 데이터 수집
+
                 let data = {
                     id: $('#id').val() || '',
                     reqDate: $('#searchDate').val(),
@@ -445,50 +445,46 @@
                     spjangcd: getSpjangcdFromSession(),
                 };
 
-                // 파일 확인
                 let file = $('#drawingFile')[0].files[0];
 
                 if (file) {
-                    // ✅ 파일 업로드 먼저 수행
+                    // ✅ AjaxUtil을 활용해 파일 업로드
                     let formData = new FormData();
                     formData.append('uploadFile', file);
 
-                    $.ajax({
-                        url: '/api/request/uploadFile',
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function (res) {
+                    AjaxUtil.postFileAsyncData(
+                        '/api/request/uploadFile',
+                        formData,
+                        function (res) {
                             if (res.success) {
                                 console.log("업로드 성공:", res.data);
-                                data.as_file = res.data; // 업로드된 파일명
-
-                                // ✅ 파일 업로드 성공 후 본 데이터 저장
+                                data.as_file = res.data;
                                 _this.saveRequestData(data);
                             } else {
                                 Alert.alert('', '파일 업로드 실패: ' + res.message);
                             }
                         },
-                        error: function () {
-                            Alert.alert('', '파일 업로드 중 오류 발생');
+                        function (req, status, error) {
+                            console.error('파일 업로드 실패:', req.responseText);
+                            Alert.alert('오류', '파일 업로드 중 오류가 발생했습니다 (' + req.status + ')');
                         }
-                    });
+                    );
                 } else {
-                    // 파일 없으면 바로 저장
                     _this.saveRequestData(data);
                 }
             }
+
+
 
             saveRequestData(data) {
                 let _this = this;
                 AjaxUtil.postJsonData(_this.url + '/save', data, function(res) {
                     if (res.success) {
-                        Notify.success('저장되었습니다.');
+                        Notify.success('저장(수정)되었습니다.');
                         _this.clearForm();
                         _this.searchMain();
                     } else {
-                        Alert.alert('저장 실패', res.message || '관리자에게 문의하세요.');
+                        Alert.alert('저장(수정) 실패', res.message || '관리자에게 문의하세요.');
                     }
                 });
             }
@@ -526,7 +522,7 @@
                     if (result && result.data) {
                         const data = result.data;
 
-                        // ✅ 기본정보 바인딩 (저장 시 전송된 모든 필드 복원)
+                        // ✅ 기본정보 바인딩
                         $('#id').val(data.id || '');
                         $('#searchDate').val(data.reqDate || getNowDate());
                         $('#spNum').val(data.userid || '');
@@ -540,51 +536,98 @@
                         $('#OurManager').val(data.ourmanager || '');
                         $('#spjangcd').val(data.spjangcd || '');
 
-                        // ✅ 에디터 내용 바인딩 (HTML 그대로)
+                        // ✅ 에디터 내용 복원
                         if (editor) {
                             editor.setHTML(data.content || '');
                         }
 
-                        // ✅ 파일 표시 로직 (있을 경우 미리보기)
-                        const $fileBox = $('#fileText').closest('div');
-                        if (data.as_file && data.as_file.trim() !== '') {
-                            const fileName = data.as_file;
-                            $fileBox.html(`
-                                <span
-                                    id="previewFile"
-                                    style="cursor:pointer; color:#007BFF; text-decoration:underline;"
-                                    data-filename="${fileName}">
-                                    📄 첨부파일 미리보기
-                                </span>
-                            `);
-
-                            // 클릭 이벤트 등록
-                            $('#previewFile').on('click', function() {
-                                const file = $(this).data('filename');
-                                if (file) {
-                                    // 새 창으로 미리보기 (백엔드에서 previewFile API 제공)
-                                    window.open('/api/request/previewFile?fileName=' + encodeURIComponent(file), '_blank');
-                                }
-                            });
-                        } else {
-                            // ❌ 파일이 없을 경우 input 필드로 복원
-                            $fileBox.html(`
-                                <input type="text" id="fileText" placeholder="파일 찾기" readonly />
-                                <input type="file" id="drawingFile" accept="application/pdf" style="display:none;" />
-                                <button type="button" class="btn-excellt" id="btnFile" name="btnFile"
-                                    style="width: 100px; height: 36px;">파일선택</button>
-                            `);
-                        }
-                        console.log($('#listTabLink').length); // 0이면 존재하지 않음
-                        console.log($('#listTabLink').is(':visible')); // false면 숨겨져 있음
                         // ✅ 탭 전환 (요청등록 탭으로 이동)
                         $('#listTabLink').trigger('click');
+
+                        // ✅ 탭 전환 완료 후 파일 표시/수정 가능 영역 구성
+                        setTimeout(() => {
+                            const $fileBox = $('#fileBoxArea'); // 확실한 선택자
+
+                            if (data.as_file && data.as_file.trim() !== '') {
+                                const fileName = data.as_file;
+
+                                // 기존 첨부 + 다운로드 + 파일변경 모두 가능하도록 구성
+                                $fileBox.html(`
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <input
+                                            type="text"
+                                            id="fileText"
+                                            value="${fileName}"
+                                            readonly
+                                            style="flex: 1; color:#333;"
+                                        />
+                                        <input type="file" id="drawingFile" accept="application" style="display:none;" />
+                                        <button
+                                            type="button"
+                                            class="btn-excellt"
+                                            id="btnDownload"
+                                            name="btnDownload"
+                                            style="width: 110px; height: 36px; cursor: pointer;"
+                                            data-filename="${fileName}"
+                                        >
+                                            다운로드
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn-excellt"
+                                            id="btnFile"
+                                            name="btnFile"
+                                            style="width: 100px; height: 36px; cursor:pointer;"
+                                        >
+                                            파일선택
+                                        </button>
+                                    </div>
+                                `);
+
+                                // 다운로드 이벤트 등록
+                                $('#btnDownload').on('click', function() {
+                                    const file = $(this).data('filename');
+                                    if (file) {
+                                        window.open('/api/request/downFile?fileName=' + encodeURIComponent(file), '_blank');
+                                    }
+                                });
+
+                                // 파일명 표시 (파일 변경 시)
+                                $(document).off('change.drawingFile').on('change.drawingFile', '#drawingFile', function() {
+                                    const fileObj = this.files[0];
+                                    if (!fileObj) return;
+                                    $('#fileText').val(fileObj.name);
+                                });
+
+                            } else {
+                                // 파일이 없을 때 기본 입력창 복원
+                                $fileBox.html(`
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <input type="text" id="fileText" placeholder="파일 찾기" readonly style="flex: 1;" />
+                                        <input type="file" id="drawingFile" accept="application" style="display:none;" />
+                                        <button
+                                            type="button"
+                                            class="btn-excellt"
+                                            id="btnFile"
+                                            name="btnFile"
+                                            style="width: 100px; height: 36px; cursor:pointer;"
+                                        >
+                                            파일선택
+                                        </button>
+                                    </div>
+                                `);
+
+                                // 파일명 표시 (파일 선택 시)
+                                $(document).off('change.drawingFile').on('change.drawingFile', '#drawingFile', function() {
+                                    const fileObj = this.files[0];
+                                    if (!fileObj) return;
+                                    $('#fileText').val(fileObj.name);
+                                });
+                            }
+                        }, 200); // 탭 렌더 완료 후 실행
                     }
                 });
             }
-
-
-
 
         }
 
@@ -700,6 +743,56 @@
             // 파일명 표시
             document.getElementById('fileText').value = file.name;
         });
+
+        // 파일 선택 시 파일명 표시 (위임 방식)
+        $(document).on('change', '#drawingFile', function() {
+            const file = this.files[0];
+            if (!file) return;
+            $('#fileText').val(file.name);
+        });
+
+        // 삭제 버튼 클릭 이벤트
+        $(document).on('click', '#btnDelete', function() {
+            const id = $('#id').val(); // 현재 선택된 요청 ID
+
+            if (!id) {
+                Alert.alert('', '삭제할 데이터를 먼저 선택하세요.');
+                return;
+            }
+
+            Alert.confirm('삭제 확인', '선택한 요청사항을 삭제하시겠습니까?', function() {
+                let data = { id: id };
+
+                // ✅ AjaxUtil 사용 → CSRF 자동 처리됨
+                AjaxUtil.postAsyncData('/api/request/delete', data, function(res) {
+                    if (res && res.success) {
+                        Notify.success('요청사항이 삭제되었습니다.');
+
+                        // ✅ 폼 초기화 (입력폼 내용 모두 비우기)
+                        $('#id').val('');
+                        $('#searchDate').val(getNowDate());
+                        $('#title').val('');
+                        $('#reqType').val('');
+                        $('#scrNum').val('');
+                        $('#fileText').val('');
+                        $('#drawingFile').val('');
+                        if (editor) editor.setHTML('');
+
+                        // ✅ 목록 새로고침
+                        if (page && typeof page.searchMain === 'function') {
+                            page.searchMain();
+                        }
+
+                        // ✅ 탭을 “요청현황”으로 자동 전환
+                        $('#inputTabLink').trigger('click');
+                    } else {
+                        Alert.alert('삭제 실패', res.message || '요청사항 삭제 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+        });
+
+
     </script>
 
 </th:block>

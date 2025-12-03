@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 public class RequestService {
@@ -258,9 +261,21 @@ public class RequestService {
                 entity.setRemark(payload.get("content").toString());
             }
 
-            // 파일명 저장
+            // 파일명 저장 (기존 파일이 있을 경우 교체 시 이전 파일 삭제)
             if (payload.get("as_file") != null) {
-                entity.setAsFile(payload.get("as_file").toString());
+                String newFileName = payload.get("as_file").toString();
+                String oldFileName = entity.getAsFile();
+
+                if (oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals(newFileName)) {
+                    try {
+                        Path oldPath = Paths.get("C:/temp/as_request/files/" + oldFileName);
+                        Files.deleteIfExists(oldPath);
+                    } catch (Exception e) {
+                        // 파일 삭제 실패는 업무 로직에 치명적이지 않으므로 무시
+                    }
+                }
+
+                entity.setAsFile(newFileName);
             }
 
             // ✅ OurManager → person 테이블 매핑 추가
