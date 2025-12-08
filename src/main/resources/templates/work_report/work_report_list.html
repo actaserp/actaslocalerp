@@ -401,10 +401,10 @@
                     <table class="write-table">
                         <colgroup>
                             <col style="width:80px">
-                            <col style="width:14%">
+                            <col style="width:17%">
 
                             <col style="width:80px">
-                            <col style="width:48%">
+                            <col style="width:45%">
 
                             <col style="width:80px">
                             <col style="width:14%">
@@ -417,7 +417,8 @@
                             <tr>
                                 <th><label for="rptdate">날짜</label></th>
                                 <td>
-                                    <input class="form-control2" type="date" id="rptdate" name="rptdate" style="min-width:135px;">
+                                    <input class="form-control2" type="date" id="rptdate" name="rptdate" style="min-width:135px; width:80%;">
+                                    <span id="rptdateDay" style="font-weight: bold; color: #555;"></span> <!-- 요일 표시 -->
                                 </td>
                                 <th><label for="datetype">주차</label></th>
                                 <td>
@@ -484,7 +485,7 @@
                             <tr>
                                 <th><label for="rptremark">업무내용</label></th>
                                 <td colspan="5">
-                                    <textarea id="rptremark" name="rptremark" style="height:110px;"></textarea>
+                                    <textarea id="rptremark" name="rptremark" style="height:130px;"></textarea>
                                 </td>
                             </tr>
 
@@ -498,7 +499,7 @@
                             <tr>
                                 <th><label for="remark">특이사항</label></th>
                                 <td colspan="5">
-                                    <textarea id="remark" name="remark" style="height:70px;"></textarea>
+                                    <textarea id="remark" name="remark" style="height:130px;"></textarea>
                                 </td>
                             </tr>
                         </tbody>
@@ -552,16 +553,38 @@
                         if (e.panel.cellType === wijmo.grid.CellType.ColumnHeader) {
                             e.cell.style.textAlign = 'center';
                         }
+
+                        // 🔹 GroupRow인 경우
                         if (e.panel.cellType === wijmo.grid.CellType.Cell &&
                             s.rows[e.row] instanceof wijmo.grid.GroupRow) {
 
-                            // 현재 HTML 예:  주차: <b>2025년 48주차</b> (3 items)
+                            // 그룹 행은 색상 제거 (혹시 남아있던 스타일 초기화)
+                            e.cell.style.backgroundColor = '';
+                            e.cell.style.color = '#000';
+
+                            // 항목 수 표기 변경
                             let html = e.cell.innerHTML;
-
-                            // " (숫자 items)" 를 " (숫자 건)" 으로 치환
                             html = html.replace(/\((\d+)\s+items\)/, '($1 건)');
-
                             e.cell.innerHTML = html;
+                            return;
+                        }
+
+                        // 🔹 일반 데이터 행만 색상 적용 (GroupRow 제외)
+                        if (e.panel.cellType === wijmo.grid.CellType.Cell &&
+                            !(s.rows[e.row] instanceof wijmo.grid.GroupRow)) {
+
+                            const item = s.rows[e.row].dataItem;
+                            if (!item) return;
+
+                            // 색상 초기화 (다시 그릴 때 중첩 방지)
+                            e.cell.style.backgroundColor = '';
+
+                            // fixflag 값에 따라 색상 지정
+                            if (item.fixflag === "1") {
+                                e.cell.style.backgroundColor = '#FFF5E1'; // 연한 주황
+                            } else if (item.fixflag === "2") {
+                                e.cell.style.backgroundColor = '#E6F3FF'; // 연한 파랑
+                            }
                         }
                     },
                     columns: [
@@ -572,10 +595,10 @@
                         {binding: 'fixpernm', header: '사원명', width: 120, align: 'center'},
                         {binding: 'cltnm', header: '업체명', width: 150, align: 'center'},
                         {binding: 'asmenu', header: '화면명', width: 200, align: 'left'},
-                        {binding: 'rptremark', header: '업무내용', width: 300, align: 'left'},
+                        {binding: 'rptremark', header: '업무내용', width: '*', align: 'left'},
                         {binding: 'recyn_nm', header: '진행상태', width: 100, align: 'center'},
                         {binding: 'asdv_nm', header: '근무구분', width: 100, align: 'center'},
-                        {binding: 'inputdate', header: '입력일자', width: 150, align: 'center'},
+                        {binding: 'inputdate', header: '접수일자', width: 150, align: 'center'},
                     ],
 
                     itemsSource: this.viewData
@@ -697,7 +720,7 @@
                     $btnEdit.show();
                     $btnDelete.show();
                 }
-                modalContainer.open({width: 1100, height: 600, $content});
+                modalContainer.open({width: 1300, height: 700, $content});
 
                 let initDateStr = "";
 
@@ -718,6 +741,28 @@
 
                 // 입력창에 넣음
                 $content.find('#rptdate').val(initDateStr);
+
+                // 날짜 → 요일 표시 함수
+                function getKoreanDayOfWeek(dateString) {
+                    if (!dateString) return "";
+                    const days = ["일", "월", "화", "수", "목", "금", "토"];
+                    const date = new Date(dateString);
+                    return days[date.getDay()];
+                }
+
+                // 날짜 초기화 시 표시
+                const $rptdate = $content.find('#rptdate');
+                const $rptdateDay = $('<span id="rptdateDay" style="font-weight:bold; color:#555; margin-left:6px;"></span>');
+                $rptdate.after($rptdateDay);
+
+                // 초기 요일 표시
+                $rptdateDay.text('(' + getKoreanDayOfWeek(initDateStr) + ')');
+
+                // 날짜 변경 시 요일 자동 변경
+                $rptdate.on('change', function () {
+                    const val = $(this).val();
+                    $rptdateDay.text(val ? '(' + getKoreanDayOfWeek(val) + ')' : '');
+                });
 
                 // stdate에도 기준 설정
                 $content.find('#stdate').val(initDateStr);
@@ -1075,7 +1120,19 @@
             page = new WorkReportPage();
 
             $('#srchStartDt').val(CommonUtil.getYYYYMMDD(-7));
-            $('#srchEndDt').val(CommonUtil.getYYYYMMDD());
+            // 이번주 일요일 구하는 함수
+            function getThisSunday() {
+                const today = new Date();
+                const day = today.getDay(); // 0: 일요일, 6: 토요일
+                const diff = 7 - day; // 다음 일요일까지 남은 일수 (오늘이 일요일이면 0)
+                const sunday = new Date(today);
+                sunday.setDate(today.getDate() + diff);
+                const year = sunday.getFullYear();
+                const month = String(sunday.getMonth() + 1).padStart(2, '0');
+                const date = String(sunday.getDate()).padStart(2, '0');
+                return `${year}-${month}-${date}`;
+            }
+            $('#srchEndDt').val(getThisSunday());
 
             page.searchMainData();
 

@@ -117,15 +117,37 @@ public class RequestController {
                     ? Integer.parseInt(payload.get("id").toString())
                     : null;
 
-            // ✅ 기존 데이터 존재 시, recdate 확인
+            // ✅ 새 파일명 (클라이언트에서 업로드된 파일명)
+            String newFileName = payload.get("as_file") != null
+                    ? payload.get("as_file").toString()
+                    : null;
+
+            // ✅ 기존 데이터 확인
             if (id != null) {
                 Optional<TbAs010> existingOpt = tbAs010Repository.findById(id);
                 if (existingOpt.isPresent()) {
                     TbAs010 existing = existingOpt.get();
+
+                    // ✅ 접수 이후 수정 불가 로직
                     if (existing.getRecdate() != null) {
                         result.success = false;
-                        result.message = "접수이후 수정,삭제 처리가 불가능합니다.";
+                        result.message = "접수 이후 수정, 삭제 처리가 불가능합니다.";
                         return result;
+                    }
+
+                    // ✅ 기존 파일 삭제 로직
+                    String oldFileName = existing.getAsFile();
+                    if (oldFileName != null && !oldFileName.isEmpty()
+                            && newFileName != null && !newFileName.equals(oldFileName)) {
+                        File oldFile = new File("C:/temp/as_request/files/" + oldFileName);
+                        if (oldFile.exists()) {
+                            boolean deleted = oldFile.delete();
+                            if (deleted) {
+                                log.info("🗑 기존 파일 삭제 완료: {}", oldFile.getAbsolutePath());
+                            } else {
+                                log.warn("⚠ 기존 파일 삭제 실패: {}", oldFile.getAbsolutePath());
+                            }
+                        }
                     }
                 }
             }

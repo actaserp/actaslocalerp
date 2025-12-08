@@ -36,4 +36,7 @@ public class TbAs011 {
 
     @Column(name = "inputdate")
     private Timestamp inputdate; // 입력일자
+
+    @Column(name = "as_file")
+    private String asFile;
 }

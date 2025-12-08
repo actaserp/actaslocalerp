@@ -12,6 +12,9 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +35,11 @@ public class RequestCurrentService {
             String searchfrdate
             , String searchtodate
             , Integer searchCompCd
+            , String searchCompnm
             , String reqType
             , String spjangcd
+            , Integer perId
+            , String aspernm
     ) {
         // 날짜 형식 변환 (YYYY-MM-DD -> YYYYMMDD)
         if (searchfrdate != null && searchfrdate.contains("-")) {
@@ -69,16 +75,18 @@ public class RequestCurrentService {
                     sc2."Value" AS recyn_nm,
                     a."recperid",
                     a."recpernm",
-                    a."recdate",
+                    TO_CHAR(a."recdate", 'YYYY-MM-DD HH24:MI') AS recdate,
                     a."endperid",
                     a."endpernm",
+                    a."as_file",
+                    f."as_file" as "fix_file",
                     TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
                     TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate,
                     CASE WHEN f."fixid" IS NOT NULL THEN 'Y' ELSE 'N' END AS hasProcess
                 FROM "tb_as010" a
                 LEFT JOIN "sys_code" sc1
                     ON sc1."Code" = a."asdv"
-                   AND sc1."CodeType" = 'sale_type'
+                   AND sc1."CodeType" = 'asdv'
                 LEFT JOIN "sys_code" sc2
                     ON sc2."Code" = a."recyn"
                    AND sc2."CodeType" = 'recyn'
@@ -90,6 +98,19 @@ public class RequestCurrentService {
         // 날짜 조건 추가
         if (searchfrdate != null && !searchfrdate.isEmpty()) {
             sql += " AND a.\"asdate\" >= :searchfrdate ";
+        }
+        if (perId != null) {
+            dicParam.addValue("perId", perId.toString());
+            sql += " AND a.\"asperid\" = :perId ";
+        }
+
+        if (searchCompnm != null && !searchCompnm.isEmpty()) { // 본사담당 검색필터
+            dicParam.addValue("searchCompnm", searchCompnm.toString());
+            sql += " AND a.\"cltnm\" = :searchCompnm ";
+        }
+        if (aspernm != null && !aspernm.isEmpty()) { // 본사담당 검색필터
+            dicParam.addValue("aspernm", aspernm.toString());
+            sql += " AND a.\"aspernm\" = :aspernm ";
         }
         if (searchtodate != null && !searchtodate.isEmpty()) {
             sql += " AND a.\"asdate\" <= :searchtodate ";
@@ -117,68 +138,58 @@ public class RequestCurrentService {
         MapSqlParameterSource paramMap = new MapSqlParameterSource();
         paramMap.addValue("asid", asid);
 
-        // 요청사항 조회
         String sql = """
-            SELECT
-                a."asid" AS id,
-                TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS asdate,
-                a."cltnm",
-                a."cltcd",
-                a."userid",
-                a."usernm",
-                a."asperid",
-                a."aspernm",
-                a."retitle" AS title,
-                a."remark" AS content,
-                a."asdv" AS reqType,
-                sc1."Value" AS reqType_nm,
-                a."asmenu" AS scrNum,
-                a."recyn",
-                sc2."Value" AS recyn_nm,
-                a."recperid",
-                a."recpernm",
-                a."recdate",
-                a."endperid",
-                a."endpernm",
-                TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS endDate,
-                TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
-            FROM "tb_as010" a
-            LEFT JOIN "sys_code" sc1
-                ON sc1."Code" = a."asdv"
-               AND sc1."CodeType" = 'sale_type'
-            LEFT JOIN "sys_code" sc2
-                ON sc2."Code" = a."recyn"
-               AND sc2."CodeType" = 'recyn'
-            WHERE a."asid" = :asid
-            """;
+        SELECT
+            a."asid" AS id,
+            TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS asdate,
+            a."cltnm",
+            a."cltcd",
+            a."userid",
+            a."usernm",
+            a."asperid",
+            a."aspernm",
+            a."retitle" AS title,
+            a."remark" AS content,
+            a."asdv" AS reqType,
+            sc1."Value" AS reqType_nm,
+            a."asmenu",
+            a."recyn",
+            sc2."Value" AS recyn_nm,
+            a."recperid",
+            a."recpernm",
+            a."recdate",
+            a."endperid",
+            a."endpernm",
+            a."as_file",
+            f."fixid",
+            TO_CHAR(TO_DATE(f."fixdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS fixdate,
+            f."asperid" AS fix_asperid,
+            f."aspernm" AS fix_aspernm,
+            f."as_file" AS fix_file,
+            f."remark" AS processContent,
+            TO_CHAR(f."inputdate", 'YYYY-MM-DD HH24:MI') AS fix_inputdate,
+            TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS endDate,
+            TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
+        FROM "tb_as010" a
+        LEFT JOIN "tb_as011" f
+            ON f."asid" = a."asid"
+            AND f."inputdate" = (
+                SELECT MAX(ff."inputdate")
+                FROM "tb_as011" ff
+                WHERE ff."asid" = a."asid"
+            )
+        LEFT JOIN "sys_code" sc1
+            ON sc1."Code" = a."asdv"
+           AND sc1."CodeType" = 'sale_type'
+        LEFT JOIN "sys_code" sc2
+            ON sc2."Code" = a."recyn"
+           AND sc2."CodeType" = 'recyn'
+        WHERE a."asid" = :asid
+        """;
 
-        Map<String, Object> item = this.sqlRunner.getRow(sql, paramMap);
-
-        // 처리내용 조회
-        if (item != null) {
-            String fixSql = """
-                SELECT
-                    f."fixid",
-                    TO_CHAR(TO_DATE(f."fixdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS fixdate,
-                    f."asperid",
-                    f."aspernm",
-                    f."remark" AS processContent,
-                    TO_CHAR(f."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
-                FROM "tb_as011" f
-                WHERE f."asid" = :asid
-                ORDER BY f."inputdate" DESC
-                LIMIT 1
-                """;
-            Map<String, Object> fixData = this.sqlRunner.getRow(fixSql, paramMap);
-            if (fixData != null) {
-                item.put("fixid", fixData.get("fixid"));
-                item.put("fixdate", fixData.get("fixdate"));
-                item.put("processContent", fixData.get("processContent"));
-            }
-        }
-
-        return item;
+        return this.sqlRunner.getRow(sql, paramMap);
     }
+
 
     // 처리내용 저장
     @Transactional
@@ -237,6 +248,24 @@ public class RequestCurrentService {
                 entity.setRemark((String) payload.get("processContent"));
             }
 
+            // ✅ 파일 교체 처리
+            if (payload.get("as_file") != null) {
+                String newFileName = payload.get("as_file").toString();
+                String oldFileName = entity.getAsFile();
+
+                // 이전 파일이 존재하고, 새로운 파일과 다르면 삭제
+                if (oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals(newFileName)) {
+                    try {
+                        Path oldPath = Paths.get("C:/temp/as_request/files/" + oldFileName);
+                        Files.deleteIfExists(oldPath);
+                    } catch (Exception e) {
+                    }
+                }
+
+                // 새로운 파일명 저장
+                entity.setAsFile(newFileName);
+            }
+
             // 수정일자 업데이트
             entity.setInputdate(new Timestamp(System.currentTimeMillis()));
 
@@ -270,6 +299,32 @@ public class RequestCurrentService {
         if (v == null) return null;
         String dateStr = v.toString();
         return dateStr.replaceAll("-", "");
+    }
+
+    // tb_as011에서 tb_as010.id(asid)로 파일명 조회
+    public String getProcessFileNameByAsid(Long asid) {
+        try {
+            MapSqlParameterSource param = new MapSqlParameterSource();
+            param.addValue("asid", asid);
+
+            String sql = """
+            SELECT f."as_file"
+            FROM "tb_as011" f
+            WHERE f."asid" = :asid
+            ORDER BY f."inputdate" DESC
+            LIMIT 1
+        """;
+
+            Map<String, Object> row = sqlRunner.getRow(sql, param);
+
+            if (row != null && row.get("as_file") != null) {
+                return row.get("as_file").toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null; // 파일이 없을 경우 null 반환
     }
 
 }

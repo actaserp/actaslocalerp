@@ -78,7 +78,7 @@
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
-                                        <input type="text" placeholder=""  id="cboCompany2" name="cboCompany2" readonly/>
+                                        <input type="text" placeholder=""  id="cboCompany2" name="cboCompany2"/>
                                         <input type="hidden"  id="cboCompanyHidden2" name="cboCompanyHidden2"  />
                                     </div>
                                 </dd>
@@ -103,7 +103,7 @@
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
-                                        <input type="text" placeholder=""  id="cboCompany2" name="cboCompany2"/>
+                                        <input type="text" placeholder=""  id="aspernm2" name="aspernm2"/>
                                     </div>
                                 </dd>
                             </dl>
@@ -150,7 +150,7 @@
                         <div id="theGrid_reqList" style="height: 430px;"></div>
                     </div>
                     <div style="margin-top: 10px; display:flex; gap: 15px;">
-                        <dl style="width: 45%;">
+                        <dl style="width: 49%;">
                             <dt style="margin-bottom: 21px;">
                                 <label>
                                     요청내용<span class="eq"></span>
@@ -164,7 +164,7 @@
                                 </div>
                             </dd>
                         </dl>
-                        <dl style="width: 45%;">
+                        <dl style="width: 49%;">
                             <dt>
                                 <label style="display: flex;">
                                     처리내용<span class="eq"></span>
@@ -327,10 +327,10 @@
                     <table class="write-table">
                         <colgroup>
                             <col style="width:80px">
-                            <col style="width:14%">
+                            <col style="width:24%">
 
                             <col style="width:80px">
-                            <col style="width:48%">
+                            <col style="width:38%">
 
                             <col style="width:80px">
                             <col style="width:14%">
@@ -412,7 +412,6 @@
             </div>
 
             <div class="popup-button" style="margin-top:0px;">
-                <button type="button" class="btn-popup y_write_auth" id="btnPopSave">저장</button>
                 <button type="button" class="btn-popup" id="modal-close-button">닫기</button>
                 <button type="button" class="btn-popup y_write_auth" id="btnDelete" style="display:none;">삭제</button>
             </div>
@@ -448,7 +447,8 @@
 
                 $('#searchfrdate2').val(getNowDateMinus7());
                 $('#searchDate, #searchtodate2').val(getNowDate());
-                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'sale_type');
+                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#fixflag'), 'system_code', 'choose', false, 'asdv');
 
                 this.init();
             }
@@ -475,15 +475,56 @@
                         { binding: 'asmenu', header: '화면명', align: 'left', width: 150 },
                         { binding: 'aspernm', header: '본사담당', align: 'left', width: 120 },
                         { binding: 'recyn_nm', header: '진행구분', align: 'center', width: 120 },
-                        { binding: 'hasProcess', header: '처리여부', align: 'center', width: 100 },
-                        { binding: 'inputdate', header: '입력일자', align: 'center', width: 150 },
+                        // { binding: 'hasProcess', header: '처리여부', align: 'center', width: 100 },
+                        { binding: 'recdate', header: '접수일자', align: 'center', width: 150 },
+                        { binding: 'as_file', header: '첨부파일', align: 'center', width: 120 },
                     ],
                     itemsSource: cv,
+                    // ✅ 파일 다운로드 컬럼 표시
+                    formatItem: (s, e) => {
+                        if (e.panel.cellType === wijmo.grid.CellType.Cell) {
+                            const col = s.columns[e.col];
+                            const item = s.rows[e.row].dataItem;
 
+                            // 🔹 as_file 컬럼이 있고 값이 존재할 때만 "다운로드" 링크 표시
+                            if (col.binding === 'as_file' && item && item.as_file) {
+                                const safeFileName = item.as_file.replace(/"/g, '&quot;'); // XSS 방지
+                                e.cell.innerHTML = `
+                                    <a href="#" class="file-download" data-file="${safeFileName}" style="
+                                        color: #007BFF;
+                                        text-decoration: underline;
+                                        cursor: pointer;
+                                    ">다운로드</a>
+                                `;
+                            }
+                        }
+                    },
                 });
                 this.grid1.rowHeaders.columns.splice(0, 1);
                 new FlexGridContextMenu(this.grid1);
                 this.grid1.downloadFileName = '요청사항_처리현황';
+
+                // ✅ 다운로드 클릭 이벤트
+                this.grid1.hostElement.addEventListener('click', (e) => {
+                    const target = e.target;
+
+                    // 🔹 클릭한 요소가 'file-download' 클래스인지 확인
+                    if (target.classList.contains('file-download')) {
+                        e.preventDefault();
+
+                        const fileName = target.dataset.file;
+                        if (!fileName) {
+                            Alert.alert('', '파일 정보가 없습니다.');
+                            return;
+                        }
+
+                        // ✅ 백엔드 매핑: @GetMapping("/downFile")
+                        const downloadUrl = `/api/request/downFile?fileName=${encodeURIComponent(fileName)}`;
+
+                        // ✅ 새 창으로 다운로드 (URL 인코딩 주의)
+                        window.open(downloadUrl, '_blank');
+                    }
+                });
 
                 // 그리드 선택 이벤트 - 상세 정보 표시
                 this.grid1.selectionChanged.addHandler((s, e) => {
@@ -493,8 +534,13 @@
                     const item = s.rows[row].dataItem;
                     if (!item) return;
 
+                    // ✅ HTML 태그 제거 (웹에디터 내용에서 순수 텍스트만 추출)
+                    const plainContent = (item.content || '').replace(/<[^>]+>/g, '');
+                    const plainRemark = (item.remark || '').replace(/<[^>]+>/g, '');
+
                     // 요청현황 탭의 상세 정보 영역에 데이터 표시
-                    $('#reqtextf').val(item.content || '');
+                    $('#reqtextf').val(plainContent);
+                    $('#reqtextf2').val(plainRemark);
                     // 처리내용은 별도 조회 필요
                 });
 
@@ -536,6 +582,8 @@
                     searchfrdate: $('#searchfrdate2').val(),
                     searchtodate: $('#searchtodate2').val(),
                     searchCompCd: $('#cboCompanyHidden2').val(),
+                    searchCompnm: $('#cboCompany2').val(),
+                    aspernm: $('#aspernm2').val(),
                     reqType : $('#reqType2').val(),
                     spjangcd: getSpjangcdFromSession(),
                 }
@@ -631,12 +679,37 @@
                     $content.find('#id').val(formData.id);
                     $content.find('#cltnm').val(formData.title || formData.retitle || '');
                     // 요청구분, 화면명 등은 readonly로 표시만
+                    $content.find('#asmenu').val(formData.asmenu || '');
+                }
+
+                // ✅ 완료 첨부파일 존재 시 표시
+                if (formData.fix_file && formData.fix_file.trim() !== '') {
+                    // 파일 존재할 때
+                    $content.find('#fileText')
+                        .val('완료첨부 파일존재')
+                        .css({
+                            'color': '#0a7cff',     // 파란색 강조
+                            'font-weight': 'bold'   // 굵게
+                        })
+                        .data('filename', formData.fix_file); // ✅ 나중에 다운로드용으로 파일명도 저장
+                } else {
+                    // 파일 없을 때 (초기화)
+                    $content.find('#fileText')
+                        .val('')
+                        .css({ 'color': '', 'font-weight': '' })
+                        .removeData('filename');
                 }
 
                 // 진행구분 셀렉트 박스 초기화
                 AjaxUtil.fillSelectOptions($content.find('#actflag'), 'system_code', '', '1', 'recyn');
                 if (formData.recyn) {
                     $content.find('#actflag').val(formData.recyn);
+                }
+
+                // 요청구분 셀렉트 박스 바인드
+                AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', formData.asdv, 'asdv');
+                if (formData.recyn) {
+                    $content.find('#fixflag').val(formData.asdv);
                 }
 
                 // 처리등록 팝업 저장버튼 클릭
@@ -683,15 +756,47 @@
 
                         console.log('Save payload:', payload);
 
-                        AjaxUtil.postJsonData(_this.url + '/save', payload, function (res) {
-                            if (res.success) {
-                                Notify.success("저장되었습니다.");
-                                _this.searchMain();
-                                modalContainer.close();
-                            } else {
-                                Alert.alert('저장 실패', res.message || '알 수 없는 오류');
-                            }
-                        });
+                        // ✅ 파일 첨부 처리
+                        const fileInput = $content.find('#drawingFile')[0];
+                        const file = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+                        if (file) {
+                            let formData = new FormData();
+                            formData.append('uploadFile', file);
+
+                            AjaxUtil.postFileAsyncData(
+                                '/api/request/uploadFile',
+                                formData,
+                                function (res) {
+                                    if (res.success) {
+                                        console.log('파일 업로드 성공:', res.data);
+                                        payload.as_file = res.data;
+                                        saveProcessData(payload);
+                                    } else {
+                                        Alert.alert('', '파일 업로드 실패: ' + res.message);
+                                    }
+                                },
+                                function (req, status, error) {
+                                    console.error('파일 업로드 실패:', req.responseText);
+                                    Alert.alert('오류', '파일 업로드 중 오류가 발생했습니다 (' + req.status + ')');
+                                }
+                            );
+                        } else {
+                            saveProcessData(payload);
+                        }
+
+                        // ✅ 파일 업로드 후 호출되는 저장 함수
+                        function saveProcessData(data) {
+                            AjaxUtil.postJsonData(_this.url + '/save', data, function (res) {
+                                if (res.success) {
+                                    Notify.success("저장되었습니다.");
+                                    _this.searchMain();
+                                    modalContainer.close();
+                                } else {
+                                    Alert.alert('저장 실패', res.message || '알 수 없는 오류');
+                                }
+                            });
+                        }
                     });
                 });
 
@@ -746,7 +851,7 @@
 
         })
 
-        // 설계도 첨부 파일 선택 완료후 화면에 표시
+        // 완료 파일 선택 완료후 화면에 표시
         $('#drawingFile').on('change', function() {
             const file = this.files[0];
             // 파일이 선택되지 않은 경우
@@ -761,6 +866,62 @@
 
             Alert.alert('', '선택된 파일: ' + file.name);
             document.getElementById('fileText').value = file.name;
+        });
+
+        // 접수처리 클릭 이벤트
+        $('#btnReceipt').on('click', function () {
+            const grid = wijmo.Control.getControl('#theGrid_reqList');
+            const selectedItem = grid.selectedItems[0];
+
+            // 선택 확인
+            if (!selectedItem) {
+                Alert.alert('', '행을 선택해주세요.');
+                return;
+            }
+
+            const asid = selectedItem.id;
+
+            Alert.confirm('', '선택한 요청을 접수하시겠습니까?', function () {
+                const payload = { asid: asid };
+
+                // ✅ CSRF 자동 처리되는 AjaxUtil 사용
+                AjaxUtil.postJsonData(page.url + '/receive', payload, function (res) {
+                    if (res.success) {
+                        Alert.alert('', '접수가 완료되었습니다.');
+                        page.searchMain(); // ✅ 그리드 갱신
+                    } else {
+                        Alert.alert('', '실패: ' + (res.message || '알 수 없는 오류'));
+                    }
+                });
+            });
+        });
+
+        // 완료첨부 다운로드 버튼
+        $(document).on('click', '#download', function () {
+            const grid = wijmo.Control.getControl('#theGrid_reqList');
+            const selectedItem = grid.selectedItems[0];
+
+            if (!selectedItem) {
+                Alert.alert('', '다운로드할 행을 선택하세요.');
+                return;
+            }
+
+            const fileName = selectedItem.fix_file; // ✅ 조회 결과에서 직접 가져옴
+
+            if (!fileName || fileName.trim() === '') {
+                Alert.alert('', '완료 첨부 파일이 없습니다.');
+                return;
+            }
+
+            window.open('/api/request_current/downFile?fileName=' + encodeURIComponent(fileName), '_blank');
+        });
+
+
+
+        $(document).on('change', '#drawingFile', function() {
+            const file = this.files[0];
+            if (!file) return;
+            $('#fileText').val(file.name);
         });
 
     </script>

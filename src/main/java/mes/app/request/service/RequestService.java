@@ -89,6 +89,7 @@ public class RequestService {
                     a."recdate",
                     a."endperid",
                     a."endpernm",
+                    f."as_file" as "fix_file",
                     TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
                     TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
                 FROM "tb_as010" a
@@ -98,6 +99,8 @@ public class RequestService {
                 LEFT JOIN "sys_code" sc2
                     ON sc2."Code" = a."recyn"
                    AND sc2."CodeType" = 'recyn'
+                LEFT JOIN "tb_as011" f
+                    ON f."asid" = a."asid"
                 WHERE 1=1
         		""";
 
@@ -198,7 +201,7 @@ public class RequestService {
             } else {
                 entity = new TbAs010();
                 entity.setInputdate(new Timestamp(System.currentTimeMillis()));
-                entity.setUserid(String.valueOf(user.getUserProfile().getName()));
+                entity.setUserid(String.valueOf(payload.get("spNum")));
                 entity.setUsernm(user.getUsername());
             }
 
@@ -212,17 +215,17 @@ public class RequestService {
             Object cboCompanyHiddenObj = payload.get("cboCompanyHidden");
             if (cboCompanyHiddenObj != null && !cboCompanyHiddenObj.toString().isEmpty()) {
                 try {
-                    Integer compId = null;
+                    String compId = null;
                     if (cboCompanyHiddenObj instanceof Integer) {
-                        compId = (Integer) cboCompanyHiddenObj;
+                        compId = (String) cboCompanyHiddenObj;
                     } else if (cboCompanyHiddenObj instanceof String) {
-                        compId = Integer.parseInt((String) cboCompanyHiddenObj);
+                        compId = (String) cboCompanyHiddenObj;
                     }
 
                     if (compId != null) {
                         MapSqlParameterSource paramMap = new MapSqlParameterSource();
                         paramMap.addValue("compId", compId);
-                        String compSql = "SELECT \"Name\", \"Code\" FROM company WHERE id = :compId";
+                        String compSql = "SELECT \"Name\", \"Code\" FROM company WHERE \"Code\" = :compId";
                         Map<String, Object> compData = this.sqlRunner.getRow(compSql, paramMap);
                         if (compData != null) {
                             if (compData.get("Name") != null)

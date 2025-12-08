@@ -2,14 +2,30 @@ package mes.app.request;
 
 import lombok.extern.slf4j.Slf4j;
 import mes.app.request.service.RequestCurrentService;
+import mes.domain.entity.TbAs010;
 import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
+import mes.domain.repository.TbAs010Repository;
+import mes.domain.repository.TbAs011Repository;
+import mes.domain.repository.TbAs020Repository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +36,16 @@ public class RequestCurrentController {
     @Autowired
     RequestCurrentService requestCurrentService;
 
-    // 요청사항 조회 (처리 대기 목록)
+    @Autowired
+    private TbAs011Repository tbAs011Repository;
+
+    @Autowired
+    private TbAs010Repository tbAs010Repository;
+
+    @Autowired
+    private TbAs020Repository tbAs020Repository;
+
+    // 요청사항 조회
     @GetMapping("/search")
     public AjaxResult searchDatas(
             HttpServletRequest request,
@@ -29,15 +54,23 @@ public class RequestCurrentController {
             @RequestParam(value="searchCompCd", required=false) Integer searchCompCd,
             @RequestParam(value="reqType", required=false) String reqType,
             @RequestParam(value="spjangcd", required=false) String spjangcd,
+            @RequestParam(value="aspernm", required=false) String aspernm,
+            @RequestParam(value="searchCompnm", required=false) String searchCompnm,
             Authentication auth) {
         AjaxResult result = new AjaxResult();
+
+        User user = (User) auth.getPrincipal();
+        Integer perId = user.getPersonid();
 
         List<Map<String, Object>> searchDatas = requestCurrentService.searchDatas(
                 searchfrdate
                 , searchtodate
                 , searchCompCd
+                , searchCompnm // 업체명
                 , reqType
                 , spjangcd
+                , perId
+                , aspernm // 본사담당 이름
         );
 
         result.data = searchDatas;
@@ -74,5 +107,95 @@ public class RequestCurrentController {
         }
 
         return result;
+    }
+
+    // 접수 처리 전용 메서드
+    @PostMapping("/receive")
+    @Transactional
+    public AjaxResult receiveRequest(@RequestBody Map<String, Object> payload, Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User) auth.getPrincipal();
+
+        Integer asid = Integer.parseInt(payload.get("asid").toString());
+
+        try {
+            // 요청사항 존재 확인
+            TbAs010 request = tbAs010Repository.findById(asid)
+                    .orElseThrow(() -> new RuntimeException("요청사항을 찾을 수 없습니다."));
+
+            // 현재 사용자 정보 (접수자)
+            String recperid = String.valueOf(user.getPersonid());
+            String recpernm = user.getFirst_name();
+
+            // 진행구분 상태값 변경 (필요 시)
+//            String newRecyn = "20";  // 예: '10=요청', '20=접수', '30=처리중' 등 코드테이블 값 사용
+
+            // 값 세팅
+            request.setRecperid(recperid);
+            request.setRecpernm(recpernm);
+            request.setRecdate(new Timestamp(System.currentTimeMillis()));
+//            request.setRecyn(newRecyn);
+
+            // 저장
+            tbAs010Repository.save(request);
+
+            result.success = true;
+            result.message = "접수가 완료되었습니다.";
+            result.data = asid;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.success = false;
+            result.message = "접수 처리 중 오류: " + e.getMessage();
+        }
+
+        return result;
+    }
+
+    // 완료첨부파일 다운로드 메서드
+    @GetMapping("/downFile")
+    public ResponseEntity<Resource> downFile(@RequestParam("fileName") String fileName) {
+        try {
+            // ✅ 실제 파일 경로 (업로드 경로와 동일)
+            File file = new File("C:/temp/as_request/files/" + fileName);
+
+            if (!file.exists()) {
+                log.warn("❌ 파일 없음: {}", file.getAbsolutePath());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            // ✅ 리소스 래핑
+            Resource resource = new FileSystemResource(file);
+
+            // ✅ 확장자 추출 (원본 파일의 확장자 유지)
+            String ext = "";
+            int dotIndex = file.getName().lastIndexOf(".");
+            if (dotIndex > 0) {
+                ext = file.getName().substring(dotIndex); // 예: .png, .pdf 등
+            }
+
+            // ✅ 다운로드 시 표시될 파일명 (고정)
+            String downloadName = "유지보수_완료_첨부파일" + ext;
+
+            // ✅ 파일명 인코딩 (한글 깨짐 방지)
+            String encodedName = URLEncoder.encode(downloadName, StandardCharsets.UTF_8)
+                    .replaceAll("\\+", "%20");
+
+            // ✅ Content-Type 자동 탐지
+            String contentType = Files.probeContentType(file.toPath());
+            if (contentType == null) contentType = "application/octet-stream";
+
+            // ✅ 다운로드 응답
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename*=UTF-8''" + encodedName)
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(file.length()))
+                    .body(resource);
+
+        } catch (Exception e) {
+            log.error("❌ 파일 다운로드 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

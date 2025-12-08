@@ -499,7 +499,30 @@
                 $('#fileText').val('');
                 $('#drawingFile').val('');
                 if (editor) editor.setHTML('');
+                // ✅ 파일 첨부 영역 완전 초기화
+                const $fileBox = $('#fileBoxArea');
+                $fileBox.html(`
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="fileText" placeholder="파일 찾기" readonly style="flex: 1;" />
+                        <input type="file" id="drawingFile" accept="application" style="display:none;" />
+                        <button
+                            type="button"
+                            class="btn-excellt"
+                            id="btnFile"
+                            name="btnFile"
+                            style="width: 100px; height: 36px; cursor:pointer;"
+                        >
+                            파일선택
+                        </button>
+                    </div>
+                `);
 
+                // ✅ 파일 선택 시 파일명 표시 이벤트 다시 연결
+                $(document).off('change.drawingFile').on('change.drawingFile', '#drawingFile', function() {
+                    const fileObj = this.files[0];
+                    if (!fileObj) return;
+                    $('#fileText').val(fileObj.name);
+                });
                 // 🔹 유지할 필드: 세션 기반 / 자동 바인딩된 정보
                 // 그대로 둠:
                 // #spNum
@@ -557,7 +580,7 @@
                                         <input
                                             type="text"
                                             id="fileText"
-                                            value="${fileName}"
+                                            value="첨부파일 존재"
                                             readonly
                                             style="flex: 1; color:#333;"
                                         />
@@ -791,6 +814,27 @@
                 });
             });
         });
+
+        // 완료첨부 다운로드 버튼
+        $(document).on('click', '#download', function () {
+            const grid = wijmo.Control.getControl('#theGrid_reqList');
+            const selectedItem = grid.selectedItems[0];
+
+            if (!selectedItem) {
+                Alert.alert('', '다운로드할 행을 선택하세요.');
+                return;
+            }
+
+            const fileName = selectedItem.fix_file; // ✅ 조회 결과에서 직접 가져옴
+
+            if (!fileName || fileName.trim() === '') {
+                Alert.alert('', '완료 첨부 파일이 없습니다.');
+                return;
+            }
+
+            window.open('/api/request_current/downFile?fileName=' + encodeURIComponent(fileName), '_blank');
+        });
+
 
 
     </script>
