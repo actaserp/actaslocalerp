@@ -3,6 +3,7 @@ package mes.app.request;
 import lombok.extern.slf4j.Slf4j;
 import mes.app.request.service.RequestCurrentService;
 import mes.domain.entity.TbAs010;
+import mes.domain.entity.TbAs020;
 import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
 import mes.domain.repository.TbAs010Repository;
@@ -100,6 +101,50 @@ public class RequestCurrentController {
 
         try {
             result = requestCurrentService.saveProcess(payload, user);
+
+            // check020이 1일 경우 tb_as020에도 insert
+            if (payload.get("check020") != null && "1".equals(payload.get("check020").toString())) {
+
+                // ✅ asid 추출
+                Integer asid = payload.get("asid") != null && !payload.get("asid").toString().isEmpty()
+                        ? Integer.parseInt(payload.get("asid").toString())
+                        : null;
+
+                if (asid == null) {
+                    throw new RuntimeException("ASID가 존재하지 않아 tb_as020을 생성할 수 없습니다.");
+                }
+
+                // ✅ tb_as010 데이터 조회
+                TbAs010 request = tbAs010Repository.findById(asid)
+                        .orElseThrow(() -> new RuntimeException("요청사항을 찾을 수 없습니다. (asid=" + asid + ")"));
+
+                // ✅ TbAs020 신규 엔티티 생성
+                TbAs020 entity = new TbAs020();
+
+                // 날짜 관련 처리
+                String rptdate = (payload.get("fixdate") != null)
+                        ? payload.get("fixdate").toString()
+                        : new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+
+                entity.setRptdate(rptdate);                  // 등록일자
+                entity.setRptweek(getWeekFromDate(rptdate)); // 작성주차 자동 계산
+
+                // 기본값 설정
+                entity.setCltnm(request.getUsernm());          // 업체명
+                entity.setFixflag("1");                       // 업무구분 (기본 1)
+                entity.setActflag("3");                       // 근무구분 (기본 1)
+                entity.setAsmenu(request.getAsmenu());       // 화면명
+                entity.setAsdv(request.getAsdv());            // 요청구분
+                entity.setRecyn((String) payload.get("recyn"));                         // 진행구분 기본 완료 상태
+                entity.setRptremark((String) payload.get("remark"));    // 업무내용 기본 문구
+                entity.setRemark("유지보수 요청처리");   // 특이사항
+                entity.setFixperid(String.valueOf(user.getId()));
+                entity.setFixpernm(user.getUsername());
+                entity.setInputdate(new Timestamp(System.currentTimeMillis()));
+
+                tbAs020Repository.save(entity);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             result.success = false;
@@ -197,6 +242,18 @@ public class RequestCurrentController {
         } catch (Exception e) {
             log.error("❌ 파일 다운로드 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 작성주차 자동 계산 메서드
+    private String getWeekFromDate(String dateStr) {
+        try {
+            java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
+            java.time.temporal.WeekFields weekFields = java.time.temporal.WeekFields.of(java.util.Locale.KOREA);
+            int weekNumber = date.get(weekFields.weekOfWeekBasedYear());
+            return date.getYear() + "-W" + String.format("%02d", weekNumber); // 예: 2025-W45
+        } catch (Exception e) {
+            return "";
         }
     }
 }

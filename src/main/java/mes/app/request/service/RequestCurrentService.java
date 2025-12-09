@@ -271,17 +271,24 @@ public class RequestCurrentService {
 
             tbAs011Repository.save(entity);
 
-            // 요청사항의 진행구분 업데이트 (처리 완료로 변경)
+            // 요청사항의 진행구분 업데이트 (처리 완료시 enddate 업데이트)
             if (payload.get("recyn") != null) {
-                request.setRecyn(payload.get("recyn").toString());
-                request.setEndperid(String.valueOf(user.getId()));
-                request.setEndpernm(user.getUsername());
-                String enddate = cleanDate(payload.get("fixdate") != null ? payload.get("fixdate") : payload.get("rptdate"));
-                if (enddate != null) {
-                    request.setEnddate(enddate);
+                String recynValue = payload.get("recyn").toString();
+                request.setRecyn(recynValue);
+
+                // ✅ recyn이 "1"일 때만 enddate 갱신
+                if ("1".equals(recynValue)) {
+                    String enddate = cleanDate(payload.get("fixdate") != null ? payload.get("fixdate") : payload.get("rptdate"));
+                    request.setEndperid(String.valueOf(user.getId()));
+                    request.setEndpernm(user.getUsername());
+                    if (enddate != null) {
+                        request.setEnddate(enddate);
+                    }
                 }
+
                 tbAs010Repository.save(request);
             }
+
 
             result.success = true;
             result.data = entity.getFixid();

@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -67,6 +68,37 @@ public class AccountController {
     		HttpServletResponse response,
     		HttpSession session, Authentication auth) {
 
+		// ✅ 1️⃣ 자동로그인 쿠키 검사
+		if (auth == null) {
+			Cookie[] cookies = request.getCookies();
+			if (cookies != null) {
+				for (Cookie cookie : cookies) {
+					if ("MES_AUTO_LOGIN".equals(cookie.getName())) {
+						String username = cookie.getValue();
+
+						User user = userRepository.findByUsername(username).orElse(null);
+
+						if (user != null && user.getActive()) {
+							UsernamePasswordAuthenticationToken token =
+									new UsernamePasswordAuthenticationToken(
+											user, null, Collections.emptyList());
+
+							SecurityContextHolder.getContext().setAuthentication(token);
+							session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+							return new ModelAndView("redirect:/");
+						} else {
+							Cookie clearCookie = new Cookie("MES_AUTO_LOGIN", null);
+							clearCookie.setMaxAge(0);
+							clearCookie.setPath("/");
+							response.addCookie(clearCookie);
+						}
+					}
+
+				}
+			}
+		}
+
 		//User-Agent를 기반으로 모바일 여부 감지
 		String userAgent = request.getHeader("User-Agent").toLowerCase();
 		boolean isMobile = userAgent.contains("mobile") || userAgent.contains("android") || userAgent.contains("iphone");
@@ -125,6 +157,13 @@ public class AccountController {
 		this.accountService.saveLoginLog("logout", auth);
 		
 		handler.logout(request, response, auth);
+
+		// ✅ 자동로그인 쿠키 제거
+		Cookie clearCookie = new Cookie("MES_AUTO_LOGIN", null);
+		clearCookie.setMaxAge(0);     // 즉시 만료
+		clearCookie.setPath("/");     // 전체 경로 적용
+		response.addCookie(clearCookie);
+
 	    response.sendRedirect("/login");
 	}
 
@@ -132,7 +171,9 @@ public class AccountController {
     public AjaxResult postLogin(
     		@RequestParam("username") final String username, 
     		@RequestParam("password") final String password,
-    		final HttpServletRequest request) {
+			@RequestParam(value = "autoLogin", required = false) String autoLogin,
+    		final HttpServletRequest request,
+			HttpServletResponse response) {
     	// 여기로 들어오지 않음.
     	
     	AjaxResult result = new AjaxResult();
@@ -170,6 +211,14 @@ public class AccountController {
 				} catch (UnknownHostException e) {
 					// Handle the exception (e.g., log it)
 					e.printStackTrace();
+				}
+				// 자동 로그인
+				if ("on".equals(autoLogin)) {
+					Cookie autoLoginCookie = new Cookie("MES_AUTO_LOGIN", username);
+					autoLoginCookie.setHttpOnly(true);
+					autoLoginCookie.setPath("/");
+					autoLoginCookie.setMaxAge(60 * 60 * 24 * 365); // 자동 로그인
+					response.addCookie(autoLoginCookie);
 				}
 			}
 		} else {

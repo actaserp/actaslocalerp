@@ -333,6 +333,9 @@
                             <col style="width:38%">
 
                             <col style="width:80px">
+                            <col style="width:10%">
+
+                            <col style="width:80px">
                             <col style="width:14%">
                         </colgroup>
 
@@ -349,6 +352,12 @@
                                 <td>
                                     <div class="input-group" style="display:flex; align-items:center; gap:5px;">
                                         <input type="text" id="aspernm" name="aspernm" style="" readonly>
+                                    </div>
+                                </td>
+                                <th><label for="check020">업무일지</label></th>
+                                <td>
+                                    <div>
+                                        <input type="radio" id="check020" name="check020" style="width: 10px; margin-left: 37%;">
                                     </div>
                                 </td>
 
@@ -368,7 +377,7 @@
 
                             <tr>
                                 <th><label for="cltnm">제목</label></th>
-                                <td colspan="3">
+                                <td colspan="5">
                                     <input class="form-control2" type="text" id="cltnm" name="cltnm">
                                 </td>
                                 <th><label for="fixflag">요청구분</label></th>
@@ -379,7 +388,7 @@
 
                             <tr>
                                 <th><label for="asmenu">화면명</label></th>
-                                <td colspan="3">
+                                <td colspan="5">
                                     <input class="form-control2" type="text" id="asmenu" name="asmenu">
                                 </td>
                                 <th><label for="actflag">진행구분</label></th>
@@ -390,14 +399,14 @@
 
                             <tr>
                                 <th><label>요청내용</label></th>
-                                <td colspan="5">
+                                <td colspan="7">
                                     <div class="webEdit" id="webEdit" style=""></div>
                                 </td>
                             </tr>
 
                             <tr>
                                 <th><label for="drawingFile">첨부파일</label></th>
-                                <td colspan="5">
+                                <td colspan="7">
                                     <input type="text" id="fileText" placeholder="파일 찾기" style="width:80%;">
                                     <input type="file" id="drawingFile" accept="application" style="display:none;" />
                                     <button type="button" class="btn-excellt" id="btnFile" name="btnFile"
@@ -742,6 +751,7 @@
                         
                         // 진행구분
                         const recyn = $content.find('#actflag').val() || '1';
+                        const check020 = $content.find('#check020').val();
 
                         const payload = {
                             fixid: formData.fixid || '',
@@ -751,6 +761,7 @@
                             remark: processContent,
                             processContent: processContent,
                             recyn: recyn,
+                            check020: check020,
                             spjangcd: getSpjangcdFromSession(),
                         };
 
