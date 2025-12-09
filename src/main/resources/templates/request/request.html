@@ -755,6 +755,10 @@
                 ]
             });
 
+            if (parent && parent.$) {
+                parent.$('#navbarBarMenu2 .open_menu').trigger('click');
+            }
+
         })
 
         // 파일첨부 저장 로직
