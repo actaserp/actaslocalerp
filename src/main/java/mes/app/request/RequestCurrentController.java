@@ -131,6 +131,7 @@ public class RequestCurrentController {
 //            String newRecyn = "20";  // 예: '10=요청', '20=접수', '30=처리중' 등 코드테이블 값 사용
 
             // 값 세팅
+            request.setRecyn("0");
             request.setRecperid(recperid);
             request.setRecpernm(recpernm);
             request.setRecdate(new Timestamp(System.currentTimeMillis()));
