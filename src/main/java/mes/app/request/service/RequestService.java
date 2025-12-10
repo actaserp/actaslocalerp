@@ -130,9 +130,9 @@ public class RequestService {
             sql += " AND a.\"asdate\" <= :searchtodate ";
         }
 
-        // 업체 조건 추가 (searchCompCd가 있으면 cltnm으로 검색)
-        if (searchCompCd != null) {
-            sql += " AND a.\"cltnm\" IN (SELECT \"Name\" FROM company WHERE \"Code\" = :searchCompCd) ";
+        // 업체 조건 추가
+        if (searchCompCd != null && !searchCompCd.isEmpty()) {
+            sql += " AND a.\"cltcd\" = :searchCompCd ";
         }
 
         // 요청구분 조건 추가

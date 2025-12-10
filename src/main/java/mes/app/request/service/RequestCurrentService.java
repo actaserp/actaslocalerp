@@ -117,8 +117,8 @@ public class RequestCurrentService {
         }
 
         // 업체 조건 추가
-        if (searchCompCd != null) {
-            sql += " AND a.\"cltcd\" = :searchCompCd) ";
+        if (searchCompCd != null && !searchCompCd.isEmpty()) {
+            sql += " AND a.\"cltcd\" = :searchCompCd ";
         }
 
         // 요청구분 조건 추가
