@@ -34,7 +34,7 @@ public class RequestCurrentService {
     public List<Map<String, Object>> searchDatas(
             String searchfrdate
             , String searchtodate
-            , Integer searchCompCd
+            , String searchCompCd
             , String searchCompnm
             , String reqType
             , String spjangcd
@@ -118,7 +118,7 @@ public class RequestCurrentService {
 
         // 업체 조건 추가
         if (searchCompCd != null) {
-            sql += " AND a.\"cltnm\" IN (SELECT \"Name\" FROM company WHERE id = :searchCompCd) ";
+            sql += " AND a.\"cltcd\" = :searchCompCd) ";
         }
 
         // 요청구분 조건 추가

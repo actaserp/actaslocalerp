@@ -52,7 +52,7 @@ public class RequestCurrentController {
             HttpServletRequest request,
             @RequestParam(value="searchfrdate") String searchfrdate,
             @RequestParam(value="searchtodate") String searchtodate,
-            @RequestParam(value="searchCompCd", required=false) Integer searchCompCd,
+            @RequestParam(value="searchCompCd", required=false) String searchCompCd,
             @RequestParam(value="reqType", required=false) String reqType,
             @RequestParam(value="spjangcd", required=false) String spjangcd,
             @RequestParam(value="aspernm", required=false) String aspernm,

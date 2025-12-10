@@ -89,7 +89,7 @@ public class WorkReportService {
             sql += " AND fixpernm LIKE CONCAT('%', :txtName, '%') ";
         }
 
-        sql += " ORDER BY rptdate DESC ";
+        sql += " ORDER BY fixflag ASC, rptdate DESC ";
 
         return this.sqlRunner.getRows(sql, dicParam);
     }

@@ -292,6 +292,46 @@
 
 
     </div>
+
+    <script type="text/x-tmpl" id="getCompTemplate">
+        <div class="content_wrap popup">
+        <div class="table-wrap">
+                <table class="write-table">
+                    <caption>주문등록 테이블</caption>
+                    <tbody>
+                        <tr>
+                            <th style="text-align: center">
+                                <label for="searchCode">업체코드</label>
+                            </th>
+                            <td style="width:50px;">
+                                <input id="searchCode" name="searchCode" type="text" style="width:180px;" />
+                            </td>
+
+                            <th style="text-align: center">
+                                <label for="searchName">거래처명</label>
+                            </th>
+                            <td style="width:50px;">
+                                 <input id="searchName" name="searchName" type="text"  style="width:180px;"/>
+                            </td>
+                            <td colspan="2" style="text-align: center;">
+                                <button type="button" class="btn-default" id="btnSubjectSearch" title="조회"><i class="fas fa-search"></i>검색</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="grid_box" style="margin-top: 10px;">
+                    <div id="comp-grid" style="height: 300px; max-height: 300px;"></div>
+                </div>
+        </div>
+
+        <div class="popup-button">
+          <button type="button" class="btn-popup" id="btnAccountSave"><span data-labelCd="선택">선택</span></button>
+          <button type="button" class="btn-popup" id="modal-close-button"><span data-labelCd="닫기">닫기</span></button>
+        </div>
+    </div>
+    </script>
+
 </th:block>
 
 <th:block layout:fragment="scripts">
@@ -652,6 +692,129 @@
                 });
             }
 
+            showGetComp(type) {
+                let _this = this;
+                let viewdata4;
+                let theGrid4;
+                let selectedItem = null;
+
+                let content = tmpl('getCompTemplate', {});
+                let $content = $(content);
+
+                let popContainer = new PopupDraggable('거래처조회');
+                popContainer.open({ width: 800, height: 500, $content });
+
+                let $searchName = $content.find('#searchName');
+                let $searchCode = $content.find('#searchCode');
+                let $btnSearch = $content.find('#btnSubjectSearch');
+
+
+                // 사번 조회 함수
+                function fetchPersonList() {
+                    let searchCode = $searchCode.val();
+                    let searchName = $searchName.val();
+
+                    $.ajax({
+                        url: '/api/request/getComp',
+                        type: 'GET',
+                        data: {
+                            searchCode: searchCode,
+                            searchName: searchName,
+                            spjangcd: sessionStorage.getItem('spjangcd')
+                        },
+                        async: false,
+                        success: function (res) {
+                            let data2 = res.data || [];
+
+                            viewdata4 = new wijmo.collections.CollectionView(data2);
+
+                            if (theGrid4) {
+                                theGrid4.itemsSource = viewdata4;
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.error('Error fetching person data:', textStatus, errorThrown);
+                        }
+                    });
+                }
+
+                // 그리드 먼저 생성
+                theGrid4 = new wijmo.grid.FlexGrid('#comp-grid', {
+                    autoGenerateColumns: false,
+                    showMarquee: true,
+                    columns: [
+                        { binding: 'Code', header: '업체코드', width: 100, align: 'center' },
+                        { binding: 'BusinessNumber', header: '사업자번호', width: 100, align: 'center' },
+                        { binding: 'Name', header: '거래처명', width: '*', align: 'center' },
+                        { binding: 'OurManager', header: '담당자명', width: 150, align: 'center' },
+                    ],
+                    isReadOnly: true,
+                    itemsSource: null
+                });
+
+                theGrid4.rowHeaders.columns.splice(0, 1);
+
+
+                fetchPersonList();
+
+
+                $btnSearch.click(() => {
+                    fetchPersonList();
+                });
+
+
+                $searchCode.add($searchName).on('keydown', function (e) {
+                    if (e.keyCode === 13) {
+                        fetchPersonList();
+                    }
+                });
+
+                theGrid4.selectionChanged.addHandler((s, e) => {
+                    selectedItem = s.collectionView.currentItem;
+                });
+
+                $content.find('#btnAccountSave').click(() => {
+                    if (selectedItem) {
+                        if(type === 'spNum') {
+                            console.log('selectedItem : ', selectedItem)
+                            $('#spNum').val(selectedItem.BusinessNumber);
+                            $('#cboCompanyHidden').val(selectedItem.Code);
+                            popContainer.close();
+                        }
+                        else {
+                            console.log('selectedItem : ', selectedItem)
+                            $('#cboCompany2').val(selectedItem.Name);
+                            $('#cboCompanyHidden2').val(selectedItem.Code);
+                            popContainer.close();
+                        }
+                    }/* else {
+                        Alert.alert('', '사번을 선택해주세요.');
+                    }*/
+                });
+
+                theGrid4.hostElement.addEventListener('dblclick', function (e) {
+                    let items = theGrid4.selectedItems;
+                    if (items.length === 0) {
+                        return false;
+                    }
+                    const selectedItem = items[0];
+                    if(type === 'spNum') {
+                        console.log('selectedItem : ', selectedItem)
+                        $('#spNum').val(selectedItem.BusinessNumber);
+                        $('#cboCompanyHidden').val(selectedItem.Code);
+                        popContainer.close();
+                    }
+                    else {
+                        console.log('selectedItem : ', selectedItem)
+                        $('#cboCompany2').val(selectedItem.Name);
+                        $('#cboCompanyHidden2').val(selectedItem.Code);
+                        popContainer.close();
+                    }
+                    popContainer.close();
+                });
+
+            }
+
         }
 
         let page = null;
@@ -695,7 +858,29 @@
             }
 
 
+            // 유저정보 확인 후 거래처직원 아닐경우 업체검색필터 readonly 제거
+            $.ajax({
+                url: '/api/request/userInfo',
+                type: 'GET',
+                data: { userId: userId },
+                success: function (res) {
+                    if (!res || !res.data.UserGroup_id) {
+                        console.warn("⚠️ userGroup 정보 없음");
+                        return;
+                    }
 
+                    // 🚫 거래처가 아닐 경우 → readonly 속성 해제
+                    if (res.data.UserGroup_id !== 10) {
+                        $("#spNum, #cboCompany2").prop("readonly", false);
+                        console.log("🔓 거래처가 아닌 사용자이므로 입력 활성화됨");
+                    } else {
+                        console.log("🔒 거래처 사용자 — readonly 유지");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("🚨 사용자 정보 조회 실패:", status, error);
+                }
+            });
 
             // $('#cboCompany').click(function(){
             //     companyPopupOpen('cboCompany', 'cboCompanyHidden');
@@ -758,6 +943,28 @@
             if (parent && parent.$) {
                 parent.$('#navbarBarMenu2 .open_menu').trigger('click');
             }
+
+            // 요청등록 사업자번호 input 클릭시 업체 검색 팝업 활성화
+            $('#spNum').click(function (e) {
+                if ($(this).prop('readonly')) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation(); // 다른 click 이벤트도 차단
+                    return false;
+                }
+
+                page.showGetComp('spNum');
+            });
+
+            // 요청현황 업체명 input 클릭시 업체 검색 팝업 활성화
+            $('#cboCompany2').click(function (e) {
+                if ($(this).prop('readonly')) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation(); // 다른 click 이벤트도 차단
+                    return false;
+                }
+
+                page.showGetComp('cboCompany2');
+            });
 
         })
 

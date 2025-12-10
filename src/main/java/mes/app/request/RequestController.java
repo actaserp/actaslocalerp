@@ -65,6 +65,23 @@ public class RequestController {
         return result;
     }
 
+    // 거래처 정보 조회
+    @GetMapping("/userInfo")
+    public AjaxResult userInfo(
+            HttpServletRequest request,
+            @RequestParam(value="userId") String userid,
+            Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User)auth.getPrincipal();
+        String username = user.getUsername();
+
+        Map<String, Object> searchData  = requestService.boolUserInfo( userid );
+
+        result.data = searchData;
+
+        return result;
+    }
+
     // 요청사항 조회
     @GetMapping("/search")
     public AjaxResult searchDatas(
@@ -297,6 +314,29 @@ public class RequestController {
             log.error("❌ 파일 다운로드 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    // 거래처 검색 팝업조회
+    @GetMapping("/getComp")
+    public AjaxResult getComp(
+            HttpServletRequest request,
+            @RequestParam(value="searchCode") String searchCode,
+            @RequestParam(value="searchName") String searchName,
+            @RequestParam(value="spjangcd", required=false) String spjangcd,
+            Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User)auth.getPrincipal();
+        String username = user.getUsername();
+
+        List<Map<String, Object>> searchDatas  = requestService.getComp(
+                searchCode
+                , searchName
+                , spjangcd
+        );
+
+        result.data = searchDatas;
+
+        return result;
     }
 
 }

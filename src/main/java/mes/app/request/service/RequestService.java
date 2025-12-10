@@ -44,6 +44,24 @@ public class RequestService {
 
         return item;
     }
+
+    // 사용자 거래처 직원 유무 조회
+    public Map<String, Object> boolUserInfo(String userid) {
+        MapSqlParameterSource dicParam = new MapSqlParameterSource();
+        dicParam.addValue("userid", userid);
+
+        String sql = """
+                SELECT
+                    *
+                FROM user_profile
+                WHERE "User_id"= (select id from auth_user where username = :userid)
+        		""";
+
+
+        Map<String, Object> item = this.sqlRunner.getRow(sql, dicParam);
+
+        return item;
+    }
     // 요청사항 조회
     public List<Map<String, Object>> searchDatas(
             String searchfrdate
@@ -332,4 +350,37 @@ public class RequestService {
         return dateStr.replaceAll("-", "");
     }
 
+    // 거래처 정보 조회
+    public List<Map<String, Object>> getComp(
+            String searchCode
+            , String searchName
+            , String spjangcd
+    ) {
+        MapSqlParameterSource dicParam = new MapSqlParameterSource();
+        dicParam.addValue("spjangcd", spjangcd);
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT
+                *
+            FROM company
+            WHERE 1=1
+            AND spjangcd = :spjangcd
+            """);
+
+        if (searchCode != null && !searchCode.isEmpty()) {
+            sql.append(" AND \"Code\" LIKE :searchCode");
+            dicParam.addValue("searchCode", "%" + searchCode + "%");
+        }
+
+        if (searchName != null && !searchName.isEmpty()) {
+            sql.append(" AND \"Name\" LIKE :searchName");
+            dicParam.addValue("searchName", "%" + searchName + "%");
+        }
+
+        sql.append(" ORDER BY \"Code\" ASC");
+
+        List<Map<String, Object>> item = this.sqlRunner.getRows(String.valueOf(sql), dicParam);
+
+        return item;
+    }
 }
