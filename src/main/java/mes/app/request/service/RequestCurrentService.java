@@ -39,6 +39,7 @@ public class RequestCurrentService {
             , String reqType
             , String spjangcd
             , Integer perId
+            , String recyn
             , String aspernm
     ) {
         // 날짜 형식 변환 (YYYY-MM-DD -> YYYYMMDD)
@@ -125,6 +126,11 @@ public class RequestCurrentService {
         if (reqType != null && !reqType.isEmpty()) {
             sql += " AND a.\"asdv\" = :reqType ";
         }
+        // 진행구분 조건 추가
+        if (recyn != null && !recyn.isEmpty()) {
+            dicParam.addValue("recyn", recyn);
+            sql += " AND a.\"recyn\" = :recyn ";
+        }
 
         sql += " ORDER BY a.\"asdate\" DESC, a.\"inputdate\" DESC ";
 
@@ -150,7 +156,7 @@ public class RequestCurrentService {
             a."aspernm",
             a."retitle" AS title,
             a."remark" AS content,
-            a."asdv" AS reqType,
+            a."asdv" AS reqtype,
             sc1."Value" AS reqType_nm,
             a."asmenu",
             a."recyn",

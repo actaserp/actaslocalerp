@@ -91,7 +91,19 @@
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
-                                        <select id="reqType2"></select>
+                                        <select id="reqType2" style="width:90px;"></select>
+                                    </div>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt>
+                                    <label>
+                                        진행구분<span class="eq"></span>
+                                    </label>
+                                </dt>
+                                <dd>
+                                    <div class="srch-box">
+                                        <select id="recyn" style="width:90px;"></select>
                                     </div>
                                 </dd>
                             </dl>
@@ -125,7 +137,6 @@
                                     <li>
                                         <a class="btn btn-delete" title="검색" id="btnReceipt">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             접수
                                         </a>
                                     </li>
@@ -137,7 +148,6 @@
                                     <li>
                                         <a class="btn btn-delete" title="검색" id="btnAddNew">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
                                             처리등록
                                         </a>
                                     </li>
@@ -351,7 +361,7 @@
                                 <th><label for="aspernm">본사담당</label></th>
                                 <td>
                                     <div class="input-group" style="display:flex; align-items:center; gap:5px;">
-                                        <input type="text" id="aspernm" name="aspernm" style="" readonly>
+                                        <input type="text" id="aspernm" name="aspernm" style="">
                                     </div>
                                 </td>
                                 <th><label for="check020">업무일지</label></th>
@@ -398,12 +408,19 @@
                             </tr>
 
                             <tr>
-                                <th><label>요청내용</label></th>
+                                <th><label>처리내용</label></th>
                                 <td colspan="7">
                                     <div class="webEdit" id="webEdit" style=""></div>
                                 </td>
                             </tr>
+                            <tr>
+                                <th><label>요청내용</label></th>
+                                <td colspan="7">
+                                    <textarea placeholder=""  id="reqtextpop" name="reqtextpop" readonly>
 
+                                    </textarea>
+                                </td>
+                            </tr>
                             <tr>
                                 <th><label for="drawingFile">첨부파일</label></th>
                                 <td colspan="7">
@@ -431,7 +448,7 @@
         <div class="content_wrap popup">
         <div class="table-wrap">
                 <table class="write-table">
-                    <caption>주문등록 테이블</caption>
+                    <caption>업체 검색 테이블</caption>
                     <tbody>
                         <tr>
                             <th style="text-align: center">
@@ -497,8 +514,9 @@
 
                 $('#searchfrdate2').val(getNowDateMinus7());
                 $('#searchDate, #searchtodate2').val(getNowDate());
-                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'choose', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'all', false, 'asdv');
                 AjaxUtil.fillSelectOptions($('#fixflag'), 'system_code', 'choose', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#recyn'), 'system_code', 'all', false, 'recyn');
 
                 this.init();
             }
@@ -635,6 +653,7 @@
                     searchCompnm: $('#cboCompany2').val(),
                     aspernm: $('#aspernm2').val(),
                     reqType : $('#reqType2').val(),
+                    recyn : $('#recyn').val(),
                     spjangcd: getSpjangcdFromSession(),
                 }
 
@@ -680,7 +699,7 @@
 
                 // 팝업 열기
                 let modalContainer = new PopupDraggable('처리등록');
-                modalContainer.open({ width: 1100, height: 600, $content });
+                modalContainer.open({ width: 1150, height: 725, $content });
 
                 // ✅ 팝업 렌더링 후 Editor 생성 (외부 스코프에서 선언)
                 let popupEditor = null;
@@ -689,7 +708,7 @@
                     if (webEditEl) {
                         popupEditor = new toastui.Editor({
                             el: webEditEl,
-                            height: '290px',
+                            height: '280px',
                             initialEditType: 'wysiwyg',
                             previewStyle: 'vertical',
                             placeholder: '처리 내용을 입력하세요...',
@@ -730,6 +749,11 @@
                     $content.find('#cltnm').val(formData.title || formData.retitle || '');
                     // 요청구분, 화면명 등은 readonly로 표시만
                     $content.find('#asmenu').val(formData.asmenu || '');
+                    // ✅ HTML 태그 제거 (웹에디터 내용에서 순수 텍스트만 추출)
+                    const plainContent = (formData.content || '').replace(/<[^>]+>/g, '');
+
+                    // 요청현황 정보 영역에 데이터 표시
+                    $('#reqtextpop').val(plainContent);
                 }
 
                 // ✅ 완료 첨부파일 존재 시 표시
@@ -757,9 +781,9 @@
                 }
 
                 // 요청구분 셀렉트 박스 바인드
-                AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', formData.asdv, 'asdv');
-                if (formData.recyn) {
-                    $content.find('#fixflag').val(formData.asdv);
+                AjaxUtil.fillSelectOptions($content.find('#fixflag'), 'system_code', '', formData.reqtype, 'asdv');
+                if (formData.reqtype) {
+                    $content.find('#fixflag').val(formData.reqtype);
                 }
 
                 // 처리등록 팝업 저장버튼 클릭

@@ -68,6 +68,8 @@ public class RequestService {
             , String searchtodate
             , String searchCompCd
             , String reqType
+            , String recyn
+            , String usernm
             , String spjangcd
     ) {
         // 날짜 형식 변환 (YYYY-MM-DD -> YYYYMMDD)
@@ -139,7 +141,16 @@ public class RequestService {
         if (reqType != null && !reqType.isEmpty()) {
             sql += " AND a.\"asdv\" = :reqType ";
         }
-
+        // 요청자 조건 추가
+        if (usernm != null && !usernm.isEmpty()) {
+            dicParam.addValue("usernm", usernm);
+            sql += " AND a.\"usernm\" = :usernm ";
+        }
+        // 진행구분 조건 추가
+        if (recyn != null && !recyn.isEmpty()) {
+            dicParam.addValue("recyn", recyn);
+            sql += " AND a.\"recyn\" = :recyn ";
+        }
         sql += " ORDER BY a.\"asdate\" DESC, a.\"inputdate\" DESC ";
 
         List<Map<String, Object>> item = this.sqlRunner.getRows(sql, dicParam);

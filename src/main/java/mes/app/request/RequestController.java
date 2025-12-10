@@ -90,6 +90,8 @@ public class RequestController {
             @RequestParam(value="searchtodate") String searchtodate,
             @RequestParam(value="searchCompCd", required=false) String searchCompCd,
             @RequestParam(value="reqType", required=false) String reqType,
+            @RequestParam(value="recyn", required=false) String recyn,
+            @RequestParam(value="reqPer", required=false) String usernm,
             @RequestParam(value="spjangcd", required=false) String spjangcd,
             Authentication auth) {
         AjaxResult result = new AjaxResult();
@@ -101,6 +103,8 @@ public class RequestController {
                 , searchtodate
                 , searchCompCd
                 , reqType
+                , recyn
+                , usernm
                 , spjangcd
         );
 

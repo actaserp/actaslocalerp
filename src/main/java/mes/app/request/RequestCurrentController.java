@@ -57,6 +57,7 @@ public class RequestCurrentController {
             @RequestParam(value="spjangcd", required=false) String spjangcd,
             @RequestParam(value="aspernm", required=false) String aspernm,
             @RequestParam(value="searchCompnm", required=false) String searchCompnm,
+            @RequestParam(value="recyn", required=false) String recyn,
             Authentication auth) {
         AjaxResult result = new AjaxResult();
 
@@ -71,6 +72,7 @@ public class RequestCurrentController {
                 , reqType
                 , spjangcd
                 , perId
+                , recyn
                 , aspernm // 본사담당 이름
         );
 

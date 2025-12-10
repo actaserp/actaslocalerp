@@ -114,6 +114,7 @@ public class CompanyService {
             , "UnpaidAmount" as unpaid_amount
             , "ManageRemark" as manage_remark
             , "GroupName" as group_name
+            , "invoiceEmail"
              , relyn as relyn
             from company c 
             Where id = :company_id

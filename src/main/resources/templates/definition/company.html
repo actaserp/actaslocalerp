@@ -259,20 +259,6 @@
                                                 <input type="text" style="width: 100%;" id="zip_code"
                                                        name="zip_code" onclick="sample4_execDaumPostcode()" placeholder="우편번호">
                                             </td>
-
-                                            <th>
-                                                <label for="address">주소</label>
-                                            </th>
-                                            <td colspan="2">
-                                                <input type="text" style="width: 100%;" id="address"
-                                                       name="address" >
-                                                <input type="hidden" id="placeAddress" placeholder="지번주소">
-                                                <span id="guide" style="color:#999;display:none"></span>
-                                            </td>
-
-
-                                        </tr>
-                                        <tr>
                                             <th>
                                                 <label for="homepage">홈페이지</label>
                                             </th>
@@ -280,7 +266,19 @@
                                                 <input type="text" style="width: 100%;" id="homepage"
                                                        name="homepage">
                                             </td>
-
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                <label for="address">주소</label>
+                                            </th>
+                                            <td colspan="4">
+                                                <input type="text" style="width: 100%;" id="address"
+                                                       name="address" >
+                                                <input type="hidden" id="placeAddress" placeholder="지번주소">
+                                                <span id="guide" style="color:#999;display:none"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th>
                                                 <label for="group_name">분류</label>
                                             </th>
@@ -288,20 +286,18 @@
                                                 <input type="text" id="group_name" name="group_name"
                                                        style="width: 100%;">
                                             </td>
+                                            <th>
+                                                <label for="relyn">거래중지여부</label>
+                                            </th>
+                                            <td style="text-align: center;">
+                                                <input type="checkbox" id="relyn" name="relyn" value="1" style="display: block; margin: auto; height: 26px; width: 26px;">
+                                            </td>
                                         </tr>
                                        <tr>
                                            <th>
-                                               <label for="relyn">거래중지여부</label>
-                                           </th>
-                                           <td style="text-align: center;">
-                                               <input type="checkbox" id="relyn" name="relyn" value="1" style="display: block; margin: auto; height: 26px; width: 26px;">
-                                           </td>
-
-
-                                           <th>
                                                 <label for="description">설명</label>
                                             </th>
-                                            <td colspan="3">
+                                            <td colspan="4">
                                                 <input type="text" id="description" name="description"
                                                        style="width: 100%;">
                                               <!--<textarea id="description" name="description"></textarea>-->

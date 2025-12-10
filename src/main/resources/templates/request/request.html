@@ -206,12 +206,36 @@
                             <dl>
                                 <dt>
                                     <label>
+                                        요청자<span class="eq"></span>
+                                    </label>
+                                </dt>
+                                <dd>
+                                    <div class="srch-box">
+                                        <input type="text" placeholder=""  id="reqPer2" name="reqPer2"/>
+                                    </div>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt>
+                                    <label>
                                         요청구분<span class="eq"></span>
                                     </label>
                                 </dt>
                                 <dd>
                                     <div class="srch-box">
                                         <select id="reqType2"></select>
+                                    </div>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt>
+                                    <label>
+                                        진행구분<span class="eq"></span>
+                                    </label>
+                                </dt>
+                                <dd>
+                                    <div class="srch-box">
+                                        <select id="recyn"></select>
                                     </div>
                                 </dd>
                             </dl>
@@ -363,6 +387,7 @@
                 $('#searchDate, #searchtodate2').val(getNowDate());
                 AjaxUtil.fillSelectOptions($('#reqType'), 'system_code', 'choose', false, 'asdv');
                 AjaxUtil.fillSelectOptions($('#reqType2'), 'system_code', 'all', false, 'asdv');
+                AjaxUtil.fillSelectOptions($('#recyn'), 'system_code', 'all', false, 'recyn');
 
                 this.init();
             }
@@ -451,6 +476,8 @@
                     searchtodate: $('#searchtodate2').val(),
                     searchCompCd: $('#cboCompanyHidden2').val(),
                     reqType : $('#reqType2').val(),
+                    recyn : $('#recyn').val(),
+                    reqPer : $('#reqPer2').val(),
                     spjangcd: getSpjangcdFromSession(),
                 }
 
@@ -518,6 +545,10 @@
 
             saveRequestData(data) {
                 let _this = this;
+                // 필수값 설정
+                if($('#spNum')){
+
+                }
                 AjaxUtil.postJsonData(_this.url + '/save', data, function(res) {
                     if (res.success) {
                         Notify.success('저장(수정)되었습니다.');
@@ -847,12 +878,11 @@
                             const c = res.data;
                             $('#cboCompanyHidden').val(c.Code);
                             $('#cboCompanyHidden2').val(c.Code);
-                            $('#cboCompany2').val(c.Name || '');
                             $('#telNum').val(c.TelNumber || '');
                             $('#Code').val(c.Code || '');
                             $('#OurManager').val(c.OurManager || '');
-                            page.searchMain(); // ✅ 이제 안전
                         }
+                        page.searchMain();
                     }
                 });
             }
@@ -872,9 +902,9 @@
                     // 🚫 거래처가 아닐 경우 → readonly 속성 해제
                     if (res.data.UserGroup_id !== 10) {
                         $("#spNum, #cboCompany2").prop("readonly", false);
-                        console.log("🔓 거래처가 아닌 사용자이므로 입력 활성화됨");
+                        // 거래처가 아닐경우 사업자번호 clear
+                        $("#spNum").val('');
                     } else {
-                        console.log("🔒 거래처 사용자 — readonly 유지");
                     }
                 },
                 error: function (xhr, status, error) {
