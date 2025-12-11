@@ -98,6 +98,9 @@ public class CompanyController {
 			@RequestParam("address") String address,
 			@RequestParam("description") String description,
 			@RequestParam("relyn") String relyn,
+			@RequestParam("IsPersonal") String IsPersonal,
+			@RequestParam("CorporateNumber") String CorporateNumber,
+			@RequestParam("PrintTradingName") String PrintTradingName,
 			//관리 정보
 			@RequestParam("our_manager") String ourManager,
 			@RequestParam("sales_manager") String salesManager,
@@ -145,6 +148,9 @@ public class CompanyController {
 		company.setAddress(address);
 		company.setDescription(description);
 		company.setRelyn(String.valueOf("1".equals(relyn) ? 1 : 0));
+		company.setIsPersonal("1".equals(IsPersonal) ? "1" : "0");
+		company.setCorporateNumber(CorporateNumber);
+		company.setPrintTradingName(PrintTradingName);
 		//관리정보
 		company.setOurManager(ourManager);
 		company.setSalesManager(salesManager);

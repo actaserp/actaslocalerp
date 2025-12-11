@@ -28,8 +28,14 @@ public class bank_codeService {
                    "banknm" AS name,
                    "remark" AS remark,
                    "bankpopcd" AS bankpopcd,
-                   "banksubcd" AS banksubcd
+                   "banksubcd" AS banksubcd,
+                   "bankcd",
+                   "subcd",
+                   xbs.refbanknm as refbanksubnm,
+                   xbss.refbanknm as refbankpopnm
             FROM tb_xbank
+            LEFT JOIN tb_xbanksub xbs ON xbs.refcd = banksubcd
+            LEFT JOIN tb_xbanksub xbss ON xbss.refcd = bankpopcd
             WHERE useyn = '1'
         """;
 

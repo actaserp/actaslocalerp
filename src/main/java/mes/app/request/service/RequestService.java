@@ -394,4 +394,44 @@ public class RequestService {
 
         return item;
     }
+
+    // 사용자(본사담당) 정보 조회
+    public List<Map<String, Object>> getUser(
+            String searchCode
+            , String searchName
+            , String spjangcd
+    ) {
+        MapSqlParameterSource dicParam = new MapSqlParameterSource();
+        dicParam.addValue("spjangcd", spjangcd);
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT
+                up.*,
+                dp.\"Name\" as \"depName\"
+            FROM user_profile up
+            LEFT JOIN depart dp ON up.\"Depart_id\" = dp.id
+            LEFT JOIN auth_user au ON up.\"User_id\" = au.id
+            LEFT JOIN person p ON au.\"personid\" = p.id
+            WHERE 1=1
+            AND up.spjangcd = :spjangcd
+            """);
+
+        if (searchCode != null && !searchCode.isEmpty()) {
+            sql.append(" AND up.\"Depart_id\" = :searchCode");
+            dicParam.addValue("searchCode", searchCode );
+        }
+
+        if (searchName != null && !searchName.isEmpty()) {
+            sql.append(" AND up.\"Name\" LIKE :searchName");
+            dicParam.addValue("searchName", "%" + searchName + "%");
+        }
+
+        sql.append(" AND p.\"rtflag\" = '0' ");
+        sql.append(" AND up.\"UserGroup_id\" = 2 ");
+        sql.append(" ORDER BY up.\"User_id\" ASC");
+
+        List<Map<String, Object>> item = this.sqlRunner.getRows(String.valueOf(sql), dicParam);
+
+        return item;
+    }
 }

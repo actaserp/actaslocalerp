@@ -75,6 +75,24 @@
                             </tr>
                             <tr>
                                 <th style="text-align: center; width: 5%; padding: 5px; border: 1px solid #ddd;">
+                                    <label for="bankcd"><span class="eq"></span>은행코드</label>
+                                </th>
+                                <td style="width: 15%; padding: 5px; border: 1px solid #ddd;">
+                                    <input type="text" id="bankcd" name="bankcd" style="width: 100%;">
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <th style="text-align: center; width: 5%; padding: 5px; border: 1px solid #ddd;">
+                                    <label for="subcd"><span class="eq"></span>지점코드</label>
+                                </th>
+                                <td style="width: 15%; padding: 5px; border: 1px solid #ddd;">
+                                    <input type="text" id="subcd" name="subcd" style="width: 100%;">
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <th style="text-align: center; width: 5%; padding: 5px; border: 1px solid #ddd;">
                                     <label for="bankpopcd">팝빌기관코드</label>
                                 </th>
                                 <td style="width: 15%; padding: 5px; border: 1px solid #ddd;">
@@ -121,10 +139,13 @@
         let columns = [
             {binding: 'id', header: 'id', width: 200, align: 'center', visible: false},
             {binding: 'name', header: '은행명', width: 200, align: 'center'},
+            {binding: 'bankcd', header: '은행코드', width: 100, align: 'center'},
+            {binding: 'subcd', header: '지점코드', width: 100, align: 'center'},
+            {binding: 'bankpopcd', header: '팝빌기관코드', width: 100, align: 'center'},
+            {binding: 'refbankpopnm', header: '팝빌기관명', width: 200, align: 'center'},
+            {binding: 'banksubcd', header: '참가기관코드', width: 100, align: 'center'},
+            {binding: 'refbanksubnm', header: '참가기관명', width: 200, align: 'center'},
             {binding: 'remark', header: '설명', width: 250, align: 'center'},
-            {binding: 'bankpopcd', header: '팝빌기관코드', width: 200, align: 'center'},
-            {binding: 'banksubcd', header: '참가기관코드', width: 200, align: 'center'},
-            {binding: '', header: '', width: '*', align: 'center'}
         ];
 
         document.readyState === 'complete' ? init() : window.onload = init;
@@ -168,6 +189,8 @@
                 let selectedItem = theGrid.selectedItems[0];
                 document.getElementById('id').value = selectedItem.id;
                 document.getElementById('name').value = selectedItem.name;
+                document.getElementById('bankcd').value = selectedItem.bankcd;
+                document.getElementById('subcd').value = selectedItem.subcd;
                 document.getElementById('remark').value = selectedItem.remark;
                 document.getElementById('bankpopcd').value = selectedItem.bankpopcd;
                 document.getElementById('banksubcd').value = selectedItem.banksubcd;

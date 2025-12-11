@@ -10,13 +10,14 @@ import javax.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Entity
 @Table(name = "tb_xbank")  // 테이블 이름 주의
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class BankCode extends AbstractAuditModel {
+public class BankCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,4 +44,10 @@ public class BankCode extends AbstractAuditModel {
 
     @Column(name = "useyn")
     private String useYn;  // 사용여부
+
+    @Column(name = "bankcd")
+    private String bankcd;  // 은행코드
+
+    @Column(name = "subcd")
+    private String subcd;  // 지점코드
 }

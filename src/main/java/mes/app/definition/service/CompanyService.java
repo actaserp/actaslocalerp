@@ -115,7 +115,10 @@ public class CompanyService {
             , "ManageRemark" as manage_remark
             , "GroupName" as group_name
             , "invoiceEmail"
-             , relyn as relyn
+            , relyn as relyn
+            , "IsPersonal"
+            , "CorporateNumber"
+            , "PrintTradingName" 
             from company c 
             Where id = :company_id
 			""";

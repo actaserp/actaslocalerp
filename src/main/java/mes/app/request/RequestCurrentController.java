@@ -162,6 +162,7 @@ public class RequestCurrentController {
     public AjaxResult receiveRequest(@RequestBody Map<String, Object> payload, Authentication auth) {
         AjaxResult result = new AjaxResult();
         User user = (User) auth.getPrincipal();
+        Integer perId = user.getPersonid();
 
         Integer asid = Integer.parseInt(payload.get("asid").toString());
 
@@ -179,6 +180,10 @@ public class RequestCurrentController {
 
             // 값 세팅
             request.setRecyn("0");
+            if (request.getAspernm() == null || request.getAspernm().isEmpty()) {
+                request.setAsperid(recperid);
+                request.setAspernm(recpernm);
+            }
             request.setRecperid(recperid);
             request.setRecpernm(recpernm);
             request.setRecdate(new Timestamp(System.currentTimeMillis()));

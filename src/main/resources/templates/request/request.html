@@ -51,8 +51,6 @@
                 <section class="tab-item" id="tab1">
                     <div class="section-top">
                         <input type="hidden" id="id" name="id" readonly>
-<!--                        본사담당자-->
-                        <input type="hidden" id="OurManager" name="OurManager" readonly>
 <!--                        거래처 코드-->
                         <input type="hidden" id="Code" name="Code" readonly>
                         <!--첨부 파일 바인드 input-->
@@ -156,6 +154,16 @@
                                 </dt>
                                 <dd>
                                     <input type="text" class="form-control2" id="scrNum" name="scrNum" />
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt>
+                                    <label>
+                                        본사담당<span class="eq"></span>
+                                    </label>
+                                </dt>
+                                <dd>
+                                    <input type="text" id="OurManager" name="OurManager" readonly>
                                 </dd>
                             </dl>
                         </div>
@@ -346,6 +354,44 @@
 
                 <div class="grid_box" style="margin-top: 10px;">
                     <div id="comp-grid" style="height: 300px; max-height: 300px;"></div>
+                </div>
+        </div>
+
+        <div class="popup-button">
+          <button type="button" class="btn-popup" id="btnAccountSave"><span data-labelCd="선택">선택</span></button>
+          <button type="button" class="btn-popup" id="modal-close-button"><span data-labelCd="닫기">닫기</span></button>
+        </div>
+    </div>
+    </script>
+    <script type="text/x-tmpl" id="getUserTemplate">
+        <div class="content_wrap popup">
+        <div class="table-wrap">
+                <table class="write-table">
+                    <caption>사용자 검색 테이블</caption>
+                    <tbody>
+                        <tr>
+                            <th style="text-align: center">
+                                <label for="searchDepart">근무부서</label>
+                            </th>
+                            <td style="width:50px;">
+                                <select id="searchDepart" name="searchDepart" style="width:180px;"></select>
+                            </td>
+
+                            <th style="text-align: center">
+                                <label for="searchName">사원명</label>
+                            </th>
+                            <td style="width:50px;">
+                                 <input id="searchName" name="searchName" type="text"  style="width:180px;"/>
+                            </td>
+                            <td colspan="2" style="text-align: center;">
+                                <button type="button" class="btn-default" id="btnSubjectSearch" title="조회"><i class="fas fa-search"></i>검색</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="grid_box" style="margin-top: 10px;">
+                    <div id="user-grid" style="height: 300px; max-height: 300px;"></div>
                 </div>
         </div>
 
@@ -725,127 +771,225 @@
 
             showGetComp(type) {
                 let _this = this;
-                let viewdata4;
-                let theGrid4;
-                let selectedItem = null;
+                if(type !== 'OurManager') {
+                    let viewdata4;
+                    let theGrid4;
+                    let selectedItem = null;
 
-                let content = tmpl('getCompTemplate', {});
-                let $content = $(content);
+                    let content = tmpl('getCompTemplate', {});
+                    let $content = $(content);
 
-                let popContainer = new PopupDraggable('거래처조회');
-                popContainer.open({ width: 800, height: 500, $content });
+                    let popContainer = new PopupDraggable('거래처조회');
+                    popContainer.open({width: 800, height: 500, $content});
 
-                let $searchName = $content.find('#searchName');
-                let $searchCode = $content.find('#searchCode');
-                let $btnSearch = $content.find('#btnSubjectSearch');
+                    let $searchName = $content.find('#searchName');
+                    let $searchCode = $content.find('#searchCode');
+                    let $btnSearch = $content.find('#btnSubjectSearch');
 
 
-                // 사번 조회 함수
-                function fetchPersonList() {
-                    let searchCode = $searchCode.val();
-                    let searchName = $searchName.val();
+                    // 사번 조회 함수
+                    function fetchPersonList() {
+                        let searchCode = $searchCode.val();
+                        let searchName = $searchName.val();
 
-                    $.ajax({
-                        url: '/api/request/getComp',
-                        type: 'GET',
-                        data: {
-                            searchCode: searchCode,
-                            searchName: searchName,
-                            spjangcd: sessionStorage.getItem('spjangcd')
-                        },
-                        async: false,
-                        success: function (res) {
-                            let data2 = res.data || [];
+                        $.ajax({
+                            url: '/api/request/getComp',
+                            type: 'GET',
+                            data: {
+                                searchCode: searchCode,
+                                searchName: searchName,
+                                spjangcd: sessionStorage.getItem('spjangcd')
+                            },
+                            async: false,
+                            success: function (res) {
+                                let data2 = res.data || [];
 
-                            viewdata4 = new wijmo.collections.CollectionView(data2);
+                                viewdata4 = new wijmo.collections.CollectionView(data2);
 
-                            if (theGrid4) {
-                                theGrid4.itemsSource = viewdata4;
+                                if (theGrid4) {
+                                    theGrid4.itemsSource = viewdata4;
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.error('Error fetching person data:', textStatus, errorThrown);
                             }
-                        },
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            console.error('Error fetching person data:', textStatus, errorThrown);
+                        });
+                    }
+
+                    // 그리드 먼저 생성
+                    theGrid4 = new wijmo.grid.FlexGrid('#comp-grid', {
+                        autoGenerateColumns: false,
+                        showMarquee: true,
+                        columns: [
+                            {binding: 'Code', header: '업체코드', width: 100, align: 'center'},
+                            {binding: 'BusinessNumber', header: '사업자번호', width: 150, align: 'center'},
+                            {binding: 'Name', header: '거래처명', width: '*', align: 'center'},
+                            {binding: 'OurManager', header: '담당자명', width: 150, align: 'center'},
+                        ],
+                        isReadOnly: true,
+                        itemsSource: null
+                    });
+
+                    theGrid4.rowHeaders.columns.splice(0, 1);
+
+
+                    fetchPersonList();
+
+
+                    $btnSearch.click(() => {
+                        fetchPersonList();
+                    });
+
+
+                    $searchCode.add($searchName).on('keydown', function (e) {
+                        if (e.keyCode === 13) {
+                            fetchPersonList();
                         }
                     });
-                }
 
-                // 그리드 먼저 생성
-                theGrid4 = new wijmo.grid.FlexGrid('#comp-grid', {
-                    autoGenerateColumns: false,
-                    showMarquee: true,
-                    columns: [
-                        { binding: 'Code', header: '업체코드', width: 100, align: 'center' },
-                        { binding: 'BusinessNumber', header: '사업자번호', width: 100, align: 'center' },
-                        { binding: 'Name', header: '거래처명', width: '*', align: 'center' },
-                        { binding: 'OurManager', header: '담당자명', width: 150, align: 'center' },
-                    ],
-                    isReadOnly: true,
-                    itemsSource: null
-                });
+                    theGrid4.selectionChanged.addHandler((s, e) => {
+                        selectedItem = s.collectionView.currentItem;
+                    });
 
-                theGrid4.rowHeaders.columns.splice(0, 1);
+                    $content.find('#btnAccountSave').click(() => {
+                        if (selectedItem) {
+                            if (type === 'spNum') {
+                                console.log('selectedItem : ', selectedItem)
+                                $('#spNum').val(selectedItem.BusinessNumber);
+                                $('#cboCompanyHidden').val(selectedItem.Code);
+                                popContainer.close();
+                            } else {
+                                console.log('selectedItem : ', selectedItem)
+                                $('#cboCompany2').val(selectedItem.Name);
+                                $('#cboCompanyHidden2').val(selectedItem.Code);
+                                popContainer.close();
+                            }
+                        }/* else {
+                            Alert.alert('', '사번을 선택해주세요.');
+                        }*/
+                    });
 
-
-                fetchPersonList();
-
-
-                $btnSearch.click(() => {
-                    fetchPersonList();
-                });
-
-
-                $searchCode.add($searchName).on('keydown', function (e) {
-                    if (e.keyCode === 13) {
-                        fetchPersonList();
-                    }
-                });
-
-                theGrid4.selectionChanged.addHandler((s, e) => {
-                    selectedItem = s.collectionView.currentItem;
-                });
-
-                $content.find('#btnAccountSave').click(() => {
-                    if (selectedItem) {
-                        if(type === 'spNum') {
+                    theGrid4.hostElement.addEventListener('dblclick', function (e) {
+                        let items = theGrid4.selectedItems;
+                        if (items.length === 0) {
+                            return false;
+                        }
+                        const selectedItem = items[0];
+                        if (type === 'spNum') {
                             console.log('selectedItem : ', selectedItem)
                             $('#spNum').val(selectedItem.BusinessNumber);
                             $('#cboCompanyHidden').val(selectedItem.Code);
                             popContainer.close();
-                        }
-                        else {
+                        } else {
                             console.log('selectedItem : ', selectedItem)
                             $('#cboCompany2').val(selectedItem.Name);
                             $('#cboCompanyHidden2').val(selectedItem.Code);
                             popContainer.close();
                         }
-                    }/* else {
-                        Alert.alert('', '사번을 선택해주세요.');
-                    }*/
-                });
-
-                theGrid4.hostElement.addEventListener('dblclick', function (e) {
-                    let items = theGrid4.selectedItems;
-                    if (items.length === 0) {
-                        return false;
-                    }
-                    const selectedItem = items[0];
-                    if(type === 'spNum') {
-                        console.log('selectedItem : ', selectedItem)
-                        $('#spNum').val(selectedItem.BusinessNumber);
-                        $('#cboCompanyHidden').val(selectedItem.Code);
                         popContainer.close();
-                    }
-                    else {
-                        console.log('selectedItem : ', selectedItem)
-                        $('#cboCompany2').val(selectedItem.Name);
-                        $('#cboCompanyHidden2').val(selectedItem.Code);
-                        popContainer.close();
-                    }
-                    popContainer.close();
-                });
+                    });
+                }
+                else{
+                    let viewdata5;
+                    let theGrid5;
+                    let selectedItem = null;
 
+                    let content = tmpl('getUserTemplate', {});
+                    let $content = $(content);
+
+                    let popContainer = new PopupDraggable('담당자조회');
+                    popContainer.open({width: 800, height: 500, $content});
+
+                    let $searchName = $content.find('#searchName');
+                    let $searchCode = $content.find('#searchDepart');
+                    let $btnSearch = $content.find('#btnSubjectSearch');
+                    AjaxUtil.fillSelectOptions($('#searchDepart'), 'depart', 'all', false);
+
+
+                    // 조회 함수
+                    function fetchPersonList() {
+                        let searchCode = $searchCode.val();
+                        let searchName = $searchName.val();
+
+                        $.ajax({
+                            url: '/api/request/getUser',
+                            type: 'GET',
+                            data: {
+                                searchCode: searchCode,
+                                searchName: searchName,
+                                spjangcd: sessionStorage.getItem('spjangcd')
+                            },
+                            async: false,
+                            success: function (res) {
+                                let data2 = res.data || [];
+
+                                viewdata5 = new wijmo.collections.CollectionView(data2);
+
+                                if (theGrid5) {
+                                    theGrid5.itemsSource = viewdata5;
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.error('Error fetching person data:', textStatus, errorThrown);
+                            }
+                        });
+                    }
+
+                    // 그리드 먼저 생성
+                    theGrid5 = new wijmo.grid.FlexGrid('#user-grid', {
+                        autoGenerateColumns: false,
+                        showMarquee: true,
+                        columns: [
+                            {binding: 'depName', header: '부서명', width: 150, align: 'center'},
+                            {binding: 'Name', header: '사원명', width: '*', align: 'center'},
+                        ],
+                        isReadOnly: true,
+                        itemsSource: null
+                    });
+
+                    theGrid5.rowHeaders.columns.splice(0, 1);
+
+
+                    fetchPersonList();
+
+
+                    $btnSearch.click(() => {
+                        fetchPersonList();
+                    });
+
+
+                    $searchCode.add($searchName).on('keydown', function (e) {
+                        if (e.keyCode === 13) {
+                            fetchPersonList();
+                        }
+                    });
+
+                    theGrid5.selectionChanged.addHandler((s, e) => {
+                        selectedItem = s.collectionView.currentItem;
+                    });
+
+                    $content.find('#btnAccountSave').click(() => {
+                        if (selectedItem) {
+                            console.log('selectedItem : ', selectedItem)
+                            $('#OurManager').val(selectedItem.Name);
+                            popContainer.close();
+                        }/* else {
+                            Alert.alert('', '사번을 선택해주세요.');
+                        }*/
+                    });
+
+                    theGrid5.hostElement.addEventListener('dblclick', function (e) {
+                        let items = theGrid5.selectedItems;
+                        if (items.length === 0) {
+                            return false;
+                        }
+                        const selectedItem = items[0];
+                        console.log('selectedItem : ', selectedItem)
+                        $('#OurManager').val(selectedItem.Name);
+                        popContainer.close();
+                    });
+                }
             }
-
         }
 
         let page = null;
@@ -899,11 +1043,15 @@
                         return;
                     }
 
-                    // 🚫 거래처가 아닐 경우 → readonly 속성 해제
+                    // 🚫 거래처가 아닐 경우 → readonly 속성 해제(사업자번호, 요청자, 본사담당)
                     if (res.data.UserGroup_id !== 10) {
-                        $("#spNum, #cboCompany2").prop("readonly", false);
-                        // 거래처가 아닐경우 사업자번호 clear
-                        $("#spNum").val('');
+                        $("#spNum, #cboCompany2, #OurManager").prop("readonly", false);
+                        // 거래처가 아닐경우 사업자번호,요청자 등 clear
+                        $("#spNum").val(''); // 사업자번호
+                        $("#cboCompanyHidden").val(''); // 업체코드
+                        $("#reqPer").val(''); // 요청자
+                        $("#cboCompany2").val(''); // 요청현황 업체명
+                        $("#cboCompanyHidden2").val(''); // 요청현황 업체코드
                     } else {
                     }
                 },
@@ -933,6 +1081,14 @@
                 }
                 if (!$('#title').val()) {
                     Alert.alert('', '제목을 입력하세요.');
+                    return;
+                }
+                if (!$('#spNum').val()) {
+                    Alert.alert('', '거래처를 선택하세요');
+                    return;
+                }
+                if (!$('#reqPer').val()) {
+                    Alert.alert('', '요청자를 입력하세요.');
                     return;
                 }
 
@@ -974,7 +1130,7 @@
                 parent.$('#navbarBarMenu2 .open_menu').trigger('click');
             }
 
-            // 요청등록 사업자번호 input 클릭시 업체 검색 팝업 활성화
+            // 요청등록 - 사업자번호 input 클릭시 업체 검색 팝업 활성화
             $('#spNum').click(function (e) {
                 if ($(this).prop('readonly')) {
                     e.preventDefault();
@@ -994,6 +1150,17 @@
                 }
 
                 page.showGetComp('cboCompany2');
+            });
+
+            // 본사담당 input 클릭시 업체 검색 팝업 활성화
+            $('#OurManager').click(function (e) {
+                if ($(this).prop('readonly')) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation(); // 다른 click 이벤트도 차단
+                    return false;
+                }
+
+                page.showGetComp('OurManager');
             });
 
         })

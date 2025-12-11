@@ -12,6 +12,7 @@ import javax.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Entity
 @Table(name="company")
@@ -136,4 +137,14 @@ public class Company extends AbstractAuditModel {
 
 	@Column(name="\"invoiceEmail\"")
 	String invoiceEmail;
+
+	@Column(name="\"IsPersonal\"")
+	String isPersonal;
+
+	@Column(name="\"CorporateNumber\"")
+	String corporateNumber;
+
+	@Column(name="\"PrintTradingName\"")
+	String printTradingName;
+
 }

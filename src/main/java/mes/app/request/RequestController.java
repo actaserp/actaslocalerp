@@ -343,4 +343,27 @@ public class RequestController {
         return result;
     }
 
+    // 사용자(본사담당) 검색 팝업조회
+    @GetMapping("/getUser")
+    public AjaxResult getUser(
+            HttpServletRequest request,
+            @RequestParam(value="searchCode") String searchCode,
+            @RequestParam(value="searchName") String searchName,
+            @RequestParam(value="spjangcd", required=false) String spjangcd,
+            Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User)auth.getPrincipal();
+        String username = user.getUsername();
+
+        List<Map<String, Object>> searchDatas  = requestService.getUser(
+                searchCode
+                , searchName
+                , spjangcd
+        );
+
+        result.data = searchDatas;
+
+        return result;
+    }
+
 }

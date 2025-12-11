@@ -100,18 +100,14 @@ public class RequestCurrentService {
         if (searchfrdate != null && !searchfrdate.isEmpty()) {
             sql += " AND a.\"asdate\" >= :searchfrdate ";
         }
-        if (perId != null) {
-            dicParam.addValue("perId", perId.toString());
-            sql += " AND a.\"asperid\" = :perId ";
-        }
-
         if (searchCompnm != null && !searchCompnm.isEmpty()) { // 본사담당 검색필터
             dicParam.addValue("searchCompnm", searchCompnm.toString());
             sql += " AND a.\"cltnm\" = :searchCompnm ";
         }
-        if (aspernm != null && !aspernm.isEmpty()) { // 본사담당 검색필터
+        if (aspernm != null && !aspernm.isEmpty()) { // 본사담당 검색필터, 담당자 배정받지 않은 건도 표시
             dicParam.addValue("aspernm", aspernm.toString());
-            sql += " AND a.\"aspernm\" = :aspernm ";
+            dicParam.addValue("asperid", perId);
+            sql += " AND (a.\"aspernm\" = :aspernm OR a.\"aspernm\" IS NULL OR a.\"asperid\" = :asperid ) ";
         }
         if (searchtodate != null && !searchtodate.isEmpty()) {
             sql += " AND a.\"asdate\" <= :searchtodate ";

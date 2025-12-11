@@ -73,6 +73,8 @@ public class bank_codeController {
             @RequestParam(value = "banksubcd", required = false) String banksubcd, // BANKSUBCD
             @RequestParam(value = "bankpopnm", required = false) String bankpopnm,
             @RequestParam(value = "banksubnm", required = false) String banksubnm,
+            @RequestParam(value = "bankcd", required = false) String bankcd,
+            @RequestParam(value = "subcd", required = false) String subcd,
             Authentication auth
     ) {
         AjaxResult result = new AjaxResult();
@@ -91,9 +93,11 @@ public class bank_codeController {
         bankCode.setRemark(remark);
         bankCode.setBankPopCd(bankpopcd);
         bankCode.setBankSubCd(banksubcd);
-        bankCode.setUseYn("Y"); // 기본값 사용여부 Y로 설정
+        bankCode.setUseYn("1"); // 기본값 사용여부 1로 설정
         bankCode.setBankPopNm(bankpopnm);
         bankCode.setBankSubNm(banksubnm);
+        bankCode.setBankcd(bankcd);
+        bankCode.setSubcd(subcd);
         //bankCode.set_audit(user); // 생성자/수정자 기록
 
         this.bankCodeRepository.save(bankCode);
