@@ -1,20 +1,32 @@
 package mes.app.sales.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
+import mes.app.definition.service.material.UnitPriceService;
+import mes.app.notification.BizEventTrigger;
+import mes.config.Settings;
+import mes.domain.entity.SujuHead;
+import mes.domain.entity.User;
+import mes.domain.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import mes.domain.entity.Suju;
-import mes.domain.repository.SujuRepository;
 import mes.domain.services.CommonUtil;
 import mes.domain.services.SqlRunner;
+
+import javax.transaction.Transactional;
 
 @Service
 public class SujuService {
@@ -24,6 +36,36 @@ public class SujuService {
 	
 	@Autowired
 	SujuRepository SujuRepository;
+
+	@Autowired
+	SujuUploadService sujuUploadService;
+
+	@Autowired
+	SujuHeadRepository sujuHeadRepository;
+
+	@Autowired
+	MaterialRepository materialRepository;
+
+	@Autowired
+	CompanyRepository companyRepository;
+
+	@Autowired
+	ProjectRepository projectRepository;
+
+	@Autowired
+	Settings settings;
+
+	@Autowired
+	DepartRepository departRepository;
+
+	@Autowired
+	UnitPriceService unitPriceService;
+
+	@Autowired
+	UnitRepository unitRepository;
+
+	@Autowired
+	private SujuRepository sujuRepository;
 	
 	
 	// 수주 내역 조회 
@@ -282,6 +324,146 @@ public class SujuService {
 		sujuHead.put("sujuList", sujuList);
 		
 		return sujuHead;
+	}
+
+	@Transactional
+	@BizEventTrigger(domain = "wm_suju_list_a", action = "SAVE")
+	public Integer saveManual(Map<String, Object> payload, Authentication auth) {
+
+		User user = (User) auth.getPrincipal();
+
+		String jumunDateStr = (String) payload.get("JumunDate");
+		String dueDateStr = (String) payload.get("DueDate");
+
+		Date jumunDate = CommonUtil.trySqlDate(jumunDateStr);
+		Date dueDate = CommonUtil.trySqlDate(dueDateStr);
+
+		String companyName = (String) payload.get("CompanyName");
+		Integer companyId = Integer.parseInt(payload.get("Company_id").toString());
+		String sujuType = (String) payload.get("SujuType");
+		String description = (String) payload.get("Description");
+		String projectId = (String) payload.get("projectHidden");
+		String spjangcd = (String) payload.get("spjangcd");
+		String amountStr = payload.get("totalAmountSum").toString().replace(",", "");
+		double totalAmount = 0.0;
+		try {
+			if (amountStr != null && !amountStr.trim().isEmpty()) {
+				totalAmount = Double.parseDouble(amountStr.trim().replace(",", ""));
+			}
+		} catch (NumberFormatException e) {
+			// 무시하고 0 유지
+		}
+		List<Map<String, Object>> items = (List<Map<String, Object>>) payload.get("items");
+
+		SujuHead head;
+
+		// ✅ suju_head 수정 여부 확인
+		if (payload.containsKey("id") && payload.get("id") != null && !payload.get("id").toString().isEmpty()) {
+			Integer headId = Integer.parseInt(payload.get("id").toString());
+			head = sujuHeadRepository.findById(headId).orElse(new SujuHead());
+		} else {
+			head = new SujuHead();
+			head.setJumunNumber(generateJumunNumber(jumunDate));
+		}
+
+		head.setJumunDate(jumunDate);
+		head.setDeliveryDate(dueDate);
+		head.setCompany_id(companyId);
+		head.setSpjangcd(spjangcd);
+		head.set_audit(user);
+		head.setSujuType(sujuType);
+		head.setTotalPrice(totalAmount);
+		head.setDescription(description);
+		head.set_status("manual");
+		head = sujuHeadRepository.save(head);
+
+		for (Map<String, Object> item : items) {
+			Suju suju;
+
+			// ✅ 수정인지 확인
+			if (item.containsKey("suju_id") && item.get("suju_id") != null && !item.get("suju_id").toString().isEmpty()) {
+				Integer sujuId = Integer.parseInt(item.get("suju_id").toString());
+				suju = SujuRepository.findById(sujuId).orElse(new Suju());
+			} else {
+				suju = new Suju(); // 신규일 경우
+				suju.setJumunNumber(head.getJumunNumber());
+			}
+
+			// 공통 필드 설정
+			suju.setSujuHeadId(head.getId());
+			suju.setJumunDate(jumunDate);
+			suju.setDueDate(dueDate);
+			suju.setCompanyId(companyId);
+			suju.setCompanyName(companyName);
+			suju.setSpjangcd(spjangcd);
+			suju.setProject_id(projectId);
+			suju.set_status("manual");
+			suju.setState("received");
+			suju.set_audit(user);
+
+			String invatyn = item.get("VatIncluded").toString();
+
+			suju.setMaterialId(Integer.parseInt(item.get("Material_id").toString()));
+			suju.setSujuQty(Integer.parseInt(item.get("quantity").toString()));
+			suju.setSujuQty2(Integer.parseInt(item.get("quantity").toString()));
+			suju.setUnitPrice(Double.parseDouble(item.get("unitPrice").toString()));
+			suju.setPrice(Double.parseDouble(item.get("supplyAmount").toString()));
+			suju.setVat(Double.parseDouble(item.get("VatAmount").toString()));
+			suju.setTotalAmount(Double.parseDouble(item.get("totalAmount").toString()));
+			suju.setProject_id(item.get("projectHidden").toString());
+			suju.setInVatYN(invatyn);
+			suju.setDescription((String) item.get("description"));
+			suju.setConfirm("0");
+
+			// 단가 변경 시 처리
+			Boolean unitPriceChanged = (Boolean) item.get("unitPriceChanged");
+			if (unitPriceChanged != null && unitPriceChanged) {
+				MultiValueMap<String, Object> priceData = new LinkedMultiValueMap<>();
+				priceData.add("Material_id", suju.getMaterialId());
+				priceData.add("Company_id", companyId);
+				priceData.add("UnitPrices", suju.getUnitPrice());
+				priceData.add("ApplyStartDate", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+				priceData.add("type", "02");
+				priceData.add("ChangerName", user.getUsername());
+				priceData.add("user_id", user.getId());
+
+				unitPriceService.saveCompanyUnitPrice(priceData);
+			}
+
+			SujuRepository.save(suju);
+		}
+
+		return head.getId();
+    }
+
+	public String generateJumunNumber(Date jumunDate) {
+		String dateStr = new SimpleDateFormat("yyyyMMdd").format(jumunDate);
+
+		String sql = """
+			WITH upsert AS (
+				INSERT INTO seq_maker ("Code", "BaseDate", "CurrVal", "_modified")
+				SELECT 'JumunNumber', '20250626', 1, now()
+				WHERE NOT EXISTS (
+					SELECT 1 FROM seq_maker WHERE "Code" = 'JumunNumber' AND "BaseDate" = '20250626'
+				)
+				RETURNING "CurrVal"
+			),
+			updated AS (
+				UPDATE seq_maker
+				SET "CurrVal" = "CurrVal" + 1, "_modified" = now()
+				WHERE "Code" = 'JumunNumber' AND "BaseDate" = '20250626'
+				RETURNING "CurrVal"
+			)
+			SELECT * FROM updated
+			UNION ALL
+			SELECT * FROM upsert;
+        """;
+
+		MapSqlParameterSource param = new MapSqlParameterSource();
+		param.addValue("date", dateStr);
+
+		Integer nextVal = this.sqlRunner.queryForObject(sql, param, (rs, rowNum) -> rs.getInt(1) );
+		return dateStr + "-" + String.format("%04d", nextVal);
 	}
 	
 	// 제품 정보 조회

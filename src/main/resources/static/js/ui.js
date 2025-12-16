@@ -170,28 +170,28 @@ $(document).ready(function () {
  * UI 공통
 =================================================================================*/
 /*        Hader : ALram TAB          */
-$(document).ready(function () {
-
-    $(".alarm-tab-links a").click(function (event) {
-        event.preventDefault();
-
-        // 클릭된 탭 링크의 href 속성 값을 가져옴
-        var tabId = $(this).attr("href");
-
-        // 해당 탭을 보여주고 활성화
-        $(".alarm-tab-item").hide();
-        $(tabId).show();
-
-        // 현재 활성화된 탭을 나타내기 위해 클래스 추가/제거
-        $(".alarm-tab-links li").removeClass("active");
-        $(this).parent().addClass("active");
-    });
-
-    // 초기에 첫 번째 탭을 활성화
-    $(".alarm-tab-item:first").show();
-    $(".alarm-tab-links li:first").addClass("active");
-
-});
+// $(document).ready(function () {
+//
+//     $(".alarm-tab-links a").click(function (event) {
+//         event.preventDefault();
+//
+//         // 클릭된 탭 링크의 href 속성 값을 가져옴
+//         var tabId = $(this).attr("href");
+//
+//         // 해당 탭을 보여주고 활성화
+//         $(".alarm-tab-item").hide();
+//         $(tabId).show();
+//
+//         // 현재 활성화된 탭을 나타내기 위해 클래스 추가/제거
+//         $(".alarm-tab-links li").removeClass("active");
+//         $(this).parent().addClass("active");
+//     });
+//
+//     // 초기에 첫 번째 탭을 활성화
+//     $(".alarm-tab-item:first").show();
+//     $(".alarm-tab-links li:first").addClass("active");
+//
+// });
 
 
 /*  Input Text delete  */
@@ -397,22 +397,59 @@ $(document).ready(function () {
 =================================================================================*/
 /*        Header - Alram        */
 $(document).ready(function () {
+
+    /* ===============================
+       🔔 알람 탭 전환
+       =============================== */
+    $(".alarm-tab-links a").on("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const tabId = $(this).attr("href");
+
+        $(".alarm-tab-item").hide();
+        $(tabId).show();
+
+        $(".alarm-tab-links li").removeClass("active");
+        $(this).parent().addClass("active");
+    });
+
+    // 초기 탭 상태
+    $(".alarm-tab-item").hide();
+    $(".alarm-tab-item:first").show();
+    $(".alarm-tab-links li:first").addClass("active");
+
+
+    /* ===============================
+       🔔 알람 박스 열고 닫기
+       =============================== */
     $('.alarm').on('click', function (event) {
-        event.preventDefault(); // 기본 동작을 막음 (필요에 따라 사용)
-        $('.alarm-box').slideToggle('fast'); // 서서히 펼쳐지거나 접히게 함
+        event.preventDefault();
+        event.stopPropagation();
+
+        $('#alarmOverlay').show();
+        $('.alarm-box').slideToggle('fast');
     });
 
-    // 클릭 시 .user-box가 외부 클릭으로 닫히게 하려면
-    $(document).on('click', function (event) {
-        if (!$(event.target).closest('.alarm, .alarm-box').length) {
-            $('.alarm-box').slideUp('fast');
-        }
+    $('.alarm-box').on('click', function (event) {
+        event.stopPropagation();
     });
 
-    $('.btn-gray').on('click', function (event) {
-        event.preventDefault(); // 기본 동작을 막음 (필요에 따라 사용)
-        $('.alarm-box').slideUp('fast'); // 서서히 접히게 함
+    $('#alarmOverlay').on('click', function () {
+        $('.alarm-box').slideUp('fast');
+        $('#alarmOverlay').hide();
     });
+
+    $(document).on('click', function () {
+        $('.alarm-box').slideUp('fast');
+        $('#alarmOverlay').hide();
+    });
+
+    $('.btn-gray').on('click', function () {
+        $('.alarm-box').slideUp('fast');
+        $('#alarmOverlay').hide();
+    });
+
 });
 
 /*        Header - User        */

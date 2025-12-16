@@ -61,7 +61,8 @@ public class UserGroupMenuController {
 			
 			boolean r = Boolean.parseBoolean(map.get("r").toString());
 			boolean w = Boolean.parseBoolean(map.get("w").toString());
-			
+			boolean a = Boolean.parseBoolean(map.get("a").toString());
+
 			String authCode = "";
 			if(r) {
 				authCode="R";
@@ -69,6 +70,7 @@ public class UserGroupMenuController {
 			if(w) {
 				authCode+="W";
 			}
+			if (a) authCode += "A";
 			
 			MapSqlParameterSource dicParam = new MapSqlParameterSource();			
 			dicParam.addValue("auth_code", authCode);
@@ -89,7 +91,7 @@ public class UserGroupMenuController {
 				dicParam.addValue("id", ugm_id);
 				String sql = """
 				update user_group_menu set "UserGroup_id"=:group_id, "MenuCode"=:menu_code, "AuthCode" = :auth_code, _modifier_id=:user_id, _modified=now()
-				where id=:id								
+				where id=:id
 				""";
 				this.sqlRunner.execute(sql, dicParam);
 			}			

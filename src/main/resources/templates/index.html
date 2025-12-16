@@ -177,45 +177,51 @@
                             </ul>
                         </div>
                     </div>
-                    <!-- 알람 -->
-                    <a href="#" class="alarm" title="알람">
-                        <img src="/images/icon/ico-bell.svg" alt="알람 아이콘">
-                        <span>알람</span>
-                        <span class="num">0</span>
+                    <!-- 알림 -->
+                    <a href="#" class="alarm" title="알림">
+                        <img src="/images/icon/ico-bell.svg">
+                        <span>알림</span>
+                        <span class="num" id="alarmCount" th:text="${unreadAlarmCount}">0</span>
                     </a>
-                    <div class="alarm-box" style="width: 1000px;">
-                        <ul class="alarm-tab-links">
-                            <li class="active">
-                                <a href="#alarm-tab1" title="주문의뢰">주문의뢰(0)</a> <!-- 동적으로 업데이트 -->
-                            </li>
-                        </ul>
+
+                    <div class="alarm-box">
+                        <!-- tab contents -->
                         <div class="alarm-tab-contents">
+                            <!-- 알림 -->
                             <div class="alarm-tab-item" id="alarm-tab1">
                                 <div class="table-wrap">
                                     <table>
-                                        <caption>알람 테이블</caption>
+                                        <caption>알림 테이블</caption>
                                         <colgroup>
-                                            <col class="wp30"> <!-- 날짜 -->
-                                            <col class="wp45"> <!-- 업체 이름 -->
-                                            <col class="wp25"> <!-- 주문 상태 -->
+                                            <col class="wp15">
+                                            <col class="wp60">
+                                            <col class="wp25">
                                         </colgroup>
-                                        <thead>
-                                        <tr>
-                                            <th>날 짜</th>
-                                            <th>업체 이름</th>
-                                            <th>주문 상태</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <!-- 알림 데이터가 여기 동적으로 추가됨 -->
+                                        <tbody id="alarmTbody">
+                                        <!-- 알림 데이터가 여기 추가됩니다. -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            <a href="#" title="확인" class="btn-gray" id="AlarmOk" onclick="AlarmOk()">확인</a>
                         </div>
+                        <a href="#" id="confirmAllAlarms" title="모두 확인" class="btn-gray">모두 확인</a>
+<!--                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; height: 25px;">-->
+<!--                            <label style="display: flex; align-items: center; gap: 5px;">-->
+<!--                                <input type="checkbox" id="toggleModalAlerts" checked style="margin-bottom: 2px;">-->
+<!--                                모달 알림 활성화-->
+<!--                            </label>-->
+<!--                        </div>-->
                     </div>
-                    <!-- 알람 -->
+                    <div id="alarmOverlay" style="
+                        display:none;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 9000;
+                    "></div>
+                    <!-- 알림 -->
                     <!-- 사용자 로그인 상태-->
                     <div id="spjangSelectWrapper">
                         <!-- 사업장 리스트 -->
@@ -910,34 +916,424 @@
     });
 </script>
 
+<script th:inline="javascript">
+    let alarmList = /*[[${unreadAlarmList}]]*/ [];
+    const userid = '[[${userid}]]';
+</script>
+
+<style>
+    #toastContainer {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 30000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* 기본 토스트 */
+    .toast {
+        width: 320px;
+        background: #2f2f2f;
+        color: #fff;
+        padding: 12px 14px;
+        border-radius: 6px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        animation: slideUp 0.25s ease-out;
+        font-size: 13px;
+    }
+
+    /* 확장 상태 */
+    .toast.expanded {
+        width: 360px;
+    }
+
+    /* 헤더 */
+    .toast-header {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+
+    /* 메시지 */
+    .toast-message {
+        line-height: 1.4;
+        margin-bottom: 6px;
+        font-size: 15px;
+    }
+
+    /* 메타 */
+    .toast-meta {
+        font-size: 11px;
+        opacity: 0.7;
+    }
+
+    /* 액션 */
+    .toast-actions {
+        margin-top: 8px;
+        display: flex;
+        gap: 6px;
+    }
+
+    .toast-actions button {
+        background: #444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .toast-actions button:hover {
+        background: #555;
+    }
+
+    /* 답장 영역 */
+    .toast-reply {
+        margin-top: 8px;
+        display: none;
+    }
+
+    .toast.expanded .toast-reply {
+        display: block;
+    }
+
+    .toast textarea {
+        width: 100%;
+        height: 60px;
+        resize: none;
+        border-radius: 4px;
+        border: none;
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    /* 애니메이션 */
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .toast-reply-box {
+        display: none;
+        margin-top: 8px;
+    }
+
+    .toast.expanded .toast-reply-box {
+        display: block;
+    }
+
+    /* 답장 알림 표시용 */
+    .toast.is-reply {
+        border-left: 4px solid #4caf50;
+    }
+
+
+</style>
+<div id="toastContainer"></div>
+
+
 <script type="text/javascript">
     // 날씨 정보
     fetchWeatherData();
     // 30분마다 날씨 정보 자동 갱신
     setInterval(fetchWeatherData, 1800000);
 
-    function sseConnect(){
+    function sseConnect() {
 
         const spjangcd = sessionStorage.getItem("spjangcd");
+        const eventSource = new EventSource("/sse/subscribe?spjangcd=" + spjangcd);
 
-        const eventSource = new EventSource("/sse/subscribe?spjangcd="  + spjangcd);
 
-        eventSource.onmessage = function (e){
-
-            if(e.data){
+        // ✅ 기존 SYSTEM 이벤트 (레거시)
+        eventSource.addEventListener("SYSTEM", function (e) {
+            if (e.data) {
                 Notify.success(e.data);
-
             }
+        });
 
-        }
+        // ✅ 신규 알림
+        eventSource.addEventListener("NOTIFICATION", function (e) {
 
-        eventSource.onerror = function(err) {
-            console.log('SSE 오류 발생, 재연결 시도 중...', err);
+            if (!e.data) return;
+
+            const noti = JSON.parse(e.data);
+
+            alarmList.unshift(noti);      // 🔥 데이터만 쌓기
+            increaseAlarmCount();         // 🔔 숫자만 증가
+            showToast(noti);
+        });
+
+        // ✅ 신규 코멘트
+        eventSource.addEventListener("COMMENT", function (e) {
+            if (!e.data) return;
+
+            const comment = JSON.parse(e.data);
+
+            // 🔥 알림 리스트에 포함
+            alarmList.unshift(comment);
+            increaseAlarmCount();
+
+            // 🔥 동일 토스트 사용
+            showToast(comment);
+        });
+
+        // ✅ 연결 확인
+        eventSource.addEventListener("CONNECTED", function () {
+            console.log("SSE 연결 완료");
+        });
+
+        eventSource.onerror = function (err) {
+            console.log("SSE 오류 발생, 재연결 시도 중...", err);
             eventSource.close();
             setTimeout(sseConnect, 3000);
         };
     }
+
     sseConnect();
+
+    // 알림
+    function increaseAlarmCount() {
+        const countEl = document.getElementById("alarmCount");
+        let count = parseInt(countEl.innerText || "0", 10);
+        countEl.innerText = count + 1;
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleString();
+    }
+
+
+    $('.alarm').on('click', function () {
+        renderAlarmList();   // 🔥 열릴 때마다 현재 상태 렌더링
+    });
+
+    function renderAlarmList() {
+
+        const tbody = document.getElementById("alarmTbody");
+        if (!tbody) return;
+
+        // 초기화
+        tbody.innerHTML = "";
+
+        // 🔕 알림 없음
+        if (alarmList.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="3" style="text-align:center; padding:20px; color:#888;">
+                    새로운 알림이 없습니다.
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        // 🔔 알림 있음
+        alarmList.forEach(alarm => {
+            const isReply = alarm.action === "REPLY";
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${isReply ? '답장' : '알림'}</td>
+                <td>${alarm.message}</td>
+                <td>${formatDate(alarm.createdAt)}</td>
+            `;
+
+            tr.onclick = () => showToast(alarm);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    const toastMap = new Map();
+
+    function showToast(noti) {
+
+        const isReply = noti.action === "REPLY";
+
+        const container = document.getElementById("toastContainer");
+        const notiId = noti.notiId;
+
+        // ✅ 이미 떠 있는 토스트라면
+        if (toastMap.has(notiId)) {
+            const existing = toastMap.get(notiId);
+
+            // 앞으로 가져오기
+            existing.toast.style.zIndex = Date.now();
+
+            // 타이머 리셋
+            clearTimeout(existing.timer);
+            existing.timer = setTimeout(() => {
+                existing.toast.remove();
+                toastMap.delete(notiId);
+            }, 5000);
+
+            return;
+        }
+
+        // ✅ 새 토스트 생성
+        const toast = document.createElement("div");
+        toast.className = "toast" + (isReply ? " is-reply" : "");
+
+        toast.innerHTML = `
+        <div class="toast-header">
+            <span>
+                ${isReply ? '💬 답장' : '🔔 알림'}
+                · <strong>
+                  ${noti.senderUserName
+                            ? `${noti.senderUserName} (${noti.senderUserId})`
+                            : noti.senderUserId}
+                </strong>
+            </span>
+            <span class="close-btn">✕</span>
+        </div>
+
+        <div class="toast-message">${noti.message}</div>
+        <div class="toast-meta">${formatDate(noti.createdAt)}</div>
+
+        <div class="toast-actions">
+            <button class="reply-btn">답장</button>
+            <button class="confirm-btn">확인</button>
+        </div>
+
+        <div class="toast-reply-box">
+            <textarea placeholder="답장을 입력하세요"></textarea>
+            <div class="toast-actions">
+                <button class="send-btn">전송</button>
+                <button class="cancel-btn">취소</button>
+            </div>
+        </div>
+    `;
+
+        container.appendChild(toast);
+
+        // ✅ 자동 제거 타이머
+        let autoClose = setTimeout(() => {
+            toast.remove();
+            toastMap.delete(notiId);
+        }, 5000);
+
+        // Map에 등록
+        toastMap.set(notiId, {
+            toast,
+            timer: autoClose
+        });
+
+        /* 이벤트 */
+        toast.querySelector(".reply-btn").onclick = () => {
+            clearTimeout(autoClose);
+            toast.classList.add("expanded");
+        };
+
+        // 답장 취소
+        toast.querySelector(".cancel-btn").onclick = () => {
+            toast.classList.remove("expanded");
+        };
+
+        // 닫기
+        toast.querySelector(".close-btn").onclick = () => {
+            toast.remove();
+            toastMap.delete(notiId);
+        };
+
+        // 확인
+        toast.querySelector(".confirm-btn").onclick = () => {
+            markAsRead(notiId);
+            removeAlarmFromList(notiId);
+            decreaseAlarmCount();
+
+            toast.remove();
+            toastMap.delete(notiId);
+        };
+
+        // 답장 전송
+        toast.querySelector(".send-btn").onclick = () => {
+            const msg = toast.querySelector("textarea").value.trim();
+            if (!msg) return;
+
+            sendReply(notiId, msg);
+            removeAlarmFromList(notiId);
+            decreaseAlarmCount();
+            toast.remove();
+            toastMap.delete(notiId);
+        };
+    }
+
+    // 확인
+    function markAsRead(notiId) {
+        AjaxUtil.postAsyncData(
+            "/api/notifications/read",
+            { notiId: notiId },
+            function () {
+                // 성공 시 특별히 할 거 없으면 비워도 됨
+            }
+        );
+    }
+
+    // 전체 확인
+    $('#confirmAllAlarms').on('click', function (e) {
+        e.preventDefault();
+
+        if (alarmList.length === 0) {
+            return;
+        }
+
+        AjaxUtil.postAsyncData(
+            "/api/notifications/readAll",
+            {},   // spjangcd는 AjaxUtil에서 자동 포함
+            function (res) {
+
+                if (!res.success) {
+                    Notify.error(res.message || "알림 확인 처리 실패");
+                    return;
+                }
+
+                // 🔥 프론트 상태 정리
+                alarmList = [];
+                document.getElementById("alarmCount").innerText = "0";
+
+                // 떠 있는 토스트 전부 제거
+                toastMap.forEach(v => v.toast.remove());
+                toastMap.clear();
+
+                // 알림 리스트 다시 렌더링
+                renderAlarmList();
+            }
+        );
+    });
+
+    // 답장
+    function sendReply(parentNotiId, message) {
+        AjaxUtil.postAsyncData(
+            "/api/notifications/reply",
+            {
+                parentNotiId: parentNotiId,
+                message: message
+            },
+            function () {
+                // 필요하면 성공 토스트
+                // Notify.success("답장이 전송되었습니다.");
+            }
+        );
+    }
+
+    // 알림 카운트 감소
+    function decreaseAlarmCount() {
+        const el = document.getElementById("alarmCount");
+        let count = parseInt(el.innerText || "0", 10);
+        if (count <= 0) return;
+        el.innerText = count - 1;
+    }
+
+    // 알림 리스트 제거
+    function removeAlarmFromList(notiId) {
+        alarmList = alarmList.filter(a => a.notiId !== notiId);
+    }
+
 
     // 날씨 정보를 서버에서 가져오는 함수
     function fetchWeatherData() {

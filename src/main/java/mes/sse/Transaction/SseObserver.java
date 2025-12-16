@@ -2,6 +2,5 @@ package mes.sse.Transaction;
 
 public interface SseObserver {
 
-    void send(String message);
-
+    void send(String eventName, Object data);
 }
