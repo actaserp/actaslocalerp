@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationRepository notificationRepository;
+
+    private final NotificationService notificationService;
 
     private final SseService sseService;
 
@@ -86,5 +89,81 @@ public class NotificationController {
         return result;
     }
 
+    @GetMapping("/user_read")
+    public AjaxResult getUserList(
+            @RequestParam(value="group", required=false) Integer group,
+            @RequestParam(value="keyword", required=false) String keyword,
+            @RequestParam(value="depart_id", required=false) Integer departId,
+            @RequestParam(value="username", required=false) String username,
+            @RequestParam(value ="spjangcd") String spjangcd,
+            HttpServletRequest request,
+            Authentication auth) {
+
+        AjaxResult result = new AjaxResult();
+
+        List<Map<String, Object>> items = this.notificationService.getUserList(group, keyword, spjangcd);
+
+        result.data = items;
+        return result;
+    }
+
+    @Transactional
+    @PostMapping("/send")
+    public AjaxResult sendMessage(
+            @RequestBody Map<String, Object> param,
+            Authentication auth
+    ) {
+        AjaxResult result = new AjaxResult();
+
+        User user = (User) auth.getPrincipal();
+        String senderUserId = user.getUsername();
+        String senderUserName = user.getFirst_name();
+
+        String message = (String) param.get("message");
+        String spjangcd = (String) param.get("spjangcd");
+
+        @SuppressWarnings("unchecked")
+        List<String> receiverUserIds =
+                (List<String>) param.get("receiverUserIds");
+
+        for (String receiverUserId : receiverUserIds) {
+
+            Notification noti = new Notification();
+            noti.setDomain("MESSAGE");
+            noti.setAction("SEND");
+            noti.setTitle("메시지");
+            noti.setMessage(message);
+
+            noti.setSenderUserId(senderUserId);
+            noti.setSenderUserName(senderUserName);
+            noti.setReceiverUserId(receiverUserId);
+            noti.setSpjangcd(spjangcd);
+
+            notificationRepository.save(noti);
+
+            // SSE 즉시 전송
+            sseService.sendComment(noti);
+        }
+        result.success = true;
+        return result;
+    }
+
+    @GetMapping("/history_list")
+    public AjaxResult getHistoryList(
+            @RequestParam(value="startDate", required=false) String startDate,
+            @RequestParam(value="endDate", required=false) String endDate,
+            @RequestParam(value ="spjangcd") String spjangcd,
+            HttpServletRequest request,
+            Authentication auth) {
+
+        AjaxResult result = new AjaxResult();
+        User user = (User) auth.getPrincipal();
+        String userId = user.getUsername();
+
+        List<Map<String, Object>> items = this.notificationService.getHistoryList(startDate, endDate, userId, spjangcd);
+
+        result.data = items;
+        return result;
+    }
 
 }

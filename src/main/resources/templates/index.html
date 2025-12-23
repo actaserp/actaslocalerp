@@ -127,6 +127,151 @@
             font-weight: 700;
         }
 
+        /* 알림 영역 */
+        header .right .alarm-box .alarm-tab-item {
+            display: none;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        header .right .alarm-box .alarm-tab-item.active {
+            display: block;
+        }
+
+        /* 테이블 제거 느낌 */
+        .alarm-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .alarm-table tr {
+            background: #f9fafb;
+            border-radius: 10px;
+            transition: background .2s ease, transform .1s ease;
+        }
+
+        .alarm-table tr:hover {
+            background: #eef4ff;
+            transform: translateY(-1px);
+        }
+
+
+        /* 셀 정리 */
+        .alarm-table td {
+            padding: 10px 6px;
+            border: none;
+        }
+
+        /* 타입 */
+        .notif-type {
+            width: 70px;
+            text-align: center;
+        }
+
+        /* ===== 공통 배지 ===== */
+        .notif-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-width: 46px;
+            height: 22px;
+            padding: 0 8px;
+
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* ===== 타입별 배지 ===== */
+
+        /* 🔔 알림 */
+        .notif-badge.is-alarm {
+            background-color: #3069B3;
+        }
+
+        /* ✉️ 메시지 */
+        .notif-badge.is-message {
+            background-color: #5A8DEE;
+        }
+
+        /* 💬 답장 */
+        .notif-badge.is-reply {
+            background-color: #2EC9D6;
+        }
+
+        .notif-msg {
+            padding: 6px 4px;
+            line-height: 1.4;
+            word-break: break-word;
+            text-align: left;
+        }
+
+        .notif-time {
+            width: 110px;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+        }
+
+        .notif-date {
+            font-weight: 600;
+        }
+
+        .notif-clock {
+            font-size: 10px;
+            opacity: 0.85;
+        }
+
+        .alarm-table tr.unread {
+            background: #e8f1ff;
+        }
+
+        .alarm-table tr.unread .alarm-msg {
+            font-weight: 600;
+        }
+
+        .alarm-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .alarm-actions .btn-gray {
+            flex: 1;
+            padding: 6px 0;                /* 🔥 높이 줄이기 */
+            font-size: 12px;               /* 🔥 살짝 작게 */
+            font-weight: 600;
+            text-align: center;
+
+            background: #f5f6f8;           /* 연한 배경 */
+            color: #555;
+
+            border: 1px solid #e0e3e8;     /* 얇은 테두리 */
+            border-radius: 14px;           /* 🔥 둥글게 */
+
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+
+        .alarm-actions .btn-gray:hover {
+            background: #eaf1ff;
+            border-color: #3069B3;
+            color: #3069B3;
+        }
+
+        .alarm-actions .btn-gray:active {
+            transform: scale(0.97);
+        }
+
+
+
     </style>
 </head>
 
@@ -186,31 +331,24 @@
 
                     <div class="alarm-box">
                         <!-- tab contents -->
-                        <div class="alarm-tab-contents">
-                            <!-- 알림 -->
-                            <div class="alarm-tab-item" id="alarm-tab1">
-                                <div class="table-wrap">
-                                    <table>
-                                        <caption>알림 테이블</caption>
-                                        <colgroup>
-                                            <col class="wp15">
-                                            <col class="wp60">
-                                            <col class="wp25">
-                                        </colgroup>
-                                        <tbody id="alarmTbody">
-                                        <!-- 알림 데이터가 여기 추가됩니다. -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                        <!-- 알림 -->
+                        <table class="alarm-table">
+                            <caption>알림 테이블</caption>
+                            <colgroup>
+                                <col style="width:70px">
+                                <col>
+                                <col style="width:90px">
+                            </colgroup>
+                            <tbody id="alarmTbody">
+
+                            </tbody>
+                        </table>
+                        <div class="alarm-actions">
+                            <a id="confirmAllAlarms" class="btn-gray">전체확인</a>
+                            <a href="#" class="btn-gray" onclick="openSendModal()">메시지</a>
+                            <a href="#" class="btn-gray" onclick="openHistoryModal()">이력</a>
                         </div>
-                        <a href="#" id="confirmAllAlarms" title="모두 확인" class="btn-gray">모두 확인</a>
-<!--                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; height: 25px;">-->
-<!--                            <label style="display: flex; align-items: center; gap: 5px;">-->
-<!--                                <input type="checkbox" id="toggleModalAlerts" checked style="margin-bottom: 2px;">-->
-<!--                                모달 알림 활성화-->
-<!--                            </label>-->
-<!--                        </div>-->
+
                     </div>
                     <div id="alarmOverlay" style="
                         display:none;
@@ -916,6 +1054,99 @@
     });
 </script>
 
+<!-- 메시지 보내기 모달 -->
+<div id="sendModal" class="modal-overlay">
+    <div class="modal_send">
+        <div class="modal-header">
+            <span>메시지 보내기</span>
+            <button class="modal-close" onclick="closeSendModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <label class="modal-label">받는 그룹</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <select class="form-control2" id="cboUserGroup" style="width: 140px;"></select>
+                <input type="text" id="userSearch"
+                       placeholder="이름 검색"
+                       class="form-control2"
+                       style="flex:1;">
+            </div>
+
+            <label class="modal-label" style="margin-top:10px;">선택된 받는 사람</label>
+            <div id="selectedUsers" class="selected-users">
+                <div class="user-empty">선택된 사용자가 없습니다</div>
+            </div>
+
+            <label class="modal-label" style="margin-top:10px;">받는 사람</label>
+            <div id="userList" class="user-list">
+                <div class="user-empty">그룹을 선택하세요</div>
+            </div>
+
+            <label class="modal-label" style="margin-top:10px;">메시지</label>
+            <textarea id="sendMessage"
+                      class="modal-textarea"
+                      placeholder="보낼 내용을 입력하세요"></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="closeSendModal()">취소</button>
+            <button class="modal-btn primary" onclick="sendAlarmMessage()">보내기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 이력 조회 모달 -->
+<div id="historyModal" class="modal-overlay" style="display:none;">
+    <div class="modal_send" style="width: 630px;">
+
+        <div class="modal-header">
+            <span>이력 조회</span>
+            <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+            <label class="modal-label">기간</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <input type="date" id="historyStartDate" class="form-control2">
+                <span>~</span>
+                <input type="date" id="historyEndDate" class="form-control2">
+            </div>
+
+            <label class="modal-label" style="margin-top:12px;">이력 목록</label>
+
+            <div class="history-table-wrap">
+                <table class="history-table">
+                    <thead>
+                    <tr>
+                        <th style="width:120px;">일시</th>
+                        <th style="width:90px;">보낸 사람</th>
+                        <th style="width:90px;">받은 사람</th>
+                        <th>내용</th>
+                        <th style="width:50px;">확인</th>
+                    </tr>
+                    </thead>
+                    <tbody id="historyTbody">
+                    <tr>
+                        <td colspan="5" class="empty">조회된 이력이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="closeHistoryModal()">닫기</button>
+            <button class="modal-btn primary" onclick="searchHistory()">조회</button>
+        </div>
+
+    </div>
+</div>
+
+
 <script th:inline="javascript">
     let alarmList = /*[[${unreadAlarmList}]]*/ [];
     const userid = '[[${userid}]]';
@@ -1031,6 +1262,217 @@
         border-left: 4px solid #4caf50;
     }
 
+    /* 오버레이 */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    /* 모달 본체 */
+    .modal_send {
+        width: 420px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.2);
+        /*display: flex;*/
+        flex-direction: column;
+    }
+
+    /* 헤더 */
+    .modal-header {
+        position: relative;                 /* 🔥 기준점 */
+        display: flex;
+        justify-content: center;             /* 제목은 가운데 */
+        align-items: center;
+        padding: 14px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        border-bottom: 1px solid #eee;
+    }
+
+    /* 닫기 버튼 */
+    .modal-close {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+
+    /* 바디 */
+    .modal-body {
+        padding: 16px;
+    }
+
+    .modal-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .modal-textarea {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        resize: none;
+        box-sizing: border-box;
+    }
+
+    .modal-textarea:focus {
+        outline: none;
+        border-color: #3069B3;
+    }
+
+    /* 푸터 */
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid #eee;
+    }
+
+    /* 버튼 */
+    .modal-btn {
+        min-width: 80px;
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .modal-btn.cancel {
+        background: #f5f6f8;
+        border: 1px solid #ddd;
+        color: #555;
+    }
+
+    .modal-btn.primary {
+        background: #3069B3;
+        border: 1px solid #3069B3;
+        color: #fff;
+    }
+
+    .user-list {
+        max-height: 140px;
+        border: 1px solid #e0e3e8;
+        border-radius: 6px;
+        padding: 6px;
+        overflow-y: auto;
+        background: #fafbfc;
+    }
+
+    .user-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 6px;
+        font-size: 13px;
+    }
+
+    .user-item:hover {
+        background: #eef4ff;
+    }
+
+    .user-empty {
+        font-size: 12px;
+        color: #888;
+        padding: 6px;
+    }
+
+    .selected-users {
+        min-height: 40px;
+        border: 1px dashed #d0d4da;
+        border-radius: 6px;
+        padding: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        background: #fafafa;
+    }
+
+    .selected-user {
+        background: #3069B3;
+        color: #fff;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .selected-user button {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .history-table-wrap {
+        max-height: 260px;          /* 모달 높이에 맞게 조절 */
+        overflow-y: auto;
+        border: 1px solid #e1e5ea;
+        border-radius: 4px;
+    }
+
+    /* 테이블 기본 */
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 13px;
+    }
+
+    /* 헤더 고정 */
+    .history-table thead th {
+        position: sticky;
+        top: -1px;
+        background: #f4f6f9;
+        z-index: 1;
+        border-bottom: 1px solid #ddd;
+        padding: 6px 8px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* 바디 */
+    .history-table td {
+        border-bottom: 1px solid #eee;
+        padding: 6px 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .history-table tbody tr:hover {
+        background: #f9fbff;
+    }
+
+    /* 비어있을 때 */
+    .history-table .empty {
+        text-align: center;
+        color: #888;
+        padding: 20px;
+    }
+
 
 </style>
 <div id="toastContainer"></div>
@@ -1041,6 +1483,12 @@
     fetchWeatherData();
     // 30분마다 날씨 정보 자동 갱신
     setInterval(fetchWeatherData, 1800000);
+
+    function getUiType(alarm) {
+        if (alarm.action === 'REPLY') return 'reply';
+        if (alarm.action === 'SEND')  return 'message';
+        return 'alarm';
+    }
 
     function sseConnect() {
 
@@ -1134,26 +1582,55 @@
 
         // 🔔 알림 있음
         alarmList.forEach(alarm => {
-            const isReply = alarm.action === "REPLY";
+            const uiType = getUiType(alarm);
             const tr = document.createElement("tr");
 
+            const { date, time } = formatAlarmDate(alarm.createdAt);
+
             tr.innerHTML = `
-                <td>${isReply ? '답장' : '알림'}</td>
-                <td>${alarm.message}</td>
-                <td>${formatDate(alarm.createdAt)}</td>
+                <td class="notif-type">
+                    <span class="notif-badge is-${uiType}">
+                        ${uiType === 'alarm' ? '알림'
+                            : uiType === 'message' ? '메시지'
+                                : '답장'}
+                    </span>
+                </td>
+                <td class="notif-msg">
+                    ${alarm.message}
+                </td>
+                <td class="notif-time">
+                    <div class="notif-date">${date}</div>
+                    <div class="notif-clock">${time}</div>
+                </td>
             `;
 
-            tr.onclick = () => showToast(alarm);
 
+            tr.onclick = () => showToast(alarm);
             tbody.appendChild(tr);
         });
     }
+
+    function formatAlarmDate(dateStr) {
+        const d = new Date(dateStr);
+
+        const date = d.toISOString().slice(0, 10); // YYYY-MM-DD
+
+        const time = d.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+
+        return { date, time };
+    }
+
 
     const toastMap = new Map();
 
     function showToast(noti) {
 
-        const isReply = noti.action === "REPLY";
+        const uiType = getUiType(noti);
 
         const container = document.getElementById("toastContainer");
         const notiId = noti.notiId;
@@ -1175,22 +1652,28 @@
             return;
         }
 
+        const titleText =
+            uiType === 'reply'   ? '💬 답장' :
+                uiType === 'message' ? '✉️ 메시지' :
+                    '🔔 알림';
+
         // ✅ 새 토스트 생성
         const toast = document.createElement("div");
-        toast.className = "toast" + (isReply ? " is-reply" : "");
+        toast.className = "toast" + (uiType === 'reply' ? " is-reply" : "");
 
         toast.innerHTML = `
-        <div class="toast-header">
-            <span>
-                ${isReply ? '💬 답장' : '🔔 알림'}
-                · <strong>
-                  ${noti.senderUserName
-                            ? `${noti.senderUserName} (${noti.senderUserId})`
-                            : noti.senderUserId}
-                </strong>
-            </span>
-            <span class="close-btn">✕</span>
-        </div>
+            <div class="toast-header">
+                <span>
+                    ${titleText}
+                    · <strong>
+                      ${noti.senderUserName
+                        ? `${noti.senderUserName} (${noti.senderUserId})`
+                        : noti.senderUserId}
+                    </strong>
+                </span>
+                <span class="close-btn">✕</span>
+            </div>
+
 
         <div class="toast-message">${noti.message}</div>
         <div class="toast-meta">${formatDate(noti.createdAt)}</div>
@@ -1332,6 +1815,283 @@
     // 알림 리스트 제거
     function removeAlarmFromList(notiId) {
         alarmList = alarmList.filter(a => a.notiId !== notiId);
+    }
+
+    let selectedUserMap = new Map(); // key: string userId
+    let currentGroup = null;
+    let userListXhr = null;
+
+    function initSendModalEvents() {
+
+        $('#cboUserGroup').on('change', function () {
+            const group = $(this).val();
+            currentGroup = group;
+
+            if (!group) {
+                $('#userList').html('<div class="user-empty">그룹을 선택하세요</div>');
+                return;
+            }
+
+            loadUsersByGroup(group);
+        });
+
+        $('#userSearch').on('input', function () {
+            if (!currentGroup) return;
+            loadUsersByGroup(currentGroup);
+        });
+    }
+
+    initSendModalEvents();
+
+    $(document).on('mousedown', '.btn-clear', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $input = $('#userSearch');
+
+        if (!$input.val()) return;
+
+        $input.val('').focus();
+
+        // 🔥 DOM 반영 이후 실행
+        setTimeout(() => {
+            $input.trigger('input');
+        }, 0);
+    });
+
+
+    function openSendModal() {
+        $('#sendModal').css('display', 'flex');
+        $('#sendMessage').val('');
+        $('#userSearch').val('');
+
+        AjaxUtil.fillSelectOptions($('#cboUserGroup'), 'user_group',  2);
+
+        currentGroup = '2';
+        $('#cboUserGroup').val('2');
+
+        loadUsersByGroup('2');
+    }
+
+    function openHistoryModal() {
+        const today = new Date().toISOString().slice(0, 10);
+
+        $('#historyStartDate').val(today);
+        $('#historyEndDate').val(today);
+        $('#historyModal').css('display', 'flex');
+        searchHistory();
+    }
+
+    function closeHistoryModal() {
+        $('#historyModal').hide();
+    }
+
+
+    function loadUsersByGroup(group) {
+
+        const keyword = $('#userSearch').val();
+
+        // 이전 요청 종료
+        if (userListXhr) {
+            userListXhr.abort();
+        }
+
+        userListXhr = $.ajax({
+            url: '/api/notifications/user_read',
+            type: 'GET',
+            data: {
+                group,
+                keyword,
+                spjangcd: sessionStorage.getItem('spjangcd')
+            },
+            success(res) {
+                renderUserList(res.data || []);
+            },
+            error(xhr) {
+                if (xhr.statusText !== 'abort') {
+                    $('#userList').html('<div class="user-empty">사용자 조회 실패</div>');
+                }
+            }
+        });
+    }
+
+
+    function renderUserList(users) {
+
+        if (!users.length) {
+            $('#userList').html('<div class="user-empty">사용자가 없습니다</div>');
+            return;
+        }
+
+        const html = users.map(u => {
+            const userId = String(u.login_id);
+            const checked = selectedUserMap.has(userId) ? 'checked' : '';
+
+            return `
+            <div class="user-item">
+                <input type="checkbox"
+                       class="chk-user"
+                       value="${userId}"
+                       data-name="${u.first_name}"
+                       data-login="${u.login_id}"
+                       ${checked}>
+                <span>${u.first_name} (${u.login_id})</span>
+            </div>
+        `;
+        }).join('');
+
+        $('#userList').html(html);
+    }
+
+    $(document).on('change', '.chk-user', function () {
+
+        const userId = $(this).val(); // string
+        const name = $(this).data('name');
+        const login = $(this).data('login');
+
+        if (this.checked) {
+            selectedUserMap.set(userId, { id: userId, name, login });
+        } else {
+            selectedUserMap.delete(userId);
+        }
+
+        renderSelectedUsers();
+    });
+
+    function renderSelectedUsers() {
+
+        const $container = $('#selectedUsers').empty();
+
+        if (selectedUserMap.size === 0) {
+            $container.html('<div class="user-empty">선택된 사용자가 없습니다</div>');
+            return;
+        }
+
+        selectedUserMap.forEach(u => {
+            $container.append(`
+            <div class="selected-user">
+                ${u.name}
+                <button style="padding:0; height:20px;" onclick="removeSelectedUser('${u.login_id}')">✕</button>
+            </div>
+        `);
+        });
+    }
+
+
+    function removeSelectedUser(userId) {
+        selectedUserMap.delete(userId);
+        $(`.chk-user[value="${userId}"]`).prop('checked', false);
+        renderSelectedUsers();
+    }
+
+    function closeSendModal() {
+        $('#sendModal').hide();
+
+        // 데이터 초기화
+        selectedUserMap.clear();
+
+        // UI 초기화
+        $('#selectedUsers').empty()
+            .html('<div class="user-empty">선택된 사용자가 없습니다</div>');
+
+        $('.chk-user').prop('checked', false);
+
+        // 검색어도 같이 초기화하고 싶으면
+        $('#userSearch').val('');
+    }
+
+    function sendAlarmMessage() {
+
+        if (selectedUserMap.size === 0) {
+            Alert.alert('', '받는 사람을 선택하세요.');
+            return;
+        }
+
+        const message = $('#sendMessage').val().trim();
+        if (!message) {
+            Alert.alert('', '메시지를 입력하세요.');
+            return;
+        }
+
+        const receiverUserIds = Array.from(selectedUserMap.keys()); // login_id 배열
+
+        const payload = {
+            receiverUserIds,
+            message
+        };
+
+        AjaxUtil.postJsonData('/api/notifications/send', payload, function (res) {
+            if (res.success) {
+                Notify.success('메시지를 전송했습니다.');
+                closeSendModal();
+            } else {
+                Alert.alert('전송 실패', res.message || '알 수 없는 오류');
+            }
+        });
+    }
+
+    function searchHistory() {
+
+        const startDate = $('#historyStartDate').val();
+        const endDate = $('#historyEndDate').val();
+
+        if (!startDate || !endDate) {
+            Alert.alert('', '기간을 선택하세요.');
+            return;
+        }
+
+        if (startDate > endDate) {
+            Alert.alert('', '시작일은 종료일보다 클 수 없습니다.');
+            return;
+        }
+
+        const data = {
+            startDate: startDate,
+            endDate: endDate
+        };
+
+        const url = '/api/notifications/history_list';
+        const result = AjaxUtil.getSyncData(url, data);
+
+        if (result.success) {
+            renderHistoryTable(result.data);
+        } else {
+            Alert.alert('조회 실패', result.message || '이력 조회 실패');
+        }
+    }
+
+    function renderHistoryTable(list) {
+
+        const $tbody = $('#historyTbody');
+        $tbody.empty();
+
+        if (!list || list.length === 0) {
+            $tbody.append(`
+            <tr>
+                <td colspan="5" class="empty">조회된 이력이 없습니다.</td>
+            </tr>
+        `);
+            return;
+        }
+
+        list.forEach(row => {
+
+            const dt = row.created_at
+                ? row.created_at.replace(' ', '<br>')
+                : '';
+
+            $tbody.append(`
+                <tr>
+                    <td style="text-align:center; white-space:normal;">
+                        ${dt}
+                    </td>
+                    <td>${row.sender_user_name}(${row.sender_user_id})</td>
+                    <td>${row.receiver_user_name}(${row.receiver_user_id})</td>
+                    <td title="${row.message}">${row.message}</td>
+                    <td>${row.read_yn}</td>
+                </tr>
+            `);
+        });
     }
 
 
