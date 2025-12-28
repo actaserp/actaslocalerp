@@ -1035,6 +1035,13 @@
                 page.showGetComp();
             });
 
+            // 본사담당 설정
+            const username = sessionStorage.getItem("username");
+            if (username) {
+                $('#aspernm2').val(username);
+
+            }
+
             page.searchMain();
 
 
