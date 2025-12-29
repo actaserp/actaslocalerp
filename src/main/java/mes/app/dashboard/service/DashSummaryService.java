@@ -581,4 +581,71 @@ public class DashSummaryService {
 
         return item;
     }
+
+
+    // 요청사항 조회 (처리 대기 목록)
+    public List<Map<String, Object>> searchDatas2(
+//            String searchfrdate
+//            , String searchtodate
+//            , String searchCompCd
+//            , String searchCompnm
+//            , String reqType
+//            , String spjangcd
+//            , Integer perId
+//            , String recyn
+//            , String aspernm
+    ) {
+
+        MapSqlParameterSource dicParam = new MapSqlParameterSource();
+
+        String sql = """
+                SELECT
+                    a."asid" AS id,
+                    TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS asdate,
+                    a."cltnm",
+                    a."cltcd",
+                    a."userid",
+                    a."usernm",
+                    a."asperid",
+                    a."aspernm",
+                    a."retitle",
+                    a."remark" AS content,
+                    a."asdv",
+                    sc1."Value" AS asdv_nm,
+                    a."asmenu",
+                    a."recyn",
+                    sc2."Value" AS recyn_nm,
+                    a."recperid",
+                    a."recpernm",
+                    TO_CHAR(a."recdate", 'YYYY-MM-DD HH24:MI') AS recdate,
+                    a."endperid",
+                    a."endpernm",
+                    a."as_file",
+                    f."as_file" as "fix_file",
+                    TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
+                    TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate,
+                    CASE WHEN f."fixid" IS NOT NULL THEN 'Y' ELSE 'N' END AS hasProcess
+                FROM "tb_as010" a
+                LEFT JOIN "sys_code" sc1
+                    ON sc1."Code" = a."asdv"
+                   AND sc1."CodeType" = 'asdv'
+                LEFT JOIN "sys_code" sc2
+                    ON sc2."Code" = a."recyn"
+                   AND sc2."CodeType" = 'recyn'
+                LEFT JOIN "tb_as011" f
+                    ON f."asid" = a."asid"
+                WHERE 1=1
+                AND TO_DATE(a."asdate", 'YYYYMMDD')::date
+                    BETWEEN date_trunc('month', CURRENT_DATE)
+                        AND (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')
+        		""";
+
+
+
+        sql += " ORDER BY a.\"asdate\" DESC, a.\"inputdate\" DESC ";
+
+        List<Map<String, Object>> item = this.sqlRunner.getRows(sql, dicParam);
+
+        return item;
+    }
 }

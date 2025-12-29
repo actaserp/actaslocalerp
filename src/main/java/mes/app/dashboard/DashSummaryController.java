@@ -39,7 +39,7 @@ public class DashSummaryController {
     @Autowired
     private TbAs010Repository tbAs010Repository;
 
-
+    //
     @GetMapping("/read")
     public AjaxResult orderStatusRead(
             @RequestParam(value = "startDate", required = false) String startDate,
@@ -249,7 +249,8 @@ public class DashSummaryController {
         result.data = items;
         return result;
     }
-//
+
+    // 연차정보 조회 메서드(캘린더 바인드)
     @GetMapping("/readCalenderGrid2")
     public AjaxResult getList2(@RequestParam(value = "search_spjangcd", required = false) String searchSpjangcd
             , Authentication auth) {
@@ -457,6 +458,41 @@ public class DashSummaryController {
                 , perId
                 , recyn
                 , aspernm // 본사담당 이름
+        );
+
+        result.data = searchDatas;
+
+        return result;
+    }
+
+    // 월별 유지보수 요청현황 조회
+    @GetMapping("/readRequest2")
+    public AjaxResult searchDatas2(
+            HttpServletRequest request,
+//            @RequestParam(value="searchfrdate") String searchfrdate,
+//            @RequestParam(value="searchtodate") String searchtodate,
+//            @RequestParam(value="searchCompCd", required=false) String searchCompCd,
+//            @RequestParam(value="reqType", required=false) String reqType,
+//            @RequestParam(value="spjangcd", required=false) String spjangcd,
+//            @RequestParam(value="aspernm", required=false) String aspernm,
+//            @RequestParam(value="searchCompnm", required=false) String searchCompnm,
+//            @RequestParam(value="recyn", required=false) String recyn,
+            Authentication auth) {
+        AjaxResult result = new AjaxResult();
+
+        User user = (User) auth.getPrincipal();
+        Integer perId = user.getPersonid();
+
+        List<Map<String, Object>> searchDatas = dashSummaryService.searchDatas2(
+//                searchfrdate
+//                , searchtodate
+//                , searchCompCd
+//                , searchCompnm // 업체명
+//                , reqType
+//                , spjangcd
+//                , perId
+//                , recyn
+//                , aspernm // 본사담당 이름
         );
 
         result.data = searchDatas;
