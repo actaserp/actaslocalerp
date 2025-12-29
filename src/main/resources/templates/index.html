@@ -128,12 +128,22 @@
         }
 
         /* 알림 영역 */
+        header .right .alarm-box {
+            max-height: 300px;
+            display: none;
+            flex-direction: column;
+        }
+
+        header .right .alarm-box.open {
+            display: flex;
+        }
+
         header .right .alarm-box .alarm-tab-item {
             display: none;
-            max-height: 220px;
+            flex: 1;
             overflow-y: auto;
-            padding: 4px;
         }
+
 
         header .right .alarm-box .alarm-tab-item.active {
             display: block;
@@ -144,7 +154,7 @@
             width: 100%;
             table-layout: fixed;
             border-collapse: separate;
-            border-spacing: 0 8px;
+            border-spacing: 0 2px;
         }
 
         .alarm-table tr {
@@ -332,17 +342,19 @@
                     <div class="alarm-box">
                         <!-- tab contents -->
                         <!-- 알림 -->
-                        <table class="alarm-table">
-                            <caption>알림 테이블</caption>
-                            <colgroup>
-                                <col style="width:70px">
-                                <col>
-                                <col style="width:90px">
-                            </colgroup>
-                            <tbody id="alarmTbody">
+                        <div class="alarm-tab-item">
 
-                            </tbody>
-                        </table>
+                            <table class="alarm-table">
+                                <caption>알림 테이블</caption>
+                                <colgroup>
+                                    <col style="width:70px">
+                                    <col>
+                                    <col style="width:90px">
+                                </colgroup>
+                                <tbody id="alarmTbody"></tbody>
+                            </table>
+
+                        </div>
                         <div class="alarm-actions">
                             <a id="confirmAllAlarms" class="btn-gray">전체확인</a>
                             <a href="#" class="btn-gray" onclick="openSendModal()">메시지</a>
@@ -1556,8 +1568,30 @@
     }
 
 
-    $('.alarm').on('click', function () {
-        renderAlarmList();   // 🔥 열릴 때마다 현재 상태 렌더링
+    $('.alarm').on('click', function (e) {
+        e.preventDefault();   // 🔥 href="#" 막기
+
+        const $box = $('.alarm-box');
+        const $tab = $box.find('.alarm-tab-item');
+        const $overlay = $('#alarmOverlay');
+
+        const isOpen = $tab.hasClass('active');
+
+        if (isOpen) {
+            // 🔽 닫기
+            $tab.removeClass('active');
+            $overlay.hide();
+        } else {
+            // 🔼 열기
+            renderAlarmList();
+            $tab.addClass('active');
+            $overlay.show();
+        }
+    });
+
+    $('#alarmOverlay').on('click', function () {
+        $('.alarm-tab-item').removeClass('active');
+        $(this).hide();
     });
 
     function renderAlarmList() {
