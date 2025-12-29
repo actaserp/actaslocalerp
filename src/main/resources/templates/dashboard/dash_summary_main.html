@@ -196,7 +196,7 @@
                                     <div class="btn-wrap" style="margin-left: auto;">
                                         <a class="btn btn-delete" title="검색" id="btn-srch" onclick="fetchListData()">
                                             <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
-                                            초기화
+                                             월별 근태현황
                                         </a>
                                     </div>
                                 </div>
@@ -524,6 +524,7 @@
         const currentMonth = new Date().getMonth() + 1;
         document.getElementById('month-status').innerText = `${currentMonth}월 근태현황`;
         document.getElementById('month-request').innerText = `${currentMonth}월 유지보수 요청현황`;
+        document.getElementById('btn-srch').innerText = `${currentMonth}월 전체조회`;
 
         document.readyState === 'complete' ? init() : window.onload = init;
         let isBindSpjangcdCalled = false;
