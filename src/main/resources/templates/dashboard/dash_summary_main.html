@@ -928,8 +928,13 @@
                     console.error("데이터를 가져오는 중 오류가 발생했습니다.");
                 }
             });
-            // CollectionView 생성
-            let viewdata = new wijmo.collections.CollectionView(data2);
+            // ✅ 항상 새로운 CollectionView 생성
+            const viewdata = new wijmo.collections.CollectionView(data2);
+
+            // ✅ 그룹화를 항상 다시 설정
+            viewdata.groupDescriptions.clear();
+            viewdata.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('rptweek'));
+            viewdata.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('fixpernm'));
 
             // FlexGrid 생성 또는 업데이트
             if (!theGrid2) {
@@ -979,7 +984,7 @@
                     },
                     columns: [
                         {binding: 'id', visible:false},
-                        {binding: 'rptdate', header: '작성일자', width: 120, align: 'center'},
+                        {binding: 'rptdate', header: '작성일자', width: 125, align: 'center'},
                         {binding: 'rptweek', header: '주차', width: 140, align: 'center'},
                         {binding: 'fixflag_nm', header: '업무구분', width: 100, align: 'center'},
                         {binding: 'fixpernm', header: '사원명', width: 120, align: 'center'},
@@ -1078,41 +1083,7 @@
             });
         }
 
-        function showCheckedCount(selector) {
-            let cntElement = document.getElementById('checked-count');
 
-            if (cntElement) {
-                let selectedRows = [];
-
-                // ✅ 최신 wijmo 버전 대응: `getCheckedItems()` 또는 `isSelected` 방식 사용
-                if (typeof selector.getCheckedItems === "function") {
-                    selectedRows = selector.getCheckedItems();
-                } else {
-                    console.warn("❗ `selector.getCheckedItems()`가 빈 배열을 반환했습니다. `isSelected` 방식으로 대체합니다.");
-                    selectedRows = theGrid2.rows.filter(r => r.isSelected).map(row => row.dataItem);
-                }
-
-                // ✅ 체크된 행 데이터 콘솔에 출력
-                console.log("🔍 최종 선택된 행 데이터:", selectedRows);
-
-                if (selectedRows.length === 0) {
-                    console.warn("❗ 여전히 선택된 행이 없습니다.");
-                    return;
-                }
-
-                cntElement.textContent = selectedRows.length.toString();
-
-                let selectedGroupInfo = new Set();
-
-                selectedRows.forEach(item => {
-                    let groupKey = `${item.cltnm}_${item.reqnum}`;
-                    selectedGroupInfo.add(groupKey);
-                });
-
-                let groupInfoArray = Array.from(selectedGroupInfo);
-                console.log("✅ 선택된 행의 그룹 정보:", groupInfoArray);
-            }
-        }
         //다운로드
         function downloadFile_order_status() {
             let selectedItems = theGrid2.selectedItems; // 선택된 항목 가져오기
