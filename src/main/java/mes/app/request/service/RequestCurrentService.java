@@ -106,7 +106,7 @@ public class RequestCurrentService {
         }
         if (aspernm != null && !aspernm.isEmpty()) { // 본사담당 검색필터, 담당자 배정받지 않은 건도 표시
             dicParam.addValue("aspernm", aspernm.toString());
-            dicParam.addValue("asperid", perId);
+            dicParam.addValue("asperid", perId.toString());
             sql += " AND (a.\"aspernm\" = :aspernm OR a.\"aspernm\" IS NULL OR a.\"asperid\" = :asperid ) ";
         }
         if (searchtodate != null && !searchtodate.isEmpty()) {
