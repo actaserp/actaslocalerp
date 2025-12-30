@@ -315,19 +315,19 @@
                                     </div>
                                 </dd>
                             </dl>
-                            <dl>
-                                <dt>
-                                    <label for="searchtketnm">
-                                        제목<span class="eq">*</span>
-                                    </label>
-                                </dt>
-                                <dd>
-                                    <div class="srch-box">
-                                        <input type="text" id="searchtketnm" name="searchtketnm" class="input-srch"
-                                               placeholder="제목" style="border-radius: 5px;">
-                                    </div>
-                                </dd>
-                            </dl>
+<!--                            <dl>-->
+<!--                                <dt>-->
+<!--                                    <label for="searchtketnm">-->
+<!--                                        제목<span class="eq">*</span>-->
+<!--                                    </label>-->
+<!--                                </dt>-->
+<!--                                <dd>-->
+<!--                                    <div class="srch-box">-->
+<!--                                        <input type="text" id="searchtketnm" name="searchtketnm" class="input-srch"-->
+<!--                                               placeholder="제목" style="border-radius: 5px;">-->
+<!--                                    </div>-->
+<!--                                </dd>-->
+<!--                            </dl>-->
                             <dl>
                                 <dt>
                                     <label for="searchstate">
@@ -535,12 +535,15 @@
             if (!isBindSpjangcdCalled) {
                 isBindSpjangcdCalled = true; // 플래그 업데이트
             }
+            // 진행구분 셀렉트 박스 초기화
+            AjaxUtil.fillSelectOptions($('#searchstate'), 'system_code', 'all', '', 'recyn');
+
             initCalendar(); // 근태현황 캘린더
             applySavedSettings(); // 페이지 로드 시 설정 적용
             fetchListData(); // 월별 근태현황 그리드 조회
             initDatas(); // 월별근태현황 카드
             fetchListData2(); // 업무일지 탭 그리드 조회
-            fetchListRequestData(); // 유지보수 요청현황 조회
+            fetchListRequestData(); // 유지보수 요청현황탭 그리드 조회
             fetchListRequestData2(); // 월별 유지보수 요청현황 조회
 
             let _this = this;
@@ -831,7 +834,7 @@
                 while (start <= end) {
                     let dateStr = start.toISOString().split('T')[0]; // YYYY-MM-DD 형식
                     orderDates.push({
-                        name: item.worknm,
+                        name: item.Name,
                         date: dateStr
                     });
                     // 다음 날짜로 이동
@@ -842,23 +845,13 @@
             return orderDates;
         }
 
-        // 주문 상태에 따른 색상 설정
+        // 색상 설정
         function getEventColor(name) {
             switch (name) {
-                case "연차":
-                    return { bg: "#031B4B", border: "#031B4B", text: "white" };
-                case "반차":
-                    return { bg: "#03428E", border: "#03428E", text: "white" };
-                case "외근":
-                    return { bg: "#3069B3", border: "#3069B3", text: "white" };
-                // case "제작진행":
-                //     return { bg: "#C7DFF4", border: "rgba(2,165,255,0.07)", text: "black" };
-                // case "출고":
-                //     return { bg: "white", border: "grey", text: "black" };
-                // case "주문취소":
-                //     return { bg: "grey", border: "grey", text: "black" };
+                // case "연차":
+                //     return { bg: "#031B4B", border: "#031B4B", text: "white" };
                 default:
-                    return { bg: "grey", border: "grey", text: "white" };
+                    return { bg: "031B4B", border: "031B4B", text: "white" };
             }
         }
 
@@ -1591,14 +1584,10 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-
-
+        // 유지보수요청현황 탭 그리드 조회
         function fetchListRequestData() {
             let data2 = []; // 데이터를 담을 배열
             let emptyRowsCount = 8;
-
-            // 진행구분 셀렉트 박스 초기화
-            AjaxUtil.fillSelectOptions($('#searchstate'), 'system_code', 'all', '', 'recyn');
 
             $.ajax({
                 url: '/api/dash_summary/readRequest',
@@ -1608,9 +1597,9 @@
                     searchtodate: $('#endDate4').val(),
                     // searchCompCd: $('#cboCompanyHidden2').val(),
                     searchCompnm: $('#searchCltnm').val(),
-                    aspernm: $('#aspernm2').val(),
+                    // aspernm: $('#aspernm2').val(),
                     // reqType : $('#reqType2').val(),
-                    // recyn : $('#recyn').val(),
+                    recyn : $('#searchstate').val(),
                     spjangcd: getSpjangcdFromSession(),
                 },
                 async: false,
@@ -1664,6 +1653,7 @@
                         e.cell.style.textAlign = 'center';
                     }
                 });
+                theGrid4.rowHeaders.columns.splice(0, 1);
                 // 선택이 변경될 때, 현재 항목 업데이트
                 new FlexGridContextMenu(theGrid4);
                 window.downloadFileName = '요청현황';
@@ -1735,13 +1725,13 @@
                                     { binding: 'asdate', header: '요청일자', align: 'center', width: 120 },
                                     { binding: 'cltnm', header: '업체명', align: 'left', width: 150 },
                                     { binding: 'usernm', header: '요청자', align: 'left', width: 120 },
-                                    { binding: 'retitle', header: '제목', align: 'left', width: '*' },
+                                    { binding: 'retitle', header: '제목', align: 'left', width: 300 },
                                     { binding: 'asdv_nm', header: '요청구분', align: 'center', width: 120 },
                                     { binding: 'asmenu', header: '화면명', align: 'left', width: 150 },
                                     { binding: 'aspernm', header: '본사담당', align: 'left', width: 120 },
                                     { binding: 'recyn_nm', header: '진행구분', align: 'center', width: 120 },
                                     { binding: 'recdate', header: '접수일자', align: 'center', width: 150 },
-                                    { binding: 'as_file', header: '첨부파일', align: 'center', width: 120 }
+                                    // { binding: 'as_file', header: '첨부파일', align: 'center', width: 120 }
                                 ],
                                 itemsSource: new wijmo.collections.CollectionView(data)
                             });

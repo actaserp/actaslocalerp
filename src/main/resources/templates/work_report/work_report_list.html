@@ -975,143 +975,7 @@
             }
         }
 
-        // 팝업 날짜 계산 로직
-        function initPopupDateKindHandler($content) {
-            const $datetype = $content.find('#datetype');
-            const $extraSelectBox = $('<span id="extraSelectBox"></span>');
-            const $stdate = $content.find('#stdate');
-            const $eddate = $content.find('#eddate');
-            const $rptdate = $content.find('#rptdate'); // ✅ 추가
 
-            $datetype.after($extraSelectBox);
-
-            $datetype.on('change', function () {
-                const type = $(this).val();
-                $extraSelectBox.empty();
-
-                // ✅ 먼저 기준 날짜를 구한다 (rptdate → stdate 순)
-                const rptdateStr = $rptdate.val();   // ex: "2025-08-01"
-                const stdateStr  = $stdate.val();    // 혹시 이미 값이 있다면
-                const baseStr    = rptdateStr || stdateStr;
-                const now        = new Date();
-                const targetDate = baseStr ? parseDate(baseStr) : now;
-
-                // 그 다음에 초기화
-                $stdate.prop('readOnly', false);
-                $eddate.prop('readOnly', false);
-
-                if (type === 'week') {
-                    const $weekSelect = $('<select id="popupWeekSelector" name="popupWeekSelector" style="min-width: 140px;"></select>');
-
-                    const year = targetDate.getFullYear();
-                    const currentWeek = getISOWeekNumber(targetDate);
-
-                    for (let i = 1; i <= 52; i++) {
-                        const value = `${year}년 ${i}주차`;
-                        const text = `${year}년 ${i}주차`;
-                        const $option = $(`<option value="${value}">${text}</option>`);
-                        if (i === currentWeek) {
-                            $option.prop("selected", true); // ✅ 기준 날짜가 속한 주차 선택
-                        }
-                        $weekSelect.append($option);
-                    }
-
-                    $weekSelect.on('change', function () {
-                        const val = $(this).val(); // 예: "2025년 11주차"
-
-                        const y = parseInt(val.split("년")[0].trim());
-                        const w = parseInt(val.split("년")[1].replace("주차", "").trim());
-
-                        const start = getDateOfISOWeek(w, y);
-                        const end = new Date(start);
-                        end.setDate(start.getDate() + 6);
-
-                        $stdate.val(formatDate(start)).prop('readOnly', true);
-                        $eddate.val(formatDate(end)).prop('readOnly', true);
-                    });
-
-                    $extraSelectBox.append($weekSelect);
-                    $weekSelect.trigger('change'); // ✅ 현재 선택된 주차로 stdate/eddate 세팅
-
-                } else if (type === 'month') {
-                    const $monthSelect = $('<select id="popupMonthSelector"></select>');
-
-                    const year = targetDate.getFullYear();
-                    const selectedMonth = targetDate.getMonth() + 1;
-
-                    for (let i = 1; i <= 12; i++) {
-                        const value = `${year}-${String(i).padStart(2, "0")}`;
-                        const text = `${year}년 ${i}월`;
-                        const $option = $(`<option value="${value}">${text}</option>`);
-                        if (i === selectedMonth) {
-                            $option.prop("selected", true);
-                        }
-                        $monthSelect.append($option);
-                    }
-
-                    $monthSelect.on('change', function () {
-                        const [y, m] = $(this).val().split('-');
-                        const start = new Date(parseInt(y), parseInt(m) - 1, 1);
-                        const end = new Date(parseInt(y), parseInt(m), 0);
-                        $stdate.val(formatDate(start)).prop('readOnly', true);
-                        $eddate.val(formatDate(end)).prop('readOnly', true);
-                    });
-
-                    $extraSelectBox.append($monthSelect);
-                    $monthSelect.trigger('change');
-
-                } else {
-                    // 기본: 최근 7일
-                    const startVal = CommonUtil.getYYYYMMDD(-7);
-                    const endVal = CommonUtil.getYYYYMMDD();
-                    $stdate.val(startVal).prop('readOnly', false);
-                    $eddate.val(endVal).prop('readOnly', false);
-                }
-            });
-
-            // 최초 적용
-            $datetype.trigger('change');
-        }
-
-
-        // ISO 주차 계산
-        function getDateOfISOWeek(week, year) {
-            const jan4 = new Date(year, 0, 4);
-            const day = jan4.getDay() || 7;
-            const start = new Date(jan4);
-            start.setDate(jan4.getDate() - day + 1 + (week - 1) * 7);
-            return start;
-        }
-
-        function formatDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, "0");
-            const d = String(date.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
-        }
-
-        function getISOWeekNumber(date) {
-            const target = new Date(date.valueOf());
-            const dayNum = (date.getDay() + 6) % 7;
-            target.setDate(target.getDate() - dayNum + 3);
-            const firstThursday = new Date(target.getFullYear(), 0, 4);
-            const diff = target - firstThursday;
-            return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-        }
-
-        function parseDate(str) {
-            if (!str) return new Date();
-            if (/^\d{8}$/.test(str)) {
-                return new Date(
-                    parseInt(str.slice(0, 4)),
-                    parseInt(str.slice(4, 6)) - 1,
-                    parseInt(str.slice(6, 8))
-                );
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-                return new Date(str);
-            }
-            return new Date();
-        }
 
         let page = null;
 
@@ -1124,7 +988,7 @@
             function getThisSunday() {
                 const today = new Date();
                 const day = today.getDay(); // 0: 일요일, 6: 토요일
-                const diff = 7 - day; // 다음 일요일까지 남은 일수 (오늘이 일요일이면 0)
+                const diff = (7 - day) % 7; // 일요일이면 0 유지
                 const sunday = new Date(today);
                 sunday.setDate(today.getDate() + diff);
                 const year = sunday.getFullYear();
@@ -1141,10 +1005,191 @@
             $('#btnSearch').click(function (e) {
                 page.searchMainData();
             });
-
-
         })
 
+    </script>
+    <script type="text/javascript">
+
+        // ✅ 한국식 주차 계산 (1월 첫 월요일 전까지는 이전 해로 간주)
+        function getKoreanWeekYear(date) {
+            const monday = new Date(date);
+            monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); // 이번 주 월요일
+
+            // 🔥 만약 이번 주 월요일이 1월 4일 이전이면 → 작년 마지막 주
+            if (monday.getMonth() === 0 && monday.getDate() < 4) {
+                return monday.getFullYear() - 1;
+            }
+            return monday.getFullYear();
+        }
+
+
+        function getKoreanWeekNumber(date) {
+            const year = getKoreanWeekYear(date);
+
+            // 해당 연도의 첫 월요일
+            let firstMonday = new Date(year, 0, 1);
+            while (firstMonday.getDay() !== 1) {
+                firstMonday.setDate(firstMonday.getDate() + 1);
+            }
+
+            const monday = new Date(date);
+            monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); // 이번 주 월요일
+
+            const diff = Math.floor((monday - firstMonday) / (7 * 24 * 60 * 60 * 1000)) + 1;
+            return diff;
+        }
+
+        // ✅ 한국식: 연도(year)의 n번째 주(week)의 월요일 반환
+        function getDateOfKoreanWeek(week, year) {
+            // 해당 연도의 첫 월요일
+            let firstMonday = new Date(year, 0, 1);
+            while (firstMonday.getDay() !== 1) {
+                firstMonday.setDate(firstMonday.getDate() + 1);
+            }
+
+            const monday = new Date(firstMonday);
+            monday.setDate(firstMonday.getDate() + (week - 1) * 7);
+            return monday;
+        }
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseDate(str) {
+            if (!str) return new Date();
+            if (/^\d{8}$/.test(str)) {
+                return new Date(
+                    parseInt(str.slice(0, 4)),
+                    parseInt(str.slice(4, 6)) - 1,
+                    parseInt(str.slice(6, 8))
+                );
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                return new Date(str);
+            }
+            return new Date();
+        }
+
+        // ✅ 팝업 주차 계산
+        function initPopupDateKindHandler($content) {
+            const $datetype = $content.find('#datetype');
+            const $extraSelectBox = $('<span id="extraSelectBox"></span>');
+            const $stdate = $content.find('#stdate');
+            const $eddate = $content.find('#eddate');
+            const $rptdate = $content.find('#rptdate');
+
+            $datetype.after($extraSelectBox);
+
+            $datetype.on('change', function () {
+                const type = $(this).val();
+                $extraSelectBox.empty();
+
+                const baseStr = $rptdate.val() || $stdate.val();
+                const targetDate = baseStr ? parseDate(baseStr) : new Date();
+
+                $stdate.prop('readOnly', false);
+                $eddate.prop('readOnly', false);
+
+                if (type === 'week') {
+                    const $weekSelect = $('<select id="popupWeekSelector" name="popupWeekSelector" style="min-width: 140px;"></select>');
+
+                    const isoYear = getKoreanWeekYear(targetDate);
+                    const currentWeek = getKoreanWeekNumber(targetDate);
+                    // ✅ 해당 연도의 마지막 주차 계산 (연도 경계 보정)
+                    let lastWeekDate = new Date(isoYear, 11, 31);
+                    let lastWeekYear = getKoreanWeekYear(lastWeekDate);
+
+                    // 12월 31일이 다음 해로 넘어가면 보정
+                    if (lastWeekYear !== isoYear) {
+                        lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+                    }
+
+                    // 안전하게 주차 계산
+                    let lastWeek = getKoreanWeekNumber(lastWeekDate);
+
+                    // 혹시라도 0이나 음수가 나오면 최소 52로 보정
+                    if (lastWeek <= 0) lastWeek = 52;
+
+                    for (let i = 1; i <= lastWeek; i++) {
+                        const value = `${isoYear}년 ${i}주차`;
+                        const text = `${isoYear}년 ${i}주차`;
+                        const $option = $(`<option value="${value}">${text}</option>`);
+                        if (i === currentWeek) $option.prop("selected", true);
+                        $weekSelect.append($option);
+                    }
+
+                    $weekSelect.on('change', function () {
+                        let val = $(this).val();
+
+                        // ✅ 값이 없으면 첫 번째 option 자동 선택
+                        if (!val) {
+                            const firstVal = $(this).find("option:first").val();
+                            if (firstVal) {
+                                $(this).val(firstVal);
+                                val = firstVal;
+                            } else {
+                                console.warn("⚠️ 주차 옵션이 없습니다.");
+                                return;
+                            }
+                        }
+
+                        const y = parseInt(val.split("년")[0].trim());
+                        const w = parseInt(val.split("년")[1].replace("주차", "").trim());
+
+                        const start = getDateOfKoreanWeek(w, y);
+                        const end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+
+                        $stdate.val(formatDate(start)).prop('readOnly', true);
+                        $eddate.val(formatDate(end)).prop('readOnly', true);
+                    });
+
+                    $extraSelectBox.append($weekSelect);
+                    $weekSelect.trigger('change');
+
+                } else if (type === 'month') {
+                    const $monthSelect = $('<select id="popupMonthSelector"></select>');
+                    const year = targetDate.getFullYear();
+                    const selectedMonth = targetDate.getMonth() + 1;
+                    for (let i = 1; i <= 12; i++) {
+                        const value = `${year}-${String(i).padStart(2, "0")}`;
+                        const text = `${year}년 ${i}월`;
+                        const $option = $(`<option value="${value}">${text}</option>`);
+                        if (i === selectedMonth) $option.prop("selected", true);
+                        $monthSelect.append($option);
+                    }
+                    $monthSelect.on('change', function () {
+                        const [y, m] = $(this).val().split('-');
+                        const start = new Date(parseInt(y), parseInt(m) - 1, 1);
+                        const end = new Date(parseInt(y), parseInt(m), 0);
+                        $stdate.val(formatDate(start)).prop('readOnly', true);
+                        $eddate.val(formatDate(end)).prop('readOnly', true);
+                    });
+                    $extraSelectBox.append($monthSelect);
+                    $monthSelect.trigger('change');
+                }
+            });
+            // ✅ rptdate 변경 시 주차 자동 갱신
+            $rptdate.on('change', function () {
+                const newDate = parseDate($(this).val());
+                const newYear = getKoreanWeekYear(newDate);
+                const newWeek = getKoreanWeekNumber(newDate);
+
+                // 주차 셀렉트박스 갱신
+                const $weekSelector = $content.find('#popupWeekSelector');
+                if ($weekSelector.length) {
+                    $weekSelector.val(`${newYear}년 ${newWeek}주차`).trigger('change');
+                } else {
+                    $datetype.trigger('change'); // 주차 셀렉트박스 없을 경우 재생성
+                }
+            });
+            $datetype.trigger('change');
+        }
+
+        // ✅ 조회 화면의 “주간/월간” 필터 로직 (상단 검색 부분)
         document.addEventListener("DOMContentLoaded", function () {
             const cboDateKind = document.getElementById("cboDateKind");
             const extraSelectBox = document.getElementById("extraSelectBox");
@@ -1153,8 +1198,7 @@
 
             cboDateKind.addEventListener("change", function () {
                 const type = this.value;
-
-                extraSelectBox.innerHTML = ""; // 초기화
+                extraSelectBox.innerHTML = "";
                 srchStartDt.value = "";
                 srchEndDt.value = "";
                 srchStartDt.readOnly = false;
@@ -1164,109 +1208,62 @@
                     const select = document.createElement("select");
                     select.id = "weekSelector";
 
-                    const now = new Date();
-                    const currentYear = now.getFullYear();
-                    const currentWeek = getISOWeekNumber(now);
-                    for (let i = 1; i <= 52; i++) {
+                    const today = new Date();
+                    const isoYear = getKoreanWeekYear(today);
+                    const currentWeek = getKoreanWeekNumber(today);
+                    const lastWeek = getKoreanWeekNumber(new Date(isoYear, 11, 28));
+
+                    for (let i = 1; i <= lastWeek; i++) {
                         const option = document.createElement("option");
-                        option.value = `${currentYear}년 ${i}주차`;
-                        option.textContent = `${currentYear}년 ${i}주차`;
-                        if (i === currentWeek) {
-                            option.selected = true; // ← 현재 주차 자동 선택
-                        }
+                        option.value = `${isoYear}년 ${i}주차`;
+                        option.textContent = `${isoYear}년 ${i}주차`;
+                        if (i === currentWeek) option.selected = true;
                         select.appendChild(option);
                     }
 
                     select.addEventListener("change", function () {
-                        const weekText = this.value; // 예: "2025년 11주차"
-
-                        // 🔥 한국어 문자열에서 숫자만 추출
-                        const year = parseInt(weekText.split("년")[0].trim());
-                        const weekNum = parseInt(
-                            weekText.split("년")[1].replace("주차", "").trim()
-                        );
-
-                        const start = getDateOfISOWeek(weekNum, year);
+                        const val = this.value;
+                        const y = parseInt(val.split("년")[0].trim());
+                        const w = parseInt(val.split("년")[1].replace("주차", "").trim());
+                        const start = getDateOfKoreanWeek(w, y);
                         const end = new Date(start);
                         end.setDate(start.getDate() + 6);
-
                         srchStartDt.value = formatDate(start);
                         srchEndDt.value = formatDate(end);
-
                         srchStartDt.readOnly = true;
                         srchEndDt.readOnly = true;
                     });
 
                     extraSelectBox.appendChild(select);
-                    select.dispatchEvent(new Event("change")); // 초기 선택값 반영
+                    select.dispatchEvent(new Event("change"));
+
                 } else if (type === "month") {
                     const select = document.createElement("select");
                     select.id = "monthSelector";
-
                     const now = new Date();
-                    const currentYear = now.getFullYear();
-                    const currentMonth = now.getMonth();
-
-                    for (let i = 0; i < 12; i++) {
-                        const month = new Date(currentYear, i, 1);
+                    const year = now.getFullYear();
+                    const monthNow = now.getMonth() + 1;
+                    for (let i = 1; i <= 12; i++) {
                         const option = document.createElement("option");
-                        option.value = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
-                        option.textContent = `${month.getFullYear()}년 ${month.getMonth() + 1}월`;
-                        if (i === currentMonth) {
-                            option.selected = true; // ← 현재 달 자동 선택
-                        }
+                        option.value = `${year}-${String(i).padStart(2, "0")}`;
+                        option.textContent = `${year}년 ${i}월`;
+                        if (i === monthNow) option.selected = true;
                         select.appendChild(option);
                     }
-
-                    select.selectedIndex = currentMonth;
-
                     select.addEventListener("change", function () {
-                        const [year, month] = this.value.split("-");
-                        const start = new Date(parseInt(year), parseInt(month) - 1, 1);
-                        const end = new Date(parseInt(year), parseInt(month), 0); // 말일
-
+                        const [y, m] = this.value.split("-");
+                        const start = new Date(parseInt(y), parseInt(m) - 1, 1);
+                        const end = new Date(parseInt(y), parseInt(m), 0);
                         srchStartDt.value = formatDate(start);
                         srchEndDt.value = formatDate(end);
                         srchStartDt.readOnly = true;
                         srchEndDt.readOnly = true;
                     });
-
                     extraSelectBox.appendChild(select);
-                    select.dispatchEvent(new Event("change")); // 초기 선택값 반영
-                } else {
-                    const startVal = CommonUtil.getYYYYMMDD(-7);
-                    const endVal = CommonUtil.getYYYYMMDD();
-
-                    $('#srchStartDt').val(startVal).prop('readOnly', false);
-                    $('#srchEndDt').val(endVal).prop('readOnly', false);
+                    select.dispatchEvent(new Event("change"));
                 }
             });
-
-            function getDateOfISOWeek(week, year) {
-                const jan4 = new Date(year, 0, 4); // 항상 1월 4일 기준
-                const day = jan4.getDay() || 7;
-                const start = new Date(jan4);
-                start.setDate(jan4.getDate() - day + 1 + (week - 1) * 7);
-                return start;
-            }
-
-            function formatDate(date) {
-                const y = date.getFullYear();
-                const m = String(date.getMonth() + 1).padStart(2, "0");
-                const d = String(date.getDate()).padStart(2, "0");
-                return `${y}-${m}-${d}`;
-            }
-
-            function getISOWeekNumber(date) {
-                const target = new Date(date.valueOf());
-                const dayNum = (date.getDay() + 6) % 7;
-                target.setDate(target.getDate() - dayNum + 3);
-                const firstThursday = new Date(target.getFullYear(), 0, 4);
-                const diff = target - firstThursday;
-                return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-            }
         });
-
 
     </script>
 

@@ -405,10 +405,12 @@ public class DashSummaryService {
         StringBuilder sql = new StringBuilder("""
                 SELECT
                     tb204.*,
-                    tb210.worknm as worknm
+                    tb210.worknm as worknm,
+                    per."Name"
                 FROM
                     tb_pb204 tb204
                     LEFT JOIN tb_pb210 tb210 ON tb210.workcd = tb204.workcd
+                    LEFT JOIN person per ON tb204.personid = per.id
                 WHERE
                     TO_DATE(tb204.frdate, 'YYYYMMDD') BETWEEN
                         TO_DATE((EXTRACT(YEAR FROM CURRENT_DATE) - 1)::text || '0101', 'YYYYMMDD')
@@ -548,8 +550,8 @@ public class DashSummaryService {
             sql += " AND a.\"asdate\" >= :searchfrdate ";
         }
         if (searchCompnm != null && !searchCompnm.isEmpty()) { // 본사담당 검색필터
-            dicParam.addValue("searchCompnm", searchCompnm.toString());
-            sql += " AND a.\"cltnm\" = :searchCompnm ";
+            dicParam.addValue("searchCompnm", '%' + searchCompnm.toString() + '%');
+            sql += " AND a.\"cltnm\" like :searchCompnm ";
         }
         if (aspernm != null && !aspernm.isEmpty()) { // 본사담당 검색필터, 담당자 배정받지 않은 건도 표시
             dicParam.addValue("aspernm", aspernm.toString());
