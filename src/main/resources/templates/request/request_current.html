@@ -605,6 +605,7 @@
                     // ✅ HTML 태그 제거 (웹에디터 내용에서 순수 텍스트만 추출)
                     const plainContent = (item.content || '').replace(/<[^>]+>/g, '');
                     const plainRemark = (item.remark || '').replace(/<[^>]+>/g, '');
+                    console.log('remark : ', item.remark)
 
                     // 요청현황 탭의 상세 정보 영역에 데이터 표시
                     $('#reqtextf').val(plainContent);

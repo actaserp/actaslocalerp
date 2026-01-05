@@ -81,6 +81,7 @@ public class RequestCurrentService {
                     a."endpernm",
                     a."as_file",
                     f."as_file" as "fix_file",
+                    f."remark",
                     TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
                     TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate,
                     CASE WHEN f."fixid" IS NOT NULL THEN 'Y' ELSE 'N' END AS hasProcess
@@ -168,7 +169,7 @@ public class RequestCurrentService {
             f."asperid" AS fix_asperid,
             f."aspernm" AS fix_aspernm,
             f."as_file" AS fix_file,
-            f."remark" AS processContent,
+            f."remark" AS "processContent",
             TO_CHAR(f."inputdate", 'YYYY-MM-DD HH24:MI') AS fix_inputdate,
             TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS endDate,
             TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate

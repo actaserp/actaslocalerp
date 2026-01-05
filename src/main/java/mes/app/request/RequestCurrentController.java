@@ -104,7 +104,7 @@ public class RequestCurrentController {
         try {
             result = requestCurrentService.saveProcess(payload, user);
 
-            // check020이 1일 경우 tb_as020에도 insert
+            // check020(업무일지)이 1일 경우 tb_as020에도 insert
             if (payload.get("check020") != null && "1".equals(payload.get("check020").toString())) {
 
                 // ✅ asid 추출
@@ -124,11 +124,11 @@ public class RequestCurrentController {
                 TbAs020 entity = new TbAs020();
 
                 // 날짜 관련 처리
-                String rptdate = (payload.get("fixdate") != null)
-                        ? payload.get("fixdate").toString()
-                        : new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+                String rptdate = payload.get("fixdate").toString().replaceAll("-", "");
 
                 entity.setRptdate(rptdate);                  // 등록일자
+                entity.setFrdate(rptdate);                  // 처리시작일자
+                entity.setTodate(rptdate);                  // 처리종료일자
                 entity.setRptweek(getWeekFromDate(rptdate)); // 작성주차 자동 계산
 
                 // 기본값 설정
@@ -140,11 +140,13 @@ public class RequestCurrentController {
                 entity.setRecyn((String) payload.get("recyn"));                         // 진행구분 기본 완료 상태
                 entity.setRptremark((String) payload.get("remark"));    // 업무내용 기본 문구
                 entity.setRemark("유지보수 요청처리");   // 특이사항
-                entity.setFixperid(String.valueOf(user.getId()));
-                entity.setFixpernm(user.getUsername());
+                entity.setFixperid(user.getUsername());
+                entity.setFixpernm(user.getFirst_name());
                 entity.setInputdate(new Timestamp(System.currentTimeMillis()));
 
                 tbAs020Repository.save(entity);
+                tbAs020Repository.flush();
+                System.out.println(">>> 저장 완료 후 ID: " + entity.getRptid());
             }
 
         } catch (Exception e) {
@@ -253,14 +255,56 @@ public class RequestCurrentController {
     }
 
     // 작성주차 자동 계산 메서드
+    /**
+     * ✅ 한국식 주차 계산 (프론트 JS와 동일)
+     * - 주 시작: 월요일
+     * - 1월 첫 월요일 전까지는 전년도 마지막 주로 간주
+     * - 예: 2026-01-05 → "2026년 1주차"
+     */
     private String getWeekFromDate(String dateStr) {
         try {
-            java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
-            java.time.temporal.WeekFields weekFields = java.time.temporal.WeekFields.of(java.util.Locale.KOREA);
-            int weekNumber = date.get(weekFields.weekOfWeekBasedYear());
-            return date.getYear() + "-W" + String.format("%02d", weekNumber); // 예: 2025-W45
+            // 1️⃣ 입력 포맷 정규화
+            String normalized = dateStr.replaceAll("-", "");
+            java.time.LocalDate date = java.time.LocalDate.parse(
+                    normalized, java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+            // 2️⃣ 이번 주의 월요일 계산
+            java.time.DayOfWeek dow = date.getDayOfWeek();
+            java.time.LocalDate monday = date.minusDays((dow.getValue() + 6) % 7);
+
+            // 3️⃣ 주차 계산용 기준 연도 결정
+            int weekYear = monday.getYear();
+            if (monday.getMonthValue() == 1 && monday.getDayOfMonth() < 4) {
+                weekYear -= 1; // 1월 첫 월요일 전이면 전년도 마지막 주
+            }
+
+            // 4️⃣ 해당 연도의 첫 월요일 구하기
+            java.time.LocalDate firstMonday = java.time.LocalDate.of(weekYear, 1, 1);
+            while (firstMonday.getDayOfWeek() != java.time.DayOfWeek.MONDAY) {
+                firstMonday = firstMonday.plusDays(1);
+            }
+
+            // 5️⃣ 주차 번호 계산 (첫 월요일부터 몇 주차인지)
+            long weekNo = java.time.temporal.ChronoUnit.WEEKS.between(firstMonday, monday) + 1;
+
+            // 🔥 경계 보정: 주차 번호가 0 이하일 경우 (1월 초)
+            if (weekNo <= 0) {
+                weekYear -= 1;
+                java.time.LocalDate lastYearLastMonday = java.time.LocalDate.of(weekYear, 12, 31);
+                while (lastYearLastMonday.getDayOfWeek() != java.time.DayOfWeek.MONDAY) {
+                    lastYearLastMonday = lastYearLastMonday.minusDays(1);
+                }
+                weekNo = java.time.temporal.ChronoUnit.WEEKS.between(
+                        lastYearLastMonday, monday) + 1;
+            }
+
+            // 6️⃣ 형식화하여 반환
+            return String.format("%d년 %d주차", weekYear, weekNo);
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "";
         }
     }
+
 }
