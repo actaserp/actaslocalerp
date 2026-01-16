@@ -1,7 +1,6 @@
 <html layout:decorate="~{layout_page}" xmlns:layout="http://www.w3.org/1999/xhtml">
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
-<link rel="stylesheet" href="/css/import.css"/>
-<link rel="stylesheet" href="/resource/ax5ui/ax5ui.all.css" />
+
 
 <style>
     .modal {
@@ -98,13 +97,13 @@
         <!-- Page Title -->
         <div class="page-title-wrap">
             <div class="left">
-                <h2>대시보드</h2><a id="toggleButton" onclick="toggleSearchWrap()"><img src="/images/icon/ico-down.png" alt="알람 아이콘"></a>
+                <h2>대시보드</h2><a id="toggleButton" onclick="toggleSearchWrap()"><img th:src="@{/images/icon/ico-down.png}" alt="알람 아이콘"></a>
                 <!--                <a href="#" title="북마크" class="bookmark toggle">-->
                 <!--                    내메뉴-->
                 <!--                </a>-->
             </div>
             <ul class="page-navi">
-                <li><img src="/images/icon/ico-nav-home.svg" alt="홈아이콘"></li>
+                <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
                 <li>대시보드</li>
             </ul>
         </div>
@@ -195,7 +194,7 @@
                                     <h3 id="">근태현황</h3>
                                     <div class="btn-wrap" style="margin-left: auto;">
                                         <a class="btn btn-delete" title="검색" id="btn-srch" onclick="fetchListData()">
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                            <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                                              월별 근태현황
                                         </a>
                                     </div>
@@ -269,7 +268,7 @@
                                     <li>
                                         <a class="btn btn-delete" title="검색" id="searchButton1" onclick="fetchListData2()">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                            <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                                             검색
                                         </a>
                                     </li>
@@ -348,7 +347,7 @@
                                     <li>
                                         <a class="btn btn-delete" title="검색" id="searchButton2" onclick="fetchListRequestData()">
                                             <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                            <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                            <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                                             검색
                                         </a>
                                     </li>
@@ -412,7 +411,7 @@
             <div class="modal-content">
                 <h2 style="text-align: center;">거래처 정보 상세</h2>
                 <a title="팝업닫기" onclick="closePopup('CltnmModal')" class="btn-popup-close">
-                    <img src="/images/icon/btn-popup-close.svg" style=" float: right; right: 30px;" alt="닫기">
+                    <img th:src="@{/images/icon/btn-popup-close.svg}" style=" float: right; right: 30px;" alt="닫기">
                 </a>
                 <form id="CltnmFindForm">
                     <div id="modalGrid" style="height: 350px;width: 100%; margin-right:0px;  margin-top: 20px;"></div>
@@ -427,7 +426,7 @@
             <div class="modal-content">
                 <h2 style="text-align: center;">주문 현황 페이지 설명</h2>
                 <a title="팝업닫기" onclick="closePopup('PageModal')" class="btn-popup-close">
-                    <img src="/images/icon/btn-popup-close.svg" style="float: right; right: 30px;" alt="닫기">
+                    <img th:src="@{/images/icon/btn-popup-close.svg}" style="float: right; right: 30px;" alt="닫기">
                 </a>
                 <form id="PageFindForm">
                     <p style="text-align: center;">
@@ -447,7 +446,7 @@
             <div class="popup-title">
                 <h3>옵션 및 요청사항</h3>
                 <a title="팝업닫기" onclick="closePopup('OrdtextModal')" class="btn-popup-close">
-                    <img src="/images/icon/btn-popup-close.svg" alt="닫기" style="float: right; right: 30px;">
+                    <img th:src="@{/images/icon/btn-popup-close.svg}" alt="닫기" style="float: right; right: 30px;">
                 </a>
             </div>
             <div class="popup-contents">
@@ -490,8 +489,8 @@
 
 </th:block>
 <th:block layout:fragment="scripts">
-    <script type="text/javascript" src="/resource/windowContainer/js/html5sortable.js"></script>
-    <script type="text/javascript" src="/js/nth-tabs.js"></script>
+    <script th:src="@{/resource/windowContainer/js/html5sortable.js}"></script>
+    <script th:src="@{/js/nth-tabs.js}"></script>
     <th:block th:replace="/common/columns_setting :: columns_setting"></th:block>
     <!-- <script>
          tinymce.init({
@@ -1073,7 +1072,7 @@
                             action: "addTab",
                             id: "order_request",
                             title: "주문등록",
-                            url: '/gui/' + "order_request" + '/default',
+                            url: withCtx('/gui/' + "order_request" + '/default'),
                             active: true,
                             allowClose: true,
                         });
@@ -1320,7 +1319,7 @@
             // 외근
             $('.produceCnt').html(0 + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
             $.ajax({
-                url: '/api/dash_summary/initDatas',
+                url: withCtx('/api/dash_summary/initDatas'),
                 type: 'GET',
                 data: {
                     'search_spjangcd': sessionStorage.getItem('spjangcd'),
@@ -1561,7 +1560,7 @@
             let emptyRowsCount = 8;
 
             $.ajax({
-                url: '/api/dash_summary/readRequest',
+                url: withCtx('/api/dash_summary/readRequest'),
                 type: 'GET',
                 data : {
                     searchfrdate: $('#startDate4').val(),
@@ -1655,7 +1654,7 @@
         // 새 요청현황 (월별 유지보수 요청현황) 조회 및 바인딩
         function fetchListRequestData2() {
             $.ajax({
-                url: '/api/dash_summary/readRequest2',
+                url: withCtx('/api/dash_summary/readRequest2'),
                 type: 'GET',
                 async: false,
                 success: function(response) {

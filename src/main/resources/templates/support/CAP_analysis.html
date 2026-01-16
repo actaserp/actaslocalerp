@@ -53,7 +53,7 @@
         </a>
       </div>
       <ul class="page-navi">
-        <li><img src="/images/icon/ico-nav-home.svg" alt="홈아이콘"></li>
+        <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
         <li>보고서</li>
         <li>CAP 분석</li>
       </ul>
@@ -79,7 +79,7 @@
               <dd>
                 <li>
                   <a class="btn btn-delete" title="검색" id="btnSearch">
-                    <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                    <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                     검색
                   </a>
                 </li>
@@ -165,7 +165,7 @@
                       <input type="text" id="product" name="product" placeholder="품목을 선택하세요" />
                     </div>
                     <a class="btn in_btn cap" title="품목 검색" id="btnProductSearch">
-                      <img src="/images/icon/btn-srch-black.svg" alt="검색 아이콘" />
+                      <img th:src="@{/images/icon/btn-srch-black.svg}" alt="검색 아이콘" />
                     </a>
                   </div>
 

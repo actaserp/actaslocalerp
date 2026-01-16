@@ -3,7 +3,7 @@
         <div class="menu-wrapper" id="gnb">
             <div class="menu-top">
                 <div class="left">
-                    <img src="/assets_mobile/images/icon/ico-user.png" alt="사용자 아이콘" style="position: relative; top: 5px;">
+                    <img th:src="@{/assets_mobile/images/icon/ico-user.png}" alt="사용자 아이콘" style="position: relative; top: 5px;">
                     <p class="user-name">
                         <span id="userName"></span>
                     </p>
@@ -11,10 +11,10 @@
                 </div>
                 <div class="right">
                     <a id="logout" title="로그아웃">
-                        <img src="/assets_mobile/images/icon/btn-logout.png" alt="로그아웃">
+                        <img th:src="@{/assets_mobile/images/icon/btn-logout.png}" alt="로그아웃">
                     </a>
                     <a title="팝업닫기" class="btn-menu-close">
-                        <img src="/assets_mobile/images/icon/btn-menu-close.png" alt="닫기">
+                        <img th:src="@{/assets_mobile/images/icon/btn-menu-close.png}" alt="닫기">
                     </a>
                 </div>
             </div> <!--//menu-top end-->

@@ -117,7 +117,7 @@ function updateFileListUI() {
         const li = $('<li>').html(`
                     <p>${file.name} <span>(${fileSize})</span></p>
                     <a href="#" title="삭제" class="btn-file-delete">
-                        <img src="/images/icon/ico-filedelete.svg" alt="삭제아이콘">
+                        <img src="${withCtx('/images/icon/ico-filedelete.svg')}" alt="삭제아이콘">
                     </a>
                 `);
         $fileList.append(li);
@@ -662,7 +662,7 @@ document.addEventListener("DOMContentLoaded", function () {
             sessionStorage.removeItem('isLoggedIn');
 
             i18n.resetData();
-            location.href = '/logout';
+            location.href = withCtx('/logout');
         });
     });
 

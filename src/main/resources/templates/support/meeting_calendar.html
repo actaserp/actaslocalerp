@@ -1,6 +1,6 @@
 <html layout:decorate="~{layout_page}">
 <head>
-    <link href="/resource/fullCalendar/c-main.min.css" rel="stylesheet">
+    <link th:href="@{/resource/fullCalendar/c-main.min.css}" rel="stylesheet">
     <style>
         #calendar {
             max-width: 100%;
@@ -35,7 +35,7 @@
                 </a>
             </div>
             <ul class="page-navi">
-                <li><img src="/images/icon/ico-nav-home.svg" alt="홈아이콘"></li>
+                <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
                 <li>조치 및 통계</li>
                 <li>업무지원</li>
                 <li>캘린더</li>
@@ -277,8 +277,8 @@
 
 
 <th:block layout:fragment="scripts">
-    <script type="text/javascript" src="/resource/fullCalendar/c-main.min.js?v=1001"></script>
-    <script type="text/javascript" src="/resource/fullCalendar/ko.js?v=1001"></script>
+    <script type="text/javascript" th:src="@{/resource/fullCalendar/c-main.min.js}"></script>
+    <script type="text/javascript" th:src="@{/resource/fullCalendar/ko.js}"></script>
     <script type="text/javascript">
         class CalendarPage {
             constructor() {

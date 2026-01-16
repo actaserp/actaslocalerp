@@ -104,9 +104,9 @@
     $(document).ready(function (e) {
         alert('로그아웃 되었습니다. 로그인 페이지로 이동합니다.');
         if (window.parent) {
-            window.parent.location.href = "/login";
+            window.parent.location.href = withCtx("/login");
         } else {
-            window.location.href = "/login";
+            window.location.href = withCtx("/login");
         }
     });
 </script>

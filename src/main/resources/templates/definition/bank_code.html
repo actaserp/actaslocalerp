@@ -15,7 +15,7 @@
                 <a title="북마크" class="bookmark toggle">내메뉴</a>
             </div>
             <ul class="page-navi">
-                <li><img src="/images/icon/ico-nav-home.svg" alt="홈아이콘"></li>
+                <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
                 <li>기준정보</li>
                 <li>은행코드</li>
             </ul>
@@ -32,7 +32,7 @@
                         <dl>
                             <dt><span class="eq"></span></dt>
                             <dd>
-                                <li><a class="btn btn-delete" title="검색" id="btnSearch"><img src="/images/icon/btn-srch.svg" alt="검색 아이콘">검색</a></li>
+                                <li><a class="btn btn-delete" title="검색" id="btnSearch"><img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">검색</a></li>
                             </dd>
                         </dl>
                     </div>
@@ -157,7 +157,7 @@
         function searchMainData() {
             let bank_name = $('#txtUnit').val();
             $.ajax({
-                url: '/api/definition/bank_code/read',
+                url: withCtx('/api/definition/bank_code/read'),
                 type: 'GET',
                 data: {'bank_name': bank_name},
                 success: function(result) {
@@ -264,7 +264,7 @@
 
             // 팝빌기관코드 select 채우기
             $.ajax({
-                url: '/api/definition/bank_code/popbill_list',
+                url: withCtx('/api/definition/bank_code/popbill_list'),
                 type: 'GET',
                 success: function (result) {
                     if (result.success && result.data.length > 0) {
@@ -282,7 +282,7 @@
 
             // 참가기관코드 select 채우기
             $.ajax({
-                url: '/api/definition/bank_code/participant_list',
+                url: withCtx('/api/definition/bank_code/participant_list'),
                 type: 'GET',
                 success: function (result) {
                     if (result.success && result.data.length > 0) {

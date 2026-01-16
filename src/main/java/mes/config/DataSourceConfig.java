@@ -21,12 +21,6 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
-
-//import com.zaxxer.hikari.HikariConfig;
-//import com.zaxxer.hikari.HikariDataSource;
 @EnableJpaRepositories(basePackages = "mes.domain.repository",  entityManagerFactoryRef = "entityManagerFactory", transactionManagerRef = "transactionManager")
 @Configuration
 public class DataSourceConfig {
@@ -40,29 +34,6 @@ public class DataSourceConfig {
 	@ConfigurationProperties(prefix="spring.datasource.hikari")
 	@Bean(name="dataSource")	
 	DataSource dataSource() {
-		/*
-		HikariConfig config = new HikariConfig();		
-		config.setJdbcUrl( "jdbc:postgresql://10.10.10.231:5432/mes_java" );
-        config.setUsername( "mes21" );
-        config.setPassword( "mes7033" );
-        config.addDataSourceProperty( "cachePrepStmts" , true );
-        config.addDataSourceProperty( "prepStmtCacheSize" , 250 );
-        config.addDataSourceProperty( "prepStmtCacheSqlLimit" , 2048 );		
-		HikariDataSource ds = new HikariDataSource(config);
-		return ds;
-		*/
-		//DRIVER=Devart ODBC Driver for PostgreSQL;Data Source=localhost;Database=mes_db;User ID=actasmes;Password=actas5200
-		/*
-		HikariConfig config = new HikariConfig();		
-		config.setJdbcUrl( "jdbc:postgresql://localhost:5432/mes_db" );
-        config.setUsername( "actasmes" );
-        config.setPassword( "actas5200" );
-        config.addDataSourceProperty( "cachePrepStmts" , true );
-        config.addDataSourceProperty( "prepStmtCacheSize" , 250 );
-        config.addDataSourceProperty( "prepStmtCacheSqlLimit" , 2048 );		
-		HikariDataSource ds = new HikariDataSource(config);
-		return ds;
-		 */
 		return DataSourceBuilder.create().build();
 	}	
 	
@@ -86,19 +57,6 @@ public class DataSourceConfig {
 	@Bean
 	@Primary
 	PlatformTransactionManager transactionManagerCustom(){
-		
-		// MyBatis transactional
-		//DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-		//dataSourceTransactionManager.setDataSource(dataSource());
-		
-		// JPA transactional
-		//JpaTransactionManager jpaTransactionManager = new JpaTransactionManager();
-		//jpaTransactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
-		
-		// Chained transaction manager (MyBatis X JPA)
-		//ChainedTransactionManager transactionManager = new ChainedTransactionManager(jpaTransactionManager, dataSourceTransactionManager);
-		//return transactionManager;
-		
 		JpaTransactionManager transactionManager =new JpaTransactionManager();
 		transactionManager.setEntityManagerFactory(this.entityManagerFactory().getObject()); 
 		return transactionManager;	
@@ -116,7 +74,6 @@ public class DataSourceConfig {
 		sessionFactory.setDataSource(dataSource);
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 		sessionFactory.setMapperLocations(resolver.getResources("mapper/*.xml")); 	//mapper 파일 로드
-		//sessionFactory.setConfigLocation(resolver.getResource("mybatis-config.xml"));//mybatis-config 로드
 		return sessionFactory.getObject();
 	}
 	

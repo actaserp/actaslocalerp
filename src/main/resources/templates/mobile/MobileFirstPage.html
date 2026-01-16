@@ -133,24 +133,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FACT CHECK</title>
-  <link rel="icon" type="image/png" href="/images/logo/icon_FACT%20CHECK.png">
+  <title>Actas Mes</title>
+  <link rel="icon" th:href="@{/images/logo/actas_log_a.png}">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/> <!-- Slide css -->
-  <link rel="stylesheet" href="/resource/ax5ui/ax5ui.all.css">
-  <link rel="stylesheet" type="text/css" href="/assets_mobile/css/import.css">
+  <link rel="stylesheet" th:href="@{/resource/ax5ui/ax5ui.all.css}">
+  <link rel="stylesheet" th:href="@{/assets_mobile/css/import.css}">
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
-  <script src="/assets_mobile/js/ui.js"></script> <!-- Common js -->
+  <script th:src="@{/assets_mobile/js/ui.js}"></script>
   <script th:inline="javascript">
     var sandanData = /*[[${session.sandanList}]]*/ [];
   </script>
 
 
-  <script type="text/javascript" src="/resource/ax5ui/ax5ui.all.min.js?v=1000"></script>
-  <script type="text/javascript" src="/js/ax5commUtil.js?v=1070"></script>
-  <script src="/js/common.js?v=1060"></script>
+  <script th:src="@{/resource/ax5ui/ax5ui.all.min.js}"></script>
+  <script th:src="@{/js/ax5commUtil.js}"></script>
+  <script th:src="@{/js/common.js}"></script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script> <!-- Slide js -->
 </head>
 
@@ -336,7 +337,7 @@
   }
 
   document.getElementById('login').addEventListener('click', function() {
-    window.location.href = '/mobile/mlogin';
+    window.location.href = withCtx('/mobile/mlogin');
   });
 
   $(document).ready(function () {
@@ -385,7 +386,7 @@
       // Alert 확인 후 로그인 페이지로 이동하도록 수정
       Alert.alert("로그인이 필요합니다.", "로그인 페이지로 이동합니다.", function () {
 
-        window.location.href = '/mobile/mlogin';
+        window.location.href = withCtx('/mobile/mlogin');
       });
 
       return;

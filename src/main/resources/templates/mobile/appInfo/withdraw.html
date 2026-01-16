@@ -184,7 +184,7 @@
             let fnSuccess = function (res) {
                 if (res.success) {
                     Alert.alert('', '탈퇴 되었습니다.', function(){
-                        window.location = '/logout';
+                        window.location = withCtx('/logout');
                     });
                 }
             }

@@ -2,32 +2,32 @@
 <html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>ACTAS MES</title>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
+    <meta name="ctx" th:content="@{/}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, minimum-scale=1, maximum-scale=1">
-<!--    <link rel="icon" type="image/png" href="/img/favicon.png">-->
-    <link rel="stylesheet" href="/resource/ax5ui/ax5ui.all.css?v=1000">
-    <link rel="stylesheet" href="/resource/timepicker/jquery.timepicker.min.css">
-    <link rel="stylesheet" href="/resource/windowContainer/css/bootstrap.4.min.css">
-    <link rel="stylesheet" href="/css/animate.css">
-    <link rel="stylesheet" href="/resource/select2/select2.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.css"> <!-- Calendar -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>  <!-- Calendar -->
-<!--    <script type="text/javascript">-->
-<!--        if (localStorage.getItem('theme-top') !== null) {-->
-<!--            document.write('<link rel="stylesheet" href="' + localStorage.getItem('theme-top') + '-content.css">');-->
-<!--        }-->
-<!--    </script>-->
-    <link rel="stylesheet" href="/css/sf21_all_6.css?v=1000">
-    <link rel="stylesheet" href="/css/sf21_all_5.css?v=1000">
-    <link rel="stylesheet" href="/css/sf21_frame.css?v=1043">
-    <link rel="stylesheet" type="text/css" href="/css/import.css">
-    <script src="/js/vendor/jquery-3.6.0.js"></script>
-    <script src="/js/vendor/jquery-ui.min.js"></script>
-    <script src="/js/ui.js"></script> <!-- Common js -->
-    <script src="/js/utilscript.js"></script> <!-- 박광열 -->
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1, minimum-scale=1, maximum-scale=1">
 
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/resource/ax5ui/ax5ui.all.css}">
+    <link rel="stylesheet" th:href="@{/resource/timepicker/jquery.timepicker.min.css}">
+    <link rel="stylesheet" th:href="@{/resource/windowContainer/css/bootstrap.4.min.css}">
+    <link rel="stylesheet" th:href="@{/css/animate.css}">
+    <link rel="stylesheet" th:href="@{/resource/select2/select2.css}">
+    <link rel="stylesheet" th:href="@{/css/sf21_all_6.css}">
+    <link rel="stylesheet" th:href="@{/css/sf21_all_5.css}">
+    <link rel="stylesheet" th:href="@{/css/sf21_frame.css}">
+    <link rel="stylesheet" th:href="@{/css/import.css}">
 
+    <!-- 외부 CDN (그대로 둠) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.2/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    <!-- JS -->
+    <script th:src="@{/js/vendor/jquery-3.6.0.js}"></script>
+    <script th:src="@{/js/vendor/jquery-ui.min.js}"></script>
+    <script th:src="@{/js/ui.js}"></script>
+    <script th:src="@{/js/utilscript.js}"></script>
 
     <!-- wijmo.min.css 대신에 아래와 같이 사용자 정의 테마 사용가능 -->
     <!-- <link href="https://cdn.grapecity.com/wijmo/5.20202.732/styles/themes/wijmo.theme.modern.min.css" rel="stylesheet"/> -->
@@ -61,8 +61,8 @@
 
     <link rel="stylesheet" href="https://cdn.grapecity.com/wijmo/5.20202.732/styles/wijmo.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.0.0/jszip.min.js"></script>
-    <script src="/js/flex-grid-context-menu.js"></script>
-    <script src="/js/wijmo-flex-grid.js"></script>
+    <script th:src="@{/js/flex-grid-context-menu.js}"></script>
+    <script th:src="@{/js/wijmo-flex-grid.js}"></script>
 
 </head>
 <style>
@@ -168,26 +168,28 @@
 </style>
 <body class="animated fadeIn">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-    <script src="/resource/jquery.min.js"></script>
-    <script src="/resource/jquery-validation/1.17.0/jquery.validate.min.js"></script>
-    <script src="/resource/jquery-validation/1.17.0/additional-methods.min.js"></script>
-    <script src="/resource/filedownload/jquery.fileDownload.js"></script>
-    <script src="/resource/ax5ui/ax5ui.all.min.js"></script>
-    <script src="/resource/se2/js/HuskyEZCreator.js"></script>
-    <script src="/resource/timepicker/jquery.timepicker.min.js"></script>
-    <script src="/resource/jquery.multi-select-ak.js"></script>
-    <script src="/resource/moment.min.js"></script>
-    <script src="/resource/windowContainer/js/jquery.scrollbar.min.js"></script>
-    <script src="/resource/windowContainer/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/resource/paho-mqtt/mqttws31.min.js"></script>
-    <script type="text/javascript" src="/resource/select2/select2.min.js"></script>
-    <script src="/resource/JavaScript-Templates/tmpl.min.js"></script>
-    <th:block th:replace="system_js :: system_js" ></th:block>
+    <script th:src="@{/resource/jquery.min.js}"></script>
+    <script th:src="@{/resource/jquery-validation/1.17.0/jquery.validate.min.js}"></script>
+    <script th:src="@{/resource/jquery-validation/1.17.0/additional-methods.min.js}"></script>
+    <script th:src="@{/resource/filedownload/jquery.fileDownload.js}"></script>
+    <script th:src="@{/resource/ax5ui/ax5ui.all.min.js}"></script>
+    <script th:src="@{/resource/se2/js/HuskyEZCreator.js}"></script>
+    <script th:src="@{/resource/timepicker/jquery.timepicker.min.js}"></script>
+    <script th:src="@{/resource/jquery.multi-select-ak.js}"></script>
+    <script th:src="@{/resource/moment.min.js}"></script>
+    <script th:src="@{/resource/windowContainer/js/jquery.scrollbar.min.js}"></script>
+    <script th:src="@{/resource/windowContainer/js/bootstrap.min.js}"></script>
+    <script th:src="@{/resource/paho-mqtt/mqttws31.min.js}"></script>
+    <script th:src="@{/resource/select2/select2.min.js}"></script>
+    <script th:src="@{/resource/JavaScript-Templates/tmpl.min.js}"></script>
 
-    <script type="text/javascript" src="/js/common.js?v=1100"></script>
-    <script type="text/javascript" src="/js/yuscript.js?v=1060"></script>
-    <script type="text/javascript" src="/js/ax5commUtil.js?v=1060"></script>
-    <script type="text/javascript" src="/js/grid.js"></script>
+    <th:block th:replace="system_js :: system_js"></th:block>
+
+    <script th:src="@{/js/common.js(v=1100)}"></script>
+    <script th:src="@{/js/yuscript.js(v=1060)}"></script>
+    <script th:src="@{/js/ax5commUtil.js(v=1060)}"></script>
+    <script th:src="@{/js/grid.js}"></script>
+
 
     <th:block layout:fragment="content"></th:block>
     <script type="text/javascript">

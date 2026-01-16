@@ -164,7 +164,8 @@ public class AccountController {
 		clearCookie.setPath("/");     // 전체 경로 적용
 		response.addCookie(clearCookie);
 
-	    response.sendRedirect("/login");
+		String ctx = request.getContextPath(); // "/mes"
+		response.sendRedirect(ctx + "/login");
 	}
 
     @PostMapping("/login")

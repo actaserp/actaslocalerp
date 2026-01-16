@@ -19,7 +19,7 @@
                 </a>
             </div>
             <ul class="page-navi">
-                <li><img src="/images/icon/ico-nav-home.svg" alt="홈아이콘"></li>
+                <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
                 <li>영업 관리</li>
                 <li>수주 및 계획량 등록</li>
             </ul>
@@ -67,7 +67,7 @@
                             <li>
                                 <a class="btn btn-delete" title="검색" id="btnSearch">
                                     <!--                                        class 쓰이는 곳 찾고 없으면 클래스명 수정하기-->
-                                    <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                    <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                                     검색
                                 </a>
                             </li>
@@ -78,19 +78,19 @@
                     <ul>
                         <li>
                             <a class="btn btn-excell" title="등록" id="btnAddNew">
-                                <img src="/images/icon/ico-plus.svg" alt="등록 아이콘">
+                                <img th:src="@{/images/icon/ico-plus.svg}" alt="등록 아이콘">
                                 등록
                             </a>
                         </li>
                         <li>
                             <a class="btn btn-delete" title="삭제" id="btnDelete">
-                                <img src="/images/icon/ico-delete.svg" alt="삭제 아이콘">
+                                <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘">
                                 삭제
                             </a>
                         </li>
                         <li>
                             <a class="btn btn-edit" title="수정" id="btnEdit">
-                                <img src="/images/icon/ico-edit.svg" alt="수정 아이콘">
+                                <img th:src="@{/images/icon/ico-edit.svg}" alt="수정 아이콘">
                                 수정
                             </a>
                         </li>
@@ -270,7 +270,7 @@
                                 placeholder="판매처 검색 버튼을 클릭하여 판매처를 검색하세요" readonly/>
                                 &nbsp;
                                 <a class="btn btn-delete" title="검색" id="btnCompanySearch">
-                                    <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">
+                                    <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
                                     판매처 검색
                                 </a>
                             </td>
@@ -285,7 +285,7 @@
 <!--                                placeholder="프로젝트 검색 버튼을 클릭하여 검색하세요" readonly/>-->
 <!--                                &nbsp;-->
 <!--                                <a class="btn btn-delete" title="검색" id="btnSelect_project">-->
-<!--                                    <img src="/images/icon/btn-srch.svg" alt="검색 아이콘">-->
+<!--                                    <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">-->
 <!--                                    프로젝트 검색-->
 <!--                                </a>-->
 <!--                            </td>-->
@@ -353,7 +353,7 @@
                         <th>상태</th>
                         <th>
                             <a class="btn in_btn plus" id="addRemark" title="추가">
-                                <img src="/images/icon/ico-plus.svg" alt="등록 아이콘" />
+                                <img th:src="@{/images/icon/ico-plus.svg}" alt="등록 아이콘" />
                             </a>
                         </th>
                     </tr>
@@ -369,7 +369,7 @@
                                 <input type="hidden" name="MaterialGroupName" />
                                 <input type="hidden" name="Material_id" />
                                 <a class="btn in_btn" title="품목 검색" id="btnProductSearch" >
-                                    <img src="/images/icon/btn-srch-black.svg" alt="검색 아이콘" />
+                                    <img th:src="@{/images/icon/btn-srch-black.svg}" alt="검색 아이콘" />
                                 </a>
                             </div>
                         </td>
@@ -395,7 +395,7 @@
                         </td>
                         <td class="al_c item_border">
                             <a class="btn in_btn" title="삭제" onclick="removeItemRow(this)">
-                                <img src="/images/icon/ico-delete.svg" alt="삭제 아이콘" />
+                                <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘" />
                             </a>
                         </td>
                     </tr>
@@ -1307,7 +1307,7 @@
                 let _this = this;
                 //let url = '/api/files/mes_form?action=suju_upload';
                 let fileName = "수주업로드양식.xlsx";
-                let url = '/api/files/mes_form?file_name=' + fileName;
+                let url = withCtx('/api/files/mes_form?file_name=') + fileName;
                 /*
                 let data = {
                     //'tableName' : tableName,
