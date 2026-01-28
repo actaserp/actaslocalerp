@@ -42,43 +42,51 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers()
-                .frameOptions()
-                .sameOrigin();
 
-        http.csrf()
-                .ignoringAntMatchers("/api/files/upload/**", "/popbill/webhook");
+        http
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                );
 
-        http.authorizeRequests()
-                .antMatchers("/login", "/logout").permitAll()
-                .anyRequest().authenticated();
+        http
+                .csrf(csrf -> csrf
+                        .ignoringAntMatchers("/api/files/upload/**", "/popbill/webhook")
+                );
 
-        http.formLogin()
-                .loginPage("/login")
-                .loginProcessingUrl("/postLogin")
-                .permitAll();
+        http
+                .authorizeRequests(auth -> auth
+                        .antMatchers(
+                                "/login",
+                                "/logout",
+                                "/resource/**",
+                                "/img/**",
+                                "/images/**",
+                                "/js/**",
+                                "/css/**",
+                                "/assets_mobile/**",
+                                "/font/**",
+                                "/robots.txt",
+                                "/favicon.ico"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                );
 
-        http.logout()
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login");
+        http
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/postLogin")
+                        .permitAll()
+                );
+
+        http
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login")
+                );
 
         return http.build();
     }
 
-    @Bean
-    WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers(
-                "/resource/**",
-                "/img/**",
-                "/images/**",
-                "/js/**",
-                "/css/**",
-                "/assets_mobile/**",
-                "/font/**",
-                "/robots.txt",
-                "/favicon.ico"
-        );
-    }
-    
+
 }
 
