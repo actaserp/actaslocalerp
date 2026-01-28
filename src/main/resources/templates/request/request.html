@@ -1123,7 +1123,14 @@
                     ['ul', 'ol', 'task', 'indent', 'outdent'],
                     ['table', 'link'],
                     ['code', 'codeblock']
-                ]
+                ],
+                hooks: {
+                    // ✅ 이미지 업로드(드래그 or 붙여넣기) 시도 차단
+                    addImageBlobHook: (blob, callback) => {
+                        Alert.alert('','하단의 첨부파일 선택을 이용해 주십시오');
+                        return false; // ❗ 이 리턴으로 업로드를 중단시킴
+                    }
+                }
             });
 
             if (parent && parent.$) {
