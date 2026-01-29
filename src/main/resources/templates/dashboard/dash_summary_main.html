@@ -132,6 +132,9 @@
                 <li>
                     <a href="#tab3" title="유지보수요청현황" class="tab-button">유지보수요청현황</a>
                 </li>
+                <li>
+                    <a href="#tab4" title="공지사항" class="tab-button">공지사항</a>
+                </li>
             </ul>
             <div class="tab-contents">
                 <!-- Section -->
@@ -394,6 +397,79 @@
                         </dl>
                     </div>
                 </section>
+                <section class="tab-item" id="tab4" style="height: 750px; overflow: hidden;">
+                    <div class="section-top">
+                        <form id="searchForm">
+                            <div class="search-wrap">
+                                <dl>
+                                    <dt>
+                                        작성일<span class="eq"></span>
+                                    </dt>
+                                    <dd>
+                                        <ul class="date-box">
+                                            <li>
+                                                <input class="tac w150 date_from " type="date" id="srchStartDt"
+                                                       name="srchStartDt"/>
+                                                <label for="srchStartDt" class="hide">시작일</label>
+                                            </li>
+                                            <li>
+                                                <input class="tac w150 date_to" type="date" id="srchEndDt" name="srchEndDt"/>
+                                                <label for="srchEndDt" class="hide">종료일</label>
+                                            </li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+
+                                <dl>
+                                    <dt>
+                                        <label for="keyword">
+                                            공지 제목<span class="eq"></span>
+                                        </label>
+                                    </dt>
+                                    <dd>
+                                        <div class="srch-box">
+                                            <input type="text" class="form-control2" id="keyword" name="keyword"
+                                                   style="border-radius: 5px 5px 5px 5px;">
+                                        </div>
+                                    </dd>
+                                </dl>
+
+                                <dl>
+                                    <dt><span class="eq"></span></dt>
+                                    <dd>
+                                        <li>
+                                            <a class="btn btn-delete" title="검색" id="btnSearch">
+                                                <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
+                                                검색
+                                            </a>
+                                        </li>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </form>
+                        <!--//section-top end -->
+
+                        <div class="button-wrap">
+                            <ul>
+                                <li>
+                                    <a class="btn btn-check" title="확인" id="btnChk">
+                                        <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘">
+                                        확인
+                                    </a>
+                                    <!-- <button type="button" class="btn btn-delete" id="btnDel" title="삭제">
+                                         <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘">
+                                         삭제</button>-->
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <div id="theGrid_notice"></div>
+                    </div>
+                    <div class="btn-wrap">
+                    </div>
+
+                </section>
             </div>
         </div>
         </section>
@@ -485,7 +561,115 @@
             </div>
         </div>
     </div>
+    <!--공지사항 스크립트-->
+    <script type="text/x-tmpl" id="noticeTmpl">
+        <div class="content_wrap popup">
+            <div class="table-wrap">
+                <form id="editorForm">
+                    <table class="write-table">
+                          <input type="hidden" id="id" name="id" value="{%=o.id%}">
+                        <caption>주문등록 테이블</caption>
+                        <tbody>
+                            <tr>
+                                <th style="text-align: center">
+                                    <label for="title">공지제목</label>
+                                </th>
+                                <td colspan="3">
+                                       <input class="form-control2" id="title" name="title" value="{%=o.title%}" disabled style="width:100%;" />
+                                </td>
+                            </tr>
 
+                            <tr>
+                                <th style="text-align: center">
+                                    <label for="notice_yn">공지여부</label>
+                                </th>
+                                <td>
+                                     <select class="form-control2" id="notice_yn" name="notice_yn" disabled >
+                                        <option value="Y">예</option>
+                                        <option value="N" selected>아니오</option>
+                                     </select>
+                                </td>
+                                <th style="text-align: center">
+                                    <label for="notice_end_date">공지종료일</label>
+                                </th>
+                                <td style="text-align: center">
+                                    <input class="form-control2 tac" type="date" id="notice_end_date" name="notice_end_date"  value="{%=o.notice_end_date%}" disabled />
+                                        <!--<span class="input-group-text fs-xl"><i class="fas fa-calendar-alt calendar_color" ></i></span>-->
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                        <div class="textarea_group" id="divContent">
+                           <textarea id="content" name="content" style="width:100%" >{%=o.content%}</textarea>
+                        </div>
+                </form>
+                <div class="grid_box" id='image_upload1'></div>
+            </div>
+
+            <div class="popup-button">
+              <button type="button" class="btn-popup y_write_auth" id="btn_modal_save" ><span data-labelCd="저장">저장</span></button>
+              <button type="button" class="btn-popup" id="modal-close-button"><span data-labelCd="닫기">닫기</span></button>
+            </div>
+
+            <!--<section class="pt-2">
+                <form id="editorForm">
+                    <input type="hidden" id="id" name="id" value="{%=o.id%}">
+                    <div class="table_box search" id="detail_box">
+                        <div class="row">
+
+                                <div class="col-12" >
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text fit_box_md">공지제목</span>
+                                        </div>
+                                            <input class="form-control2" id="title" name="title" value="{%=o.title%}" disabled />
+                                    </div>
+                                </div>
+
+                                <div class="col-3" >
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text fit_box_md">공지여부</span>
+                                        </div>
+                                                <select class="form-control2" id="notice_yn" name="notice_yn" disabled >
+                                                    <option value="Y">예</option>
+                                                    <option value="N" selected>아니오</option>
+                                                </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="input-group" data-ax5picker="basic" id="srchDt">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text fit_box_md">공지종료일</span>
+                                        </div>
+                                        <input class="form-control2 tac" type="text" id="notice_end_date" name="notice_end_date"  value="{%=o.notice_end_date%}" disabled />
+                                        <span class="input-group-text fs-xl"><i class="fas fa-calendar-alt calendar_color" ></i></span>
+                                    </div>
+                                </div>
+
+                                    <div class="col-12" >
+                                            <div class="textarea_group" id="divContent">
+                                                <textarea style="height:310px;width:100%" id="content" name="content" >{%=o.content%}</textarea>
+                                            </div>
+                                </div>
+
+                        </div>
+                    </div>
+                </form>
+                <div class="grid_box" id='image_upload1'></div>
+
+            </section>
+            <section class="section">
+                <div class="popup_button_group bottom">
+                    <div class="left_align">
+                        <button type="button" class="btn-popup y_write_auth" id="btn_modal_save"><span>저장</span></button>
+                        <button type="button" class="btn-popup" id="modal-close-button"><span>닫기</span></button>
+                    </div>
+                </div>
+            </section>-->
+        </div>
+    </script>
 
 </th:block>
 <th:block layout:fragment="scripts">
@@ -518,6 +702,8 @@
         let viewdata;
         let theGrid4;
         let viewdata4;
+        let theGrid5;
+        let viewdata5;
 
         // 주문현황 년도 자동화
         const currentMonth = new Date().getMonth() + 1;
@@ -544,6 +730,7 @@
             fetchListData2(); // 업무일지 탭 그리드 조회
             fetchListRequestData(); // 유지보수 요청현황탭 그리드 조회
             fetchListRequestData2(); // 월별 유지보수 요청현황 조회
+            fetchListNoticeData(); // 공지사항 조회
 
             let _this = this;
 
@@ -597,6 +784,22 @@
                         }
                     }, 200); // 약간의 딜레이를 줘서 렌더링 완료 후 실행
                 }
+            });
+
+            // 공지사항 기본값 설정
+            const currentDate = new Date();
+            // 오늘 날짜를 'YYYY-MM-DD' 형식으로 변환
+            const noticeToday = currentDate.toISOString().split('T')[0];
+
+            // 1개월 전 날짜 계산
+            const oneMonthAgo = new Date(currentDate);
+            oneMonthAgo.setMonth(currentDate.getMonth() - 1); // 한 달 전으로 설정
+            const oneMonthAgoFormatted = oneMonthAgo.toISOString().split('T')[0];
+            $('.date_from').val(oneMonthAgoFormatted);
+            $('.date_to').val(noticeToday);
+            // 공지사항 검색버튼클릭
+            $("#btnSearch").click(function (e) {
+                fetchListNoticeData();
             });
         });
 
@@ -895,17 +1098,16 @@
         /*==============캘린더 끝=============================================================================================================*/
         var nthTabs = this;
         function fetchListData2() {
-            let data2 = []; // 데이터를 담을 기본 배열 초기화
+            let data2 = [];
 
-            // 업무일지 목록 조회
             $.ajax({
                 url: '/api/dash_summary/read_report',
                 type: 'GET',
                 data: {
                     'search_spjangcd': sessionStorage.getItem('spjangcd'),
                     'startDate': $('#startDate').val(),
-                    'endDate':$('#endDate').val(),
-                    'searchPernm' :$('#searchPernm').val()
+                    'endDate': $('#endDate').val(),
+                    'searchPernm': $('#searchPernm').val()
                 },
                 async: false,
                 success: function (response) {
@@ -917,8 +1119,7 @@
                         }, 10);
 
                         if (window.selectedGridId) {
-                            // GridUtil.selectRowById(_this.theGrid2, window.selectedGridId);
-                            GridUtil.selectRowById(_this.theGrid2, window.selectedGridId, {idField: 'id'});
+                            GridUtil.selectRowById(_this.theGrid2, window.selectedGridId, { idField: 'id' });
                             window.selectedGridId = null;
                         }
                     }
@@ -927,15 +1128,16 @@
                     console.error("데이터를 가져오는 중 오류가 발생했습니다.");
                 }
             });
-            // ✅ 항상 새로운 CollectionView 생성
+
+            // ✅ CollectionView 생성
             const viewdata = new wijmo.collections.CollectionView(data2);
 
-            // ✅ 그룹화를 항상 다시 설정
+            // ✅ 그룹 기준은 'rptweek'만 (문자 그대로)
             viewdata.groupDescriptions.clear();
             viewdata.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('rptweek'));
             viewdata.groupDescriptions.push(new wijmo.collections.PropertyGroupDescription('fixpernm'));
 
-            // FlexGrid 생성 또는 업데이트
+            // ✅ FlexGrid 생성 또는 갱신
             if (!theGrid2) {
                 theGrid2 = new wijmo.grid.FlexGrid('#theGrid3', {
                     selectionMode: wijmo.grid.SelectionMode.Row,
@@ -943,92 +1145,72 @@
                     autoGenerateColumns: false,
                     showMarquee: true,
                     isReadOnly: true,
+                    itemsSource: viewdata,
+
+                    columns: [
+                        { binding: 'id', visible: false },
+                        { binding: 'rptdate', header: '작성일자', width: 125, align: 'center' },
+                        { binding: 'rptweek', header: '주차', width: 160, align: 'center' },
+                        { binding: 'fixflag_nm', header: '업무구분', width: 100, align: 'center' },
+                        { binding: 'fixpernm', header: '사원명', width: 120, align: 'center' },
+                        { binding: 'cltnm', header: '업체명', width: 150, align: 'center' },
+                        { binding: 'asmenu', header: '화면명', width: 200, align: 'left' },
+                        { binding: 'rptremark', header: '업무내용', width: '*', align: 'left' },
+                        { binding: 'recyn_nm', header: '진행상태', width: 100, align: 'center' },
+                        { binding: 'asdv_nm', header: '근무구분', width: 100, align: 'center' },
+                        { binding: 'inputdate', header: '입력일자', width: 150, align: 'center' },
+                    ],
+
                     formatItem: (s, e) => {
                         if (e.panel.cellType === wijmo.grid.CellType.ColumnHeader) {
                             e.cell.style.textAlign = 'center';
+                            return;
                         }
 
-                        // 🔹 GroupRow인 경우
+                        // 🔹 GroupRow 렌더링 (표시만 수정)
                         if (e.panel.cellType === wijmo.grid.CellType.Cell &&
                             s.rows[e.row] instanceof wijmo.grid.GroupRow) {
 
-                            // 그룹 행은 색상 제거 (혹시 남아있던 스타일 초기화)
                             e.cell.style.backgroundColor = '';
                             e.cell.style.color = '#000';
+                            e.cell.style.fontWeight = '';
 
-                            // 항목 수 표기 변경
                             let html = e.cell.innerHTML;
-                            html = html.replace(/\((\d+)\s+items\)/, '($1 건)');
+
+                            // ✅ "items" → "건" 변경
+                            html = html.replace(/\((\d+)\s*items\)/, '($1건)');
+
+                            // ✅ rptweek 그룹이면 날짜 범위 추가
+                            const groupRow = s.rows[e.row];
+                            const group = groupRow.dataItem;
+                            if (group.groupDescription.propertyName === 'rptweek' && group.items.length) {
+                                const first = group.items[0];
+                                const formatDate = (str) => {
+                                    if (!str || str.length !== 8) return '';
+                                    return `${str.substring(0, 4)}-${str.substring(4, 6)}-${str.substring(6, 8)}`;
+                                };
+                                const start = formatDate(first.frdate);
+                                const end = formatDate(first.todate);
+                                html = html.replace(group.name, `${group.name} (${start} ~ ${end})`);
+                            }
+
                             e.cell.innerHTML = html;
                             return;
                         }
 
-                        // 🔹 일반 데이터 행만 색상 적용 (GroupRow 제외)
+                        // 🔹 일반 행 색상
                         if (e.panel.cellType === wijmo.grid.CellType.Cell &&
                             !(s.rows[e.row] instanceof wijmo.grid.GroupRow)) {
 
                             const item = s.rows[e.row].dataItem;
                             if (!item) return;
 
-                            // 색상 초기화 (다시 그릴 때 중첩 방지)
                             e.cell.style.backgroundColor = '';
-
-                            // fixflag 값에 따라 색상 지정
-                            if (item.fixflag === "1") {
-                                e.cell.style.backgroundColor = '#FFF5E1'; // 연한 주황
-                            } else if (item.fixflag === "2") {
-                                e.cell.style.backgroundColor = '#E6F3FF'; // 연한 파랑
-                            }
+                            if (item.fixflag === "1") e.cell.style.backgroundColor = '#FFF5E1';
+                            if (item.fixflag === "2") e.cell.style.backgroundColor = '#E6F3FF';
                         }
-                    },
-                    columns: [
-                        {binding: 'id', visible:false},
-                        {binding: 'rptdate', header: '작성일자', width: 125, align: 'center'},
-                        {binding: 'rptweek', header: '주차', width: 140, align: 'center'},
-                        {binding: 'fixflag_nm', header: '업무구분', width: 100, align: 'center'},
-                        {binding: 'fixpernm', header: '사원명', width: 120, align: 'center'},
-                        {binding: 'cltnm', header: '업체명', width: 150, align: 'center'},
-                        {binding: 'asmenu', header: '화면명', width: 200, align: 'left'},
-                        {binding: 'rptremark', header: '업무내용', width: '*', align: 'left'},
-                        {binding: 'recyn_nm', header: '진행상태', width: 100, align: 'center'},
-                        {binding: 'asdv_nm', header: '근무구분', width: 100, align: 'center'},
-                        {binding: 'inputdate', header: '입력일자', width: 150, align: 'center'},
-                    ],
-                    itemsSource: viewdata,
-                    formatItem: function(s, e) {
-
                     }
                 });
-                setTimeout(() => {
-                    if (theGrid2 && theGrid2.hostElement) {
-                        new FlexGridContextMenu(theGrid2);
-                    }
-                }, 100);
-                theGrid2.downloadFileName = '업무보고 내역';
-
-                // -----------------------------
-                // 2) GroupPanel 생성
-                // -----------------------------
-                // this.groupPanel = new wijmo.grid.grouppanel.GroupPanel('#theGridPanel', {
-                //     grid: theGrid2,
-                //     placeholder: '여기에 필드를 끌어서 그룹화할 수 있습니다.'
-                // });
-
-                // -----------------------------
-                // 3) 기본 그룹 설정
-                // -----------------------------
-                viewdata.groupDescriptions.clear();
-
-                // 1단계 그룹: 주차
-                viewdata.groupDescriptions.push(
-                    new wijmo.collections.PropertyGroupDescription('rptweek')
-                );
-
-                // 2단계 그룹: 사원명
-                viewdata.groupDescriptions.push(
-                    new wijmo.collections.PropertyGroupDescription('fixpernm')
-                );
-
 
                 new FlexGridContextMenu(theGrid2);
                 theGrid2.downloadFileName = '업무일지 내역';
@@ -1036,10 +1218,8 @@
                 theGrid2.selectionChanged.addHandler((s, e) => {
                     const row = s.selection.row;
                     if (row < 0) return;
-
                     const item = s.rows[row].dataItem;
                     if (!item) return;
-
                     $("#rptremark").val(item.rptremark || "");
                     $("#etcremark").val(item.etcremark || "");
                     $("#remark").val(item.remark || "");
@@ -1047,7 +1227,11 @@
             } else {
                 theGrid2.itemsSource = viewdata;
             }
+
+            viewdata.refresh();
+            setTimeout(() => theGrid2?.collapseGroupsToLevel(0), 50);
         }
+
         // ✅ 더블 클릭 이벤트 핸들러 수정
         function attachDoubleClickEvent(grid) {
             let lastClickTime = 0;
@@ -1719,6 +1903,79 @@
                     console.error('❌ 유지보수 요청현황 데이터를 가져오는 중 오류 발생:', error);
                 }
             });
+        }
+
+        // 공지사항 조회
+        function fetchListNoticeData() {
+            let keyword = $('#keyword').val();
+            let srchStartDt = $('#srchStartDt').val();
+            let srchEndDt = $('#srchEndDt').val();
+
+            let data2 = []; // 데이터를 담을 배열
+            let emptyRowsCount = 8;
+
+            $.ajax({
+                url: withCtx('/api/dash_summary/notice'),
+                type: 'GET',
+                data: {
+                    'keyword': keyword,
+                    'srchStartDt': srchStartDt,
+                    'srchEndDt': srchEndDt
+                },
+                async: false,
+                success: function (response) {
+                    // 응답이 올바르게 도착했고, data 속성이 배열인지 확인
+                    if (response && Array.isArray(response.data)) {
+                        data2 = response.data;
+                        console.log("data2",data2)
+                        // 날짜 형식 변환 및 ordflag 변환
+                        data2.forEach(item => {
+
+                        });
+                    }
+                },
+                error: function () {
+                    console.error("데이터를 가져오는 중 오류가 발생했습니다.");
+                }
+            });
+
+            // 빈 객체를 emptyRowsCount만큼 추가
+            if(data2.length < emptyRowsCount) {
+                for (let i = 0; emptyRowsCount - data2.length ; i++) {
+                    data2.push({
+
+                    });
+                }
+            }
+            viewdata5 = new wijmo.collections.CollectionView(data2);
+            if (!theGrid5) {
+                theGrid5 = new wijmo.grid.FlexGrid('#theGrid_notice', {
+                    autoGenerateColumns: false,
+                    showMarquee: true,
+                    isReadOnly: true,
+                    columns: [
+                        {binding: 'id', header: '번호', width: 80, align: 'center'},
+                        {binding: 'title', header: '제목', width: 190, align: 'center'},
+                        {binding: 'write_date_time', header: '작성일', width: 175, align: 'center'},
+                        {binding: 'content', header: '내용', width: "*", align: 'center'},
+                        {binding: '', header: '확인', width: 150, align: 'center'}
+                    ],
+                    itemsSource: viewdata5 // 빈 객체가 추가된 배열 사용
+                });
+                // 헤더를 중앙 정렬하는 이벤트 핸들러
+                theGrid5.formatItem.addHandler(function (s, e) {
+                    if (e.panel === s.columnHeaders) {
+                        e.cell.style.textAlign = 'center';
+                    }
+                });
+                theGrid5.rowHeaders.columns.splice(0, 1);
+                // 선택이 변경될 때, 현재 항목 업데이트
+                new FlexGridContextMenu(theGrid5);
+                window.downloadFileName = '공지사항';
+            } else {
+                // 이미 FlexGrid이 존재하는 경우, 데이터만 업데이트
+                theGrid5.itemsSource = viewdata5; // 빈 객체가 추가된 배열 사용
+            }
         }
     </script>
 </th:block>

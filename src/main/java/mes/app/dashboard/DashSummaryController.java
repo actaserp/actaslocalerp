@@ -499,4 +499,23 @@ public class DashSummaryController {
 
         return result;
     }
+
+    // 공지사항 조회
+    @GetMapping("/notice")
+    public AjaxResult getBoardList(
+            @RequestParam(value = "srchStartDt", required = false) String srchStartDt,
+            @RequestParam(value = "srchEndDt", required = false) String srchEndDt,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            HttpServletRequest request) {
+
+        String date_from = srchStartDt + " 00:00:00";
+        String date_to = srchEndDt + " 23:59:59";
+
+        List<Map<String, Object>> items = this.dashSummaryService.getBoardList("notice", keyword, date_from, date_to);
+
+        AjaxResult result = new AjaxResult();
+        result.data = items;
+
+        return result;
+    }
 }

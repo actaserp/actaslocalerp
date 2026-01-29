@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -66,6 +67,7 @@ public class MobileMainController {
     }
 
     // 출근 메서드
+    @Transactional
     @PostMapping("/submitCommute")
     public AjaxResult submitCommute(
             @RequestParam(value="weekNum") Integer weekNum,
