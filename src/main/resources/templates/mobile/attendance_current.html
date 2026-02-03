@@ -136,7 +136,7 @@
                                 <div style="width: 100%">
                                     <select id="searchYear">
                                         <option>
-                                            2025
+                                            2026
                                         </option>
                                     </select>
                                 </div>
@@ -249,7 +249,10 @@
         // 이벤트 리스너 등록
         document.getElementById('editStartDate').addEventListener('change', calculateUseDays);
         document.getElementById('editEndDate').addEventListener('change', calculateUseDays);
-        searchMainData();
+        // ✅ 서버에서 연도 리스트 받아와 셀렉트 박스 바인딩
+        loadAvailableYears().then(() => {
+            searchMainData(); // 연도 옵션 바인드 후 검색 실행
+        });
     });
     // yy.mm.dd 형식 포멧함수
     function formatDateToYYMMDD(dateStr) {
@@ -551,6 +554,32 @@
             }
         };
         AjaxUtil.getAsyncData(url, data, fnsuccess);
+    }
+    async function loadAvailableYears() {
+        try {
+            const res = await fetch('/api/attendance_current/years');
+            const result = await res.json(); // 전체 JSON 객체
+            const years = result.data;       // ✅ 실제 연도 배열만 추출
+            const select = document.getElementById('searchYear');
+            select.innerHTML = ''; // 기존 옵션 제거
+
+            if (!years || years.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = new Date().getFullYear();
+                opt.value = new Date().getFullYear();
+                select.appendChild(opt);
+                return;
+            }
+
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.text = y;
+                opt.value = y;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('연도 조회 실패:', e);
+        }
     }
 </script>
 </body>

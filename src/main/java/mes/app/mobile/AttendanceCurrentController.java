@@ -159,4 +159,15 @@ public class AttendanceCurrentController {
 
         return dateTimeParts;
     }
+
+    @GetMapping("/years")
+    public AjaxResult getAvailableYears(Authentication auth) {
+        AjaxResult result = new AjaxResult();
+        User user = (User) auth.getPrincipal();
+        Integer personInfo = user.getPersonid();
+
+        List<String> years = tbPb204Repository.findDistinctYearsByPersonId(personInfo);
+        result.data = years;
+        return result;
+    }
 }

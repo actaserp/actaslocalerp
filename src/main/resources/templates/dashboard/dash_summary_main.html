@@ -180,7 +180,7 @@
                                             </section>
                                             <section style="background-color: #C7DFF4; color: #031B4B; flex: 0.5; margin-right: 5px; cursor: pointer; padding: 10px 10px;" class="fetchCard" data-search-type="11">
                                                 <div class="title">
-                                                    <h3>외근</h3>
+                                                    <h3>유연근무</h3>
                                                 </div>
                                                 <div class="produceCnt" style="font-size: 32px; font-weight: 700; text-align: right; margin: 9px 0;">
                                                     -<span class="small-unit" style=" font-size: 0.5em; opacity: 0.5;"> 건</span>
@@ -932,7 +932,7 @@
                 // 주문현황 데이터 가져오기
                 // 연차 정보 데이터 가져와서 날짜별 그룹화 후 캘린더에 추가(캘린더에 바인드)
                 fetchOrderDates().then(orderDates => {
-                    // 1️⃣ 날짜별 그룹화 ( { "YYYY-MM-DD": { "연차": 08, "반차": 04, "외근": } } 형태로 저장 )
+                    // 1️⃣ 날짜별 그룹화 ( { "YYYY-MM-DD": { "연차": 08, "반차": 04, "유연근무": 13} } 형태로 저장 )
                     let groupedEvents = {};
 
                     orderDates.forEach(order => {
@@ -1500,7 +1500,7 @@
             $('.checkCnt').html(0 + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
             // 반차
             $('.estimateCnt').html(0 + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
-            // 외근
+            // 유연근무
             $('.produceCnt').html(0 + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
             $.ajax({
                 url: withCtx('/api/dash_summary/initDatas'),
@@ -1521,8 +1521,8 @@
                             case "04":
                                 $('.estimateCnt').html(item.workcd_count + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
                                 break;
-                            // 외근
-                            case "11":
+                            // 유연근무
+                            case "13":
                                 $('.produceCnt').html(item.workcd_count + '<span class="small-unit" style="font-size: 0.5em; opacity: 0.5;"> 건</span>');
                                 break;
                             // 병가

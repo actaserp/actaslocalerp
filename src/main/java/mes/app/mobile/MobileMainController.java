@@ -6,8 +6,10 @@ import mes.app.transaction.service.MonthlyPurchaseListService;
 import mes.domain.entity.User;
 import mes.domain.entity.commute.TB_PB201;
 import mes.domain.entity.commute.TB_PB201_PK;
+import mes.domain.entity.mobile.TB_PB204;
 import mes.domain.model.AjaxResult;
 import mes.domain.repository.commute.TB_PB201Repository;
+import mes.domain.repository.mobile.TB_PB204Repository;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,6 +40,9 @@ public class MobileMainController {
 
     @Autowired
     private TB_PB201Repository tbPb201Repository;
+
+    @Autowired
+    private TB_PB204Repository tbPb204Repository;
 
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -213,7 +218,13 @@ public class MobileMainController {
             }
             // 이미 workcd 있으면 변경하지 않음
         }
-
+        // --- 유연근무 신청 여부 확인 ---
+        TB_PB204 flexibleWork = tbPb204Repository.findFlexibleWorkByPersonAndDate(
+                Integer.valueOf(perId),
+                workday,
+                "13"
+        );
+        boolean isFlexibleWork = (flexibleWork != null);
         // jotime(조퇴) 판단: 반차("04")/연차("08")면 무조건 0, 그 외엔 정상퇴근시간 이전=1(조퇴), 이후=0(정상)
         boolean isBanchaOrYeoncha = "04".equals(entity.getWorkcd()) || "08".equals(entity.getWorkcd());
         int jotFlag = 0;
@@ -276,12 +287,23 @@ public class MobileMainController {
         entity.setEndtime(formattedCurrentTime);
         entity.setRemark(remark);
         entity.setInflag(inFlag);
-        if(entity.getHoliyn().equals("0")){
-            entity.setWorktime(totalTime);
-            entity.setNomaltime(normalTime);
-            entity.setOvertime(overTime);
-            entity.setNighttime(nightTime);
-        }else{
+        if (entity.getHoliyn().equals("0")) {
+            if (isFlexibleWork) {
+                // ✅ 유연근무 신청자 처리
+                entity.setWorktime(totalTime);
+                entity.setNomaltime(totalTime);
+                entity.setOvertime(BigDecimal.ZERO);
+                entity.setNighttime(BigDecimal.ZERO);
+                log.info("유연근무자 근무시간 계산: {}", totalTime);
+            } else {
+                // 일반 근무자 로직
+                entity.setWorktime(totalTime);
+                entity.setNomaltime(normalTime);
+                entity.setOvertime(overTime);
+                entity.setNighttime(nightTime);
+            }
+        } else {
+            // 휴일 근무자 로직
             entity.setWorktime(totalTime);
             entity.setHolitime(totalTime);
         }

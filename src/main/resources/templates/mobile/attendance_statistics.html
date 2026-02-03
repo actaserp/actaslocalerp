@@ -245,8 +245,11 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
-        searchDeductionData();
-        searchUserData();
+        // ✅ 서버에서 연도 리스트 받아와 셀렉트 박스 바인딩
+        loadAvailableYears().then(() => {
+            searchDeductionData();
+            searchUserData();
+        });
     });
 
     // 파스텔톤 색상 리스트
@@ -377,6 +380,33 @@
                 console.error("데이터 불러오기 실패:", error);
             }
         });
+    }
+    // 조회년도 바인드 로직
+    async function loadAvailableYears() {
+        try {
+            const res = await fetch('/api/attendance_current/years');
+            const result = await res.json(); // 전체 JSON 객체
+            const years = result.data;       // ✅ 실제 연도 배열만 추출
+            const select = document.getElementById('searchYear');
+            select.innerHTML = ''; // 기존 옵션 제거
+
+            if (!years || years.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = new Date().getFullYear();
+                opt.value = new Date().getFullYear();
+                select.appendChild(opt);
+                return;
+            }
+
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.text = y;
+                opt.value = y;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('연도 조회 실패:', e);
+        }
     }
 </script>
 </body>
