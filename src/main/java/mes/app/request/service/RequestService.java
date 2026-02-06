@@ -166,7 +166,7 @@ public class RequestService {
         String sql = """
         SELECT
             a."asid" AS id,
-            TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS reqDate,
+            TO_CHAR(TO_DATE(a."asdate", 'YYYYMMDD'), 'YYYY-MM-DD') AS "reqDate",
             a."cltnm",
             a."cltcd" AS "Code",
             a."userid",
