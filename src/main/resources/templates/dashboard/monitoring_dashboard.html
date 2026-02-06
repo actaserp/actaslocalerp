@@ -1,0 +1,453 @@
+<html layout:decorate="~{layout_page}">
+
+<head>
+    <style>
+
+        [data-ax5grid] [data-ax5grid-container="root"] [data-ax5grid-container="body"] [data-ax5grid-panel] table tr td [data-ax5grid-cellHolder] {
+            font-size: 14px;
+        }
+
+
+        /* 1. 최상위 컨테이너 높이 해제 */
+        .layout-contents {
+            height: auto !important; /* 고정 높이 제거 */
+            min-height: 100%; /* 최소한 화면은 채우도록 설정 */
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 40px; /* 마지막 카드 하단 여백 확보 */
+        }
+
+        /* 2. 중간 래퍼들의 높이 제약 해제 */
+        .tab-wrap, .tab-contents, .row {
+            height: auto !important;
+            min-height: 1px; /* 부모 height: 100% 자식들이 깨지는 것 방지 */
+            display: block !important;
+        }
+
+        /* 3. 대시보드 그리드 (3열 유지) */
+        .dashboard-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            grid-gap: 20px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+       /* 4. 카드 디자인 수정 */
+    .card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e1e4e8;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        display: flex;
+        flex-direction: column;
+
+        /* [핵심 수정] 높이를 고정합니다. 원하시는 높이로 조절하세요. */
+        height: 320px;
+        overflow: hidden; /* 전체 카드가 깨지는 것 방지 */
+    }
+
+    .card-header {
+        background-color: white;
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f3f5;
+        flex-shrink: 0; /* 헤더 크기가 줄어들지 않도록 설정 */
+    }
+
+    .card-header strong {
+        font-size: 16px;
+        font-weight: 800;
+        color: #212529;
+        letter-spacing: -0.5px;
+    }
+
+    /* 5. 카드 내부 본문 스크롤 설정 */
+    .card-body {
+        padding: 20px;
+        flex: justify-content: space-around; /* 남은 공간을 차지하도록 설정 */
+        align-items: flex-start;
+        overflow-x: auto; overflow-y: auto;
+        display: flex; /* 중앙 정렬을 풀고 내용이 위에서부터 쌓이게 변경 */
+    }
+
+    /* 스크롤바 디자인 (선택 사항: 더 깔끔하게 보이게 함) */
+    .card-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .card-body::-webkit-scrollbar-thumb {
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+    .card-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chart-container {
+    position: relative;
+    height: 150px; /* 게이지 차트가 적절히 보일 높이 */
+    width: 100%;
+    }
+
+    /* 그리드 전용 패딩 클래스 */
+    .card-body.grid-padding {
+        padding: 15px 25px; /* 상하 15px, 좌우 25px로 너비를 조절 */
+    }
+
+    /* 그리드 호스트 스타일 보정 */
+    .grid-host {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #e1e4e8; /* 그리드 테두리를 살짝 주면 더 깔끔합니다 */
+        border-radius: 4px;      /* 모서리 살짝 굴림 */
+    }
+
+
+
+
+        /* 반응형 설정: 창이 줄어들면 1열로 */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<th:block layout:fragment="content">
+    <div class="layout-contents">
+        <div class="page-title-wrap">
+            <div class="left">
+                <h2>Dash Board</h2>
+                <a title="북마크" class="bookmark toggle">내 메뉴</a>
+            </div>
+            <ul class="page-navi">
+                <li><img th:src="@{/images/icon/ico-nav-home.svg}" alt="홈아이콘"></li>
+                <li>모니터링</li>
+                <li>대쉬보드</li>
+            </ul>
+        </div>
+
+        <div class="tab-wrap">
+            <div class="tab-contents">
+                <div class="row">
+                    <div class="content-wrap dashboard-grid">
+
+                        <div class="card">
+                            <div class="card-header"><strong>VM 사용량(vCPU 및 RAM 가용성)</strong></div>
+                            <div class="card-body" style="display: flex; justify-content: space-around; align-items: flex-start; overflow-x: auto; overflow-y: auto;">
+
+                                <div class="vm-usage-item" style="flex: 1; text-align: center; padding: 10px; min-width: 150px;">
+                                    <div style="position: relative; height: 140px; width: 100%;">
+                                        <canvas id="cpuChart"></canvas>
+                                        <div id="cpuValue" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 800; color: #3b82f6;">0%</div>
+                                    </div>
+                                    <div style="font-weight: 800; color: #333; margin-top: -10px;">vCPU</div>
+                                </div>
+
+                                <div class="vm-usage-item" style="flex: 1; text-align: center; padding: 10px; min-width: 150px;">
+                                    <div style="position: relative; height: 140px; width: 100%;">
+                                        <canvas id="ramChart"></canvas>
+                                        <div id="ramValue" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 800; color: #10b981;">0%</div>
+                                    </div>
+                                    <div style="font-weight: 800; color: #333; margin-top: -10px;">RAM</div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><strong>api 콜 횟수(고객사별)</strong></div>
+                            <div class="card-body grid-padding">
+                                <div id="apiCallGrid" class="grid-host"></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><strong>요금제별 이용현황</strong></div>
+                            <div class="card-body grid-padding">
+                                <div id="ratePlanGrid" class="grid-host"></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>월별 가입현황</strong>
+
+                                <input type="month" id="monthPicker"
+                                       style="padding: 5px 10px;
+                      border: 1px solid #e1e4e8;
+                      border-radius: 6px;
+                      font-size: 13px;
+                      font-family: inherit;
+                      color: #333;
+                      outline: none;
+                      cursor: pointer;">
+                            </div>
+                            <div class="card-body grid-padding">
+                                <div id="monthlySignupGrid" class="grid-host"></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><strong>네트워크 이용내역</strong></div>
+                            <div class="card-body">
+                                <div style="width: 100%; height: 100%; position: relative;">
+                                    <canvas id="networkChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><strong>요청사항</strong></div>
+                            <div class="card-body grid-padding">
+                                <div id="requestGrid" class="grid-host"></div>
+                            </div>
+                        </div>
+
+                    </div> </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+<th:block layout:fragment="scripts">
+    <script th:src="@{/resource/apexcharts/apexcharts.3.26.min.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript">
+        class CustomOrderPage {
+            constructor() {
+                // 그리드와 차트 객체를 저장할 변수 선언
+                this.apiCallGrid = null;
+                this.ratePlanGrid = null;
+                this.monthlySignupGrid = null;
+                this.requestGrid = null;
+
+                this.charts = {};
+
+                this.init();
+            }
+
+            init() {
+                this.initGrids();
+                this.initCharts(); // 기존 게이지 차트 로직 (유지)
+                this.setData();
+            }
+
+            initGrids() {
+                this.apiCallGrid = new wijmo.grid.FlexGrid('#apiCallGrid', {
+                    autoGenerateColumns: false,
+                    headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                    isReadOnly: true,
+                    // ... (기존 설정 유지)
+                    columns: [
+                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
+                        { header: '상태', binding: 'status', width: 80, align: 'center' },
+                        { header: '콜 횟수', binding: 'callCount', width: 120, align: 'right', format: 'n0' }
+                    ]
+                });
+
+                this.ratePlanGrid = new wijmo.grid.FlexGrid('#ratePlanGrid', {
+                    autoGenerateColumns: false,
+                    headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                    isReadOnly: true,
+                    // ... (기존 설정 유지)
+                    columns: [
+                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
+                        { header: '요금제', binding: 'grade', width: 80, align: 'center' },
+                        { header: '사용인원', binding: 'userNum', width: 120, align: 'left', format: 'n0' }
+                    ]
+                });
+
+                this.monthlySignupGrid = new wijmo.grid.FlexGrid('#monthlySignupGrid', {
+                    autoGenerateColumns: false,
+                    headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                    isReadOnly: true,
+                    // ... (기존 설정 유지)
+                    columns: [
+                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
+                        { header: '승인여부', binding: 'approval', width: 80, align: 'center' },
+                        { header: '가입일시', binding: 'joinDate', width: 120, align: 'left', format: 'n0' }
+                    ]
+                });
+
+                this.requestGrid = new wijmo.grid.FlexGrid('#requestGrid', {
+                    autoGenerateColumns: false,
+                    headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                    isReadOnly: true,
+                    // ... (기존 설정 유지)
+                    columns: [
+                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
+                        { header: '아이디', binding: 'user_id', width: 80, align: 'center' },
+                        { header: '확인여부', binding: 'confirmation', width: 120, align: 'left' }
+                    ]
+                });
+            }
+
+
+
+            initCharts() {
+                // 이전에 작성한 vCPU, RAM 게이지 차트 초기화 로직
+                this.charts.cpu = this.createGaugeChart('cpuChart', '#3b82f6');
+                this.charts.ram = this.createGaugeChart('ramChart', '#10b981');
+
+                // 네트워크 라인 차트 초기화
+                this.initNetworkChart();
+            }
+
+            /* 네트워크 차트 초기 설정 전용 메서드 */
+            initNetworkChart() {
+                const ctx = document.getElementById('networkChart').getContext('2d');
+                this.charts.network = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                        datasets: [
+                            {
+                                label: 'Inbound',
+                                data: [],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0,           // 0으로 설정하면 직선이 됩니다
+                                pointRadius: 4,       // 꼭짓점 크기
+                                pointBackgroundColor: '#3b82f6' // 꼭짓점 색상
+                            },
+                            {
+                                label: 'Outbound',
+                                data: [],
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                fill: true,
+                                tension: 0,           // 0으로 설정하면 직선이 됩니다
+                                pointRadius: 4,
+                                pointBackgroundColor: '#f59e0b'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',     // 같은 시간대 데이터를 같이 보여줌
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: { position: 'top', align: 'end' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'GB' },
+                                grid: { color: '#f1f3f5' } // 배경 선 연하게
+                            },
+                            x: {
+                                grid: { display: false } // X축 세로선은 제거해서 깔끔하게
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 게이지 차트 생성 공통 함수 (차트 부분)
+            createGaugeChart(canvasId, color) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return null;
+                const ctx = canvas.getContext('2d');
+                return new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { datasets: [{ data: [0, 100], backgroundColor: [color, '#f1f3f5'], borderWidth: 0 }] },
+                    options: {
+                        rotation: -90, circumference: 180, cutout: '75%',
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            }
+
+            setData() {
+                // 1. VM 사용량 차트 데이터 세팅 (목데이터)
+                const mockChartData = { cpuUsage: 48, ramUsage: 76 };
+                this.updateGauge(this.charts.cpu, 'cpuValue', mockChartData.cpuUsage);
+                this.updateGauge(this.charts.ram, 'ramValue', mockChartData.ramUsage);
+
+                // 2. API 콜 횟수 그리드 데이터 세팅
+                // 실제 운영시: let apiData = AjaxUtil.getSyncData('/api/dashboard/api_calls');
+                let apiData = {
+                    data: [
+                        { customer: '(주)테크솔루션', status: '정상', callCount: 12540 },
+                        { customer: '에이아이 소프트', status: '정상', callCount: 8900 },
+                        { customer: '클라우드 시스템', status: '주의', callCount: 7210 },
+                        { customer: '데이터 웍스', status: '정상', callCount: 4300 },
+                        { customer: '네트워크 보안', status: '정상', callCount: 2100 },
+                        { customer: '미래 정보통신', status: '대기', callCount: 1500 }
+                    ]
+                };
+
+                let rateApiData = {
+                    data: [
+                        { customer: '(주)테크솔루션', grade: 'Premium', userNum: '사용중 : (3/5)' },
+                        { customer: '에이아이 소프트', grade: 'Basic', userNum: '사용중 : (2/5)' },
+                        { customer: '클라우드 시스템', grade: 'Standard', userNum: '사용중 : (1/5)' },
+                        { customer: '데이터 웍스', grade: 'Enterprise', userNum: '사용중 : (3/50)' },
+                        { customer: '네트워크 보안', grade: 'Basic', userNum: '사용중 : (3/5)' },
+                        { customer: '미래 정보통신', grade: 'Standard', userNum: '사용중 : (2/5)' }
+                    ]
+                };
+
+                let monthlySignApiData = {
+                    data: [
+                        { customer: '(주)테크솔루션', approval: '승인', joinDate: '2026-02-06 12:39:20' },
+                        { customer: '에이아이 소프트', approval: '승인', joinDate: '2026-02-04 19:39:21' },
+                        { customer: '클라우드 시스템', approval: '미승인', joinDate: '2026-02-02 01:39:00' },
+                        { customer: '엠프리어스 테크', approval: '미승인', joinDate: '2026-02-02 00:39:30' },
+                        { customer: '플래닛랩스', approval: '승인', joinDate: '2026-02-01 20:18:21' },
+                        { customer: '미래 정보통신', approval: '승인', joinDate: '2026-02-01 12:39:49' }
+                    ]
+                };
+
+                let requestData = {
+                    data: [
+                        { customer: '(주)테크솔루션', user_id: 'tech_admin', confirmation: '확인완료 (26.02.05)' },
+                        { customer: '에이아이 소프트', user_id: 'ai_user01', confirmation: '대기중' },
+                        { customer: '클라우드 시스템', user_id: 'cloud_master', confirmation: '확인완료 (26.02.04)' },
+                        { customer: '데이터 웍스', user_id: 'dw_manager', confirmation: '진행중' },
+                        { customer: '네트워크 보안', user_id: 'secu_09', confirmation: '대기중' },
+                        { customer: '미래 정보통신', user_id: 'future_dev', confirmation: '확인완료 (26.02.01)' },
+                        { customer: '글로벌 링크', user_id: 'link_ceo', confirmation: '대기중' },
+                        { customer: '이노베이션 랩', user_id: 'lab_staff', confirmation: '확인완료 (26.01.30)' }
+                    ]
+                };
+
+
+                this.apiCallGrid.itemsSource = apiData.data;
+                this.ratePlanGrid.itemsSource = rateApiData.data;
+                this.monthlySignupGrid.itemsSource = monthlySignApiData.data;
+                this.requestGrid.itemsSource = requestData.data;
+
+
+                // 네트워크 목데이터 세팅
+                    const networkData = {
+                        inbound: [12, 19, 15, 25, 22, 30, 28],
+                        outbound: [8, 12, 10, 18, 15, 22, 20]
+                    };
+
+                    this.charts.network.data.datasets[0].data = networkData.inbound;
+                    this.charts.network.data.datasets[1].data = networkData.outbound;
+                    this.charts.network.update();
+            }
+
+            // 게이지 업데이트용 함수
+            updateGauge(chart, valueElementId, value) {
+                if (!chart) return;
+                chart.data.datasets[0].data = [value, 100 - value];
+                chart.update();
+                const valEl = document.getElementById(valueElementId);
+                if (valEl) valEl.innerText = value + '%';
+            }
+        }
+
+        let page = null;
+        $(document).ready(function (e) {
+            page = new CustomOrderPage();
+        });
+    </script>
+</th:block>
+</html>

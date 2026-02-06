@@ -10,7 +10,7 @@ import java.util.Map;
 @Configuration
 public class MesGptConfig {
 
-    @Bean
+    //@Bean
     public Map<String, List<Map<String, String>>> gptMesTableSpec(TableSpecLoader loader) {
         return loader.loadFromExcel("templates/_tablelist/DataBaseExcel.xlsx");
     }
