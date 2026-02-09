@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -786,12 +787,15 @@ public class ComboService {
 	};
 	
 	ComboDataFunction user_group=(String cond1, String cond2, String cond3)-> {
-		
+
+		String tenantId = TenantContext.get();
+
 		String sql = """
-		select id as value, "Name" as text from user_group order by "Name" 		
+		select id as value, "Name" as text from user_group where spjangcd = :spjangcd order by "Name"
 		""";
 		
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		dicParam.addValue("spjangcd", tenantId);
 		dicParam.addValue("cond1", cond1);
 		dicParam.addValue("cond2", cond2);
 		dicParam.addValue("cond3", cond3);

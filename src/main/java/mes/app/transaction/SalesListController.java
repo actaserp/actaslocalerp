@@ -2,7 +2,7 @@ package mes.app.transaction;
 
 
 import lombok.extern.slf4j.Slf4j;
-import mes.app.aop.DecryptField;
+import mes.app.aspect.DecryptField;
 import mes.app.transaction.service.SalesListService;
 import mes.domain.model.AjaxResult;
 import org.springframework.web.bind.annotation.GetMapping;

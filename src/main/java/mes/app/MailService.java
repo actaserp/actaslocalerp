@@ -3,6 +3,7 @@ package mes.app;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,6 +23,9 @@ public class MailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     public void sendVerificationEmail(String to, String usernm, String uuid, String content){
         String subject = content + " 인증 메일입니다.";
@@ -49,7 +53,7 @@ public class MailService {
             helper.setSubject(subject);
             helper.setText(body, true);
             // 이렇게 맞춰야 됨 (메일 전송 계정과 동일)
-            helper.setFrom("kimyouli0330@naver.com");
+            helper.setFrom(fromEmail);
 
             FileSystemResource file = new FileSystemResource(attachment);
             helper.addAttachment(attachmentFileName, file);

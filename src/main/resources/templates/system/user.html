@@ -262,10 +262,10 @@
                                         <td>
                                             <select style="width: 100%;" id="lang_code" name="lang_code"></select>
                                         </td>
-                                        <th><label for="spjangcd">사업장</label></th>
-                                        <td>
-                                            <select style="width: 100%;" id="spjangcd" name="spjangcd"></select>
-                                        </td>
+<!--                                        <th><label for="spjangcd">사업장</label></th>-->
+<!--                                        <td>-->
+<!--                                            <select style="width: 100%;" id="spjangcd" name="spjangcd"></select>-->
+<!--                                        </td>-->
 
                                     </tr>
                                     </tbody>
@@ -721,12 +721,12 @@
             let data = FormUtil.extractForm($('#userForm'));
 
             data.is_active = $('#is_active').is(':checked');
-            let spjangcd = $('#spjangcd').val();
-            if (!spjangcd) {
-                Alert.alert('', '사업장을 선택해주세요.');
-                return;
-            }
-            data.spjangcd = spjangcd;
+            // let spjangcd = $('#spjangcd').val();
+            // if (!spjangcd) {
+            //     Alert.alert('', '사업장을 선택해주세요.');
+            //     return;
+            // }
+            // data.spjangcd = spjangcd;
 
 
             if (!data.login_id) {

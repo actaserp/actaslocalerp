@@ -1,4 +1,4 @@
-package mes.app.aop;
+package mes.app.aspect;
 
 import lombok.extern.slf4j.Slf4j;
 import mes.app.util.UtilClass;

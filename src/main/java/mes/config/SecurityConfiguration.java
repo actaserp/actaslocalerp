@@ -43,50 +43,72 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
+        // 1. 헤더 설정
         http
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 );
 
+        // 2. CSRF 예외 경로 (기존 pda 및 기타 추가)
         http
                 .csrf(csrf -> csrf
-                        .ignoringAntMatchers("/api/files/upload/**", "/popbill/webhook")
+                        .ignoringAntMatchers(
+                                "/api/files/upload/**",
+                                "/popbill/webhook",
+                                "/pda/**"
+                        )
                 );
 
+        // 3. 권한 설정 (기존 소스의 모든 permitAll 경로 통합)
         http
                 .authorizeRequests(auth -> auth
                         .antMatchers(
-                                "/login",
-                                "/logout",
-                                "/resource/**",
-                                "/img/**",
-                                "/images/**",
-                                "/js/**",
-                                "/css/**",
-                                "/assets_mobile/**",
-                                "/font/**",
-                                "/robots.txt",
-                                "/favicon.ico"
+                                // 기본 페이지 및 인증
+                                "/login", "/logout", "/postLogin", "/intro", "/error", "/alive",
+                                // 정적 리소스
+                                "/resource/**", "/img/**", "/images/**", "/js/**", "/css/**",
+                                "/assets_mobile/**", "/font/**", "/robots.txt", "/favicon.ico",
+                                // PDA 관련
+                                "/pda/login", "/pda/app/version/**", "/pda/**",
+                                // API 및 외부 연동
+                                "/useridchk/**", "/user-auth/**", "/user-auth/save",
+                                "/popbill/webhook", "/api/transaction/input/**",
+                                "/api/das_device", "/authentication/**"
                         ).permitAll()
+                        .antMatchers("/setup").hasAuthority("admin")
                         .anyRequest().authenticated()
                 );
 
+        // 4. 로그인 설정
         http
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/postLogin")
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .failureHandler(customAuthenticationFailureHandler)
                         .permitAll()
                 );
 
+        // 5. 로그아웃 설정
         http
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
+                        .invalidateHttpSession(true)
+                        .deleteCookies(sessionCookieName)
+                        .clearAuthentication(true)
+                        .permitAll()
                 );
+
+        // 6. 예외 처리 및 기타 (기존 소스의 AjaxAware 및 AccessDenied 적용)
+        http.httpBasic(httpBasic -> httpBasic.disable());
+
+        http.exceptionHandling(exception -> exception
+                .accessDeniedHandler(new CustomAccessDeniedHandler())
+                .authenticationEntryPoint(new AjaxAwareLoginUrlAuthenticationEntryPoint("/login"))
+        );
 
         return http.build();
     }
-
-
 }
 

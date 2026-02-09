@@ -31,7 +31,9 @@
         sessionStorage.setItem("username", [[${session.username}]] );
         sessionStorage.setItem("userid", [[${session.userid}]] );
         sessionStorage.setItem("groupid", [[${session.groupid}]] );
-        sessionStorage.setItem("spjangcd", [[${session.spjangcd}]] );
+        if (!sessionStorage.getItem("spjangcd")) {
+            sessionStorage.setItem("spjangcd", [[${session.spjangcd}]] );
+        }
     </script>
 
     <style>
@@ -536,6 +538,14 @@
 
                                     </ul>
                                 </li>
+                                <li class="dep1-1">
+                                    <a href="#a" title="관리자" class="ico-lnb01">
+                                        관리자 메뉴
+                                    </a>
+                                    <ul class="dep2" id="dep2-admin">
+
+                                    </ul>
+                                </li>
                             </ul>
 
                         </nav> <!-- // nav end -->
@@ -642,6 +652,7 @@
             12: '#dep2-approval',
             13: '#dep2-inventory-materials',
             14: '#dep2-request',
+            15: '#dep2-admin',
         };
 
         function renderMenuByFrontFolder(menus, FrontFolderId, $FrontFolderElement) {
@@ -2212,41 +2223,43 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         const wrapper = document.getElementById('spjangSelectWrapper');
-        const savedSpjangcd = sessionStorage.getItem('spjangcd');
         const select = document.createElement('select');
 
+        // 1. 현재 sessionStorage에 저장된 값을 가져옴
+        let currentSpjangcd = sessionStorage.getItem('spjangcd');
+
+        // 2. 저장된 값이 "진짜로" 없을 때만 기본값(ZZ 또는 첫 번째) 설정
+        if (!currentSpjangcd) {
+            const zzItem = spjangList.find(item => item.spjangcd === 'ZZ');
+            if (zzItem) {
+                currentSpjangcd = 'ZZ';
+            } else if (spjangList.length > 0) {
+                currentSpjangcd = spjangList[0].spjangcd;
+            }
+            // 결정된 기본값을 저장
+            if (currentSpjangcd) {
+                sessionStorage.setItem('spjangcd', currentSpjangcd);
+            }
+        }
+
+        // 3. 셀렉트 박스 옵션 생성
         select.id = 'spjangcd';
         select.name = 'spjangcd';
         select.classList.add('select-no-border');
 
-        // 디폴트로 선택할 spjangcd 값
-        let defaultSpjangcd = null;
-
-        if (!savedSpjangcd && spjangList.length >= 2) {
-            const zzItem = spjangList.find(item => item.spjangcd === 'ZZ');
-            if (zzItem) {
-                defaultSpjangcd = 'ZZ';
-                sessionStorage.setItem('spjangcd', 'ZZ');
-            }
-        }
-
-        spjangList.forEach((item, index) => {
+        spjangList.forEach((item) => {
             const option = document.createElement('option');
             option.value = item.spjangcd;
             option.textContent = item.spjangnm;
 
-            if (savedSpjangcd) {
-                option.selected = (item.spjangcd === savedSpjangcd);
-            } else if (defaultSpjangcd) {
-                option.selected = (item.spjangcd === defaultSpjangcd);
-            } else if (index === 0) {
+            // 위에서 확정된 currentSpjangcd와 일치하면 선택 상태로 만듦
+            if (item.spjangcd === currentSpjangcd) {
                 option.selected = true;
-                sessionStorage.setItem('spjangcd', item.spjangcd); // 첫 항목 저장
             }
-
             select.appendChild(option);
         });
 
+        // 4. 변경 시 저장 및 새로고침
         select.addEventListener('change', function () {
             sessionStorage.setItem('spjangcd', this.value);
             window.location.reload();

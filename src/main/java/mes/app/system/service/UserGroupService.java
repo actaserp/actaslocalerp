@@ -32,6 +32,7 @@ public class UserGroupService {
             left join menu_item mi
 			on mi."MenuCode" = ug.gmenu
             where 1 = 1
+            and ug.spjangcd = :spjangcd
 			""";
 				
 			

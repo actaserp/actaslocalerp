@@ -2,7 +2,7 @@ package mes.app.transaction;
 
 
 import lombok.extern.slf4j.Slf4j;
-import mes.app.aop.DecryptField;
+import mes.app.aspect.DecryptField;
 import mes.app.transaction.service.TransactionInputService;
 import mes.app.util.UtilClass;
 import mes.domain.dto.BankTransitDto;

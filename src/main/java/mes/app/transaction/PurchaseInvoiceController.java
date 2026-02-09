@@ -1,10 +1,8 @@
 package mes.app.transaction;
 
-import mes.app.aop.DecryptField;
+import mes.app.aspect.DecryptField;
 import mes.app.transaction.service.PurchaseInvoiceService;
-import mes.domain.entity.Company;
 import mes.domain.entity.Material;
-import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
 import mes.domain.repository.CompanyRepository;
 import mes.domain.repository.MaterialRepository;
@@ -15,10 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/tran/purchase")

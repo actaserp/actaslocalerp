@@ -2,6 +2,7 @@ package mes.app.popup;
 
 
 import lombok.extern.slf4j.Slf4j;
+import mes.app.common.TenantContext;
 import mes.domain.model.AjaxResult;
 import mes.domain.services.DateUtil;
 import mes.domain.services.SqlRunner;
@@ -343,8 +344,10 @@ public class PopupController {
 			@RequestParam(value = "compName", required = false) String compName,
 			@RequestParam(value = "business_number", required = false) String business_number){
 
+		String spjangcd = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("compCode", compCode);
+		paramMap.addValue("spjangcd", spjangcd);
 		paramMap.addValue("compName", compName);
 		paramMap.addValue("business_number", business_number);
 		AjaxResult result = new AjaxResult();
@@ -366,6 +369,7 @@ public class PopupController {
             WHERE ("CompanyType" = 'sale'
             OR "CompanyType" = 'sale-purchase')
             AND ("relyn" = '0' OR "relyn" IS NULL)
+            and spjangcd = :spjangcd
 			""";
 
 		if (compCode != null && !compCode.isEmpty()) {

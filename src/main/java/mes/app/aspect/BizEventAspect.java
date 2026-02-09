@@ -1,6 +1,8 @@
-package mes.app.notification;
+package mes.app.aspect;
 
 import lombok.RequiredArgsConstructor;
+import mes.app.notification.BizEvent;
+import mes.app.notification.BizEventTrigger;
 import mes.domain.entity.User;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -113,12 +114,12 @@ public class UserController {
 			@RequestParam(value="is_active", required = false) Boolean is_active,
 			@RequestParam(value="personid", required = false) String personid,
 			@RequestParam(value="tel", required = false) String tel,
-			@RequestParam(value ="spjangcd") String spjangcd,
 			HttpServletRequest request,
 			Authentication auth
 			) {
 		
 		AjaxResult result = new AjaxResult();
+		String spjangcd = TenantContext.get();
 		
 		String sql = null;
 		User user = null;
