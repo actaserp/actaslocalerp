@@ -147,6 +147,9 @@
   "wm_project_status": {  "name": "프로젝트 현황", "templates": { "default": "transaction/project_status.html" } },
 
   "wm_user_group": { "name": "사용자그룹", "templates": { "default": "system/usergroup.html" }  },
+
+  "wm_amount_used": { "name": "실시간사용량", "templates": { "default": "system/amount_use.html" }  },
+
   "wm_user": { "name": "사용자", "templates": { "default": "system/user.html" } },
   "wm_user_group_menu": { "name": "메뉴권한", "templates": { "default": "system/usergroup_menu.html" } },
   "wm_storyboard_config": { "name": "스토리보드설정", "templates": { "default": "system/storyboard_config.html" } },

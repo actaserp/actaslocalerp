@@ -102,6 +102,17 @@
     }
 
 
+#adminUsageGrid .wj-header {
+    background-color: #8c8c8c !important; /* 이미지와 유사한 회색 헤더 */
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* 초과 사용 시 텍스트 강조 */
+.usage-excess {
+    color: #ff0000 !important;
+    font-weight: bold;
+}
 
 
         /* 반응형 설정: 창이 줄어들면 1열로 */
@@ -202,8 +213,26 @@
                                 <div id="requestGrid" class="grid-host"></div>
                             </div>
                         </div>
+                    </div>
 
-                    </div> </div>
+                    <div class="row" style="margin-top: 20px;">
+                        <div class="card admin-only-section" style="height: auto; min-height: 400px;">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa;">
+                                <strong>[관리자 전용] 실시간 사용량 및 정산 현황</strong>
+                                <div class="header-tools">
+                                    <button class="btn-excel" style="padding: 5px 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                        엑셀 다운로드
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body grid-padding">
+                                <div id="adminUsageGrid" class="grid-host" style="min-height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
             </div>
         </div>
     </div>
@@ -219,6 +248,7 @@
                 this.ratePlanGrid = null;
                 this.monthlySignupGrid = null;
                 this.requestGrid = null;
+                this.adminUsageGrid = null;
 
                 this.charts = {};
 
@@ -279,9 +309,32 @@
                         { header: '확인여부', binding: 'confirmation', width: 120, align: 'left' }
                     ]
                 });
+
+                        this.adminUsageGrid = new wijmo.grid.FlexGrid('#adminUsageGrid', {
+                        autoGenerateColumns: false,
+                        headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                        isReadOnly: true,
+                        allowSorting: true,
+                        columns: [
+                            { header: '회원ID', binding: 'user_id', width: 100, align: 'center' },
+                            { header: '회사명', binding: 'company', width: 150, align: 'left' },
+                            { header: '이용서비스플랜', binding: 'plan', width: '*', align: 'left' },
+                            { header: '스토리지사용량', binding: 'storage', width: 150, align: 'center' },
+                            { header: 'api 호출양', binding: 'api_call', width: 150, align: 'center' },
+                            { header: '부가서비스 사용량', binding: 'extra_service', width: 250, align: 'left' },
+                            { header: '이용료', binding: 'fee', width: 120, align: 'right', format: 'n0' }
+                        ],
+                        formatItem: (s, e) => {
+                            if (e.panel === s.cells) {
+                                let item = s.rows[e.row].dataItem;
+                                // 트래픽 초과 등의 조건부 서식 (예: 6GB/5GB인 경우)
+                                if (item.is_traffic_excess) {
+                                    e.cell.classList.add('usage-excess');
+                                }
+                            }
+                        }
+                    });
             }
-
-
 
             initCharts() {
                 // 이전에 작성한 vCPU, RAM 게이지 차트 초기화 로직
@@ -416,12 +469,27 @@
                     ]
                 };
 
+                let adminUsageData = {
+                    data: [
+                        {
+                            user_id: 'asdda123', company: '(주)테크솔루션', plan: 'Standard',
+                            storage: '1GB/5GB', api_call: '15000건/10000건', is_traffic_excess: true,
+                            extra_service: 'MMS:200 / SMS:100', fee: 155100
+                        },
+                        {
+                            user_id: 'cxds8233', company: 'ABCD', plan: 'Premium',
+                            storage: '50GB/90GB', api_call: '1GB/5GB', is_traffic_excess: false,
+                            extra_service: 'MMS:500 / SMS:10', fee: 100100
+                        }
+                    ]
+                };
+
 
                 this.apiCallGrid.itemsSource = apiData.data;
                 this.ratePlanGrid.itemsSource = rateApiData.data;
                 this.monthlySignupGrid.itemsSource = monthlySignApiData.data;
                 this.requestGrid.itemsSource = requestData.data;
-
+                this.adminUsageGrid.itemsSource = adminUsageData.data;
 
                 // 네트워크 목데이터 세팅
                     const networkData = {
