@@ -32,7 +32,7 @@ public class WebMvcConfig implements WebMvcConfigurer{
                         "/api/transaction/input/**", "/api/das_device", "/authentication/**",
 
                         // 4. PDA 관련
-                        "/pda/**"
+                        "/pda/**", "/api/common/**"
                 );
     }
 
