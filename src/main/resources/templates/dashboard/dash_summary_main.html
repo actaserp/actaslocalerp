@@ -178,7 +178,7 @@
                                                     -<span class="small-unit" style=" font-size: 0.5em; opacity: 0.5;"> 건</span>
                                                 </div>
                                             </section>
-                                            <section style="background-color: #C7DFF4; color: #031B4B; flex: 0.5; margin-right: 5px; cursor: pointer; padding: 10px 10px;" class="fetchCard" data-search-type="11">
+                                            <section style="background-color: #C7DFF4; color: #031B4B; flex: 0.5; margin-right: 5px; cursor: pointer; padding: 10px 10px;" class="fetchCard" data-search-type="13">
                                                 <div class="title">
                                                     <h3>유연근무</h3>
                                                 </div>
@@ -448,20 +448,6 @@
                             </div>
                         </form>
                         <!--//section-top end -->
-
-                        <div class="button-wrap">
-                            <ul>
-                                <li>
-                                    <a class="btn btn-check" title="확인" id="btnChk">
-                                        <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘">
-                                        확인
-                                    </a>
-                                    <!-- <button type="button" class="btn btn-delete" id="btnDel" title="삭제">
-                                         <img th:src="@{/images/icon/ico-delete.svg}" alt="삭제 아이콘">
-                                         삭제</button>-->
-                                </li>
-                            </ul>
-                        </div>
                     </div>
                     <div class="container-fluid">
                         <div id="theGrid_notice"></div>
@@ -568,7 +554,7 @@
                 <form id="editorForm">
                     <table class="write-table">
                           <input type="hidden" id="id" name="id" value="{%=o.id%}">
-                        <caption>주문등록 테이블</caption>
+                        <caption>공지사항 테이블</caption>
                         <tbody>
                             <tr>
                                 <th style="text-align: center">
@@ -607,7 +593,7 @@
             </div>
 
             <div class="popup-button">
-              <button type="button" class="btn-popup y_write_auth" id="btn_modal_save" ><span data-labelCd="저장">저장</span></button>
+              <button type="button" class="btn-popup y_write_auth" id="btn_modal_save" ><span data-labelCd="저장">확인</span></button>
               <button type="button" class="btn-popup" id="modal-close-button"><span data-labelCd="닫기">닫기</span></button>
             </div>
 
@@ -663,7 +649,7 @@
             <section class="section">
                 <div class="popup_button_group bottom">
                     <div class="left_align">
-                        <button type="button" class="btn-popup y_write_auth" id="btn_modal_save"><span>저장</span></button>
+                        <button type="button" class="btn-popup y_write_auth" id="btn_modal_save"><span>확인</span></button>
                         <button type="button" class="btn-popup" id="modal-close-button"><span>닫기</span></button>
                     </div>
                 </div>
@@ -704,6 +690,12 @@
         let viewdata4;
         let theGrid5;
         let viewdata5;
+
+        // 공지사항 localStorage key (popup 표출확인 용도)
+        const LAST_READ_NOTICE_KEY = 'lastReadNoticeId';
+        var oEditors = [];
+        // 페이지 최초진입 확인 키
+        let isFirstNoticeLoad = true;
 
         // 주문현황 년도 자동화
         const currentMonth = new Date().getMonth() + 1;
@@ -1928,10 +1920,11 @@
                     if (response && Array.isArray(response.data)) {
                         data2 = response.data;
                         console.log("data2",data2)
-                        // 날짜 형식 변환 및 ordflag 변환
-                        data2.forEach(item => {
-
-                        });
+                        // 최초 동작(페이지진입)시 미확인 공지사항 popup 출력
+                        if (isFirstNoticeLoad) {
+                            const popupTargets = getPopupTargetNotice(data2);
+                            checkUnreadNoticeOnce(popupTargets);
+                        }
                     }
                 },
                 error: function () {
@@ -1958,7 +1951,7 @@
                         {binding: 'title', header: '제목', width: 190, align: 'center'},
                         {binding: 'write_date_time', header: '작성일', width: 175, align: 'center'},
                         {binding: 'content', header: '내용', width: "*", align: 'center'},
-                        {binding: '', header: '확인', width: 150, align: 'center'}
+                        {binding: '', header: '첨부파일', width: 150, align: 'center'}
                     ],
                     itemsSource: viewdata5 // 빈 객체가 추가된 배열 사용
                 });
@@ -1968,6 +1961,15 @@
                         e.cell.style.textAlign = 'center';
                     }
                 });
+                theGrid5.hostElement.addEventListener('dblclick', function (e) {
+                    const ht = theGrid5.hitTest(e);
+                    if (ht.cellType !== wijmo.grid.CellType.Cell) return;
+
+                    const rowData = theGrid5.rows[ht.row].dataItem;
+                    if (!rowData || !rowData.id) return;
+
+                    showNoticeEdit(rowData);
+                });
                 theGrid5.rowHeaders.columns.splice(0, 1);
                 // 선택이 변경될 때, 현재 항목 업데이트
                 new FlexGridContextMenu(theGrid5);
@@ -1976,6 +1978,116 @@
                 // 이미 FlexGrid이 존재하는 경우, 데이터만 업데이트
                 theGrid5.itemsSource = viewdata5; // 빈 객체가 추가된 배열 사용
             }
+        }
+
+        //모달
+        function showNoticeEdit(data) {
+            let _this = this;
+            let content = tmpl('noticeTmpl', data);
+            let $content = $(content);
+            let modalContainer;
+            modalContainer = new PopupDraggable('공지 사항 확인');
+            modalContainer.open({width: 1010, height: 670, $content});
+            $content.find('#srchDt').ax5DatePicker({direction: 'top'});
+            edit();
+        }
+        function edit() {
+            nhn.husky.EZCreator.createInIFrame({
+                oAppRef: oEditors,
+                elPlaceHolder: 'content', //textarea id
+                sSkinURI: '/resource/se2/SmartEditor2Skin.html',
+                htParams: {
+                    bUseToolbar: true,				// 툴바 사용 여부 (true:사용/ false:사용하지 않음)
+                    bUseVerticalResizer: true,		// 입력창 크기 조절바 사용 여부 (true:사용/ false:사용하지 않음)
+                    bUseModeChanger: true,			// 모드 탭(Editor | HTML | TEXT) 사용 여부 (true:사용/ false:사용하지 않음)
+                    //bSkipXssFilter : true,		// client-side xss filter 무시 여부 (true:사용하지 않음 / 그외:사용)
+                    //aAdditionalFontList : aAdditionalFontSet,		// 추가 글꼴 목록
+                    fOnBeforeUnload: function () {
+                        Alert.alert('',"완료!");
+                    }
+                }, //boolean
+                fOnAppLoad: function () {
+
+                    //예제 코드
+                    //oEditors.getById["content"].exec("PASTE_HTML", ["/*dfdfd*/"]);
+
+                    //초기 readonly 시키는 부분
+                    //var editor = oEditors.getById["content"];
+                    //editor.exec("DISABLE_WYSIWYG");
+                    //editor.exec("DISABLE_ALL_UI");
+                    //page.searchMain();
+                },
+                fCreator: 'createSEditor2'
+            });
+        };
+
+        // 공지사항 localStorage 확인id 값 반환(popup표출 - localStorage에 있는 id 값보다 큰값(신규공지사항))
+        function getLastReadNoticeId() {
+            return Number(localStorage.getItem(LAST_READ_NOTICE_KEY) || 0);
+        }
+
+        // 공지사항 확인 메서드
+        function setLastReadNoticeId(id) {
+            const current = getLastReadNoticeId();
+            const newId = Number(id);
+
+            if (newId > current) {
+                localStorage.setItem(LAST_READ_NOTICE_KEY, newId);
+            }
+        }
+
+        // 최초진입시 미확인 공지 팝업표출
+        function checkUnreadNoticeOnce(noticeList) {
+            if (!isFirstNoticeLoad) return;
+            isFirstNoticeLoad = false;
+
+            const lastReadId = getLastReadNoticeId();
+
+            // id 기준으로 미확인 공지 필터링
+            const unreadList = noticeList
+                .filter(n => n.id && Number(n.id) > lastReadId)
+                .sort((a, b) => b.id - a.id); // 최신 공지 우선
+
+            if (unreadList.length > 0) {
+                showNoticeEdit(unreadList[0]); // 가장 최신 1건만
+            }
+        }
+
+        // 공지사항 확인버튼 클릭 이벤트
+        $(document).on('click', '#btn_modal_save', function () {
+            const noticeId = $('#editorForm #id').val();
+
+            if (noticeId) {
+                setLastReadNoticeId(noticeId);
+            }
+
+            $('#modal-close-button').click();
+        });
+
+        // 공지사항 공지종료일 >= 오늘 여부 판단 메서드(공지종료일이 끝나지 않은경우 return)
+        function isAfterOrToday(dateStr) {
+            if (!dateStr) return false;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const target = new Date(dateStr);
+            target.setHours(0, 0, 0, 0);
+
+            return target >= today;
+        }
+
+        // 팝업 대상 공지 필터링 로직(공지여부 값 : 'Y'인 데이터만)
+        function getPopupTargetNotice(noticeList) {
+            const lastReadId = getLastReadNoticeId(); // 이전에 만든 localStorage 기준
+
+            return noticeList
+                .filter(n =>
+                    n.notice_yn === 'Y' &&
+                    isAfterOrToday(n.notice_end_date) &&
+                    Number(n.id) > lastReadId
+                )
+                .sort((a, b) => b.id - a.id); // 최신 공지 우선
         }
     </script>
 </th:block>

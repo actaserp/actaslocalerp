@@ -672,6 +672,8 @@ public class DashSummaryService {
                     select id, "Title" as title
 	                , to_char("WriteDateTime", 'yyyy-mm-dd hh24:mi:ss') as write_date_time
 	                , "Content" as content
+	                , "NoticeEndDate" AS notice_end_date
+                    , "NoticeYN" AS notice_yn
 	                from board
 	                where "BoardGroup" = :board_group
                     and "NoticeYN" = 'Y'
@@ -680,6 +682,8 @@ public class DashSummaryService {
                     select B.id, B."Title" as title
                     , to_char(B."WriteDateTime", 'yyyy-mm-dd hh24:mi:ss') as write_date_time
                     , "Content" as content
+                    , "NoticeEndDate" AS notice_end_date
+                    , "NoticeYN" AS notice_yn
                     from board B 
                     left join A on A.id = B.id
                     where B."BoardGroup" = :board_group
@@ -697,10 +701,22 @@ public class DashSummaryService {
 
         sql += """
         		)
-            select 1 as data_group, id, title, write_date_time, content
+            select 1 as data_group
+            , id
+            , title
+            , write_date_time
+            , content
+            , notice_end_date
+            , notice_yn
             from A 
             union all 
-            select 2 as data_group, id, title, write_date_time, content
+            select 2 as data_group
+            , id
+            , title
+            , write_date_time
+            , content
+            , notice_end_date
+            , notice_yn
             from B 
             order by data_group, write_date_time desc
         		""";

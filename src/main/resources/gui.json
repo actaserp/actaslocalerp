@@ -157,6 +157,7 @@
   "wm_system_log": { "name": "시스템로그",  "templates": { "default": "system/system_log.html" }  },
   "wm_login_log": { "name": "로그인로그", "templates": { "default": "system/login_log.html" } },
   "wm_menu_log": { "name": "메뉴로그", "templates": { "default": "system/menu_log.html" } },
+  "wm_manage_customer_current": { "name": "고객사계약현황", "templates": { "default": "system/manage_customer_current.html" } },
 
   "wm_clock_daymonthly": { "name": "일/월별 근태현황", "templates": { "default": "clock/daymonthly.html" } },
   "wm_clock_member": { "name": "사원별휴가확인", "templates": { "default": "clock/member.html" } },
