@@ -218,10 +218,11 @@ public class MobileMainController {
             }
             // 이미 workcd 있으면 변경하지 않음
         }
+        String today = workym + workday;
         // --- 유연근무 신청 여부 확인 ---
         TB_PB204 flexibleWork = tbPb204Repository.findFlexibleWorkByPersonAndDate(
                 Integer.valueOf(perId),
-                workday,
+                today,
                 "13"
         );
         boolean isFlexibleWork = (flexibleWork != null);
