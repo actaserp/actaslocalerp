@@ -733,6 +733,9 @@
             $FrontFolderElement.find('.dep3').off('click').on('click', 'a', function (e) {
                 e.preventDefault();
 
+                $FrontFolderElement.find('.dep3 li').removeClass('on');
+                $(this).closest('li').addClass('on');
+
                 let objid = $(this).data('objid');
                 let title = $(this).text();
                 let bookmark = $(this).data('bookmark');
@@ -799,7 +802,7 @@
             $('#bookmark-menu').html(litagbook);
 
             // 클릭 이벤트 바인딩
-            $('#bookmark-menu').on('click', 'a', function (e) {
+            $(document).on('click', '#bookmark-menu a, .header-menu .menu-btn', function (e) {
                 e.preventDefault();
                 $('#bookmark-menu li').removeClass('on');
                 $(this).parent('li').addClass('on');

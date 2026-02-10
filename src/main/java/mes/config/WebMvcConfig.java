@@ -32,7 +32,14 @@ public class WebMvcConfig implements WebMvcConfigurer{
                         "/api/transaction/input/**", "/api/das_device", "/authentication/**",
 
                         // 4. PDA 관련
-                        "/pda/**", "/api/common/**"
+                        "/pda/**", 
+                        
+                        // 5. spjangcd 안씀
+                        "/api/common/**", 
+                        
+                        // 6. 모바일(어차피 다 id 값으로 필터함)
+                        "/api/mobile_main/**", "/api/attendance_submit/**", "/api/commute_current/**",
+                        "/api/attendance_current/**"
                 );
     }
 
