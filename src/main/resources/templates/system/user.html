@@ -194,7 +194,8 @@
                                             <label for="personid">사번</label>
                                         </th>
                                         <td colspan="3">
-                                            <input type="text" id="personid" name="personid" style="width: 35%;" readonly>
+                                            <input type="text" id="person_code" name="person_code" style="width: 35%;" readonly>
+                                            <input type="hidden" id="personid" name="personid" style="width: 35%;" readonly>
                                             <input type="text" id="personname" name="personname" style="width: 35%;" readonly>
                                             <a class="btn btn-navy" title="자료가져오기" id="getPersonId">사번찾기</a>
                                         </td>
@@ -462,7 +463,7 @@
         let columns = [
             {binding: 'id', header: 'id', width: 100, align: 'center', visible: false},
             {binding: 'login_id', header: 'ID', width: 120, align: 'center'},
-            {binding: 'personid', header: '사번', width: 100, align: 'center'},
+            {binding: 'personcode', header: '사번', width: 100, align: 'center'},
             {binding: 'first_name', header: '이름', width: 140, align: 'center'},
             {binding: 'tel', header: '전화번호', width: 180, align: 'center'},
             {binding: 'email', header: '이메일', width: 200, align: 'center'},
@@ -551,6 +552,7 @@
                 document.getElementById('email').value = selectedItem.email;
                 document.getElementById('tel').value = selectedItem.tel;
                 document.getElementById('Depart_id').value = selectedItem.dept_name;
+                document.getElementById('person_code').value = selectedItem.personcode;
                 document.getElementById('personid').value = selectedItem.personid;
                 document.getElementById('personname').value = selectedItem.first_name;
                 document.getElementById('is_active').checked = selectedItem.is_active === true; // 체크박스 상태 설정
@@ -1038,7 +1040,7 @@
                 autoGenerateColumns: false,
                 showMarquee: true,
                 columns: [
-                    { binding: 'id', header: '사번', width: 100, align: 'center' },
+                    { binding: 'code', header: '사번', width: 100, align: 'center' },
                     { binding: 'name', header: '이름', width: 150, align: 'center' },
                     { binding: 'dept_name', header: '부서', width: 150, align: 'center' },
                     { binding: 'dept_id', header: '부서id', width: 150, align: 'center', visible:false},
@@ -1086,6 +1088,8 @@
                     return false;
                 }
                 const selectedItem = items[0];
+                console.log('person info : ', selectedItem);
+                $('#person_code').val(selectedItem.code);
                 $('#personid').val(selectedItem.id);
                 $('#Depart_id').val(selectedItem.dept_id);
                 $('#personname').val(selectedItem.name);

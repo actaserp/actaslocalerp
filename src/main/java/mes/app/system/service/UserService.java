@@ -35,7 +35,6 @@ public class UserService {
               , up."UserGroup_id"
               , au.email
               , au.tel
-              , au.personid
               , ug."Name" as group_name
               , up."Factory_id"
               , f."Name" as factory_name
@@ -45,11 +44,14 @@ public class UserService {
               , au.is_active
               , to_char(au.date_joined ,'yyyy-mm-dd hh24:mi') as date_joined
               , au.spjangcd as spjangcd
+              , au.personid as personid
+              , p."Code" as personcode
             from auth_user au
             left join user_profile up on up."User_id" = au.id and up.spjangcd = au.spjangcd
             left join user_group ug on ug.id = up."UserGroup_id" and ug.spjangcd = up.spjangcd
             left join factory f on f.id = up."Factory_id" and f.spjangcd = up.spjangcd
             left join depart d on d.id = up."Depart_id" and d.spjangcd = up.spjangcd
+            left join person p on p.id = au.personid
             where is_superuser = false
             AND au.spjangcd = :spjangcd
 		    """;
@@ -170,6 +172,7 @@ public class UserService {
 		String sql = """
                  select
                  p.id as id
+                 , p."Code" as code
                  , p."Name" as name
                  , d."Name" as dept_name
                  , d.id as dept_id
