@@ -290,12 +290,17 @@ public class MobileMainController {
         entity.setInflag(inFlag);
         if (entity.getHoliyn().equals("0")) {
             if (isFlexibleWork) {
-                // ✅ 유연근무 신청자 처리
-                entity.setWorktime(totalTime);
-                entity.setNomaltime(totalTime);
+                // 🔥 유연근무자 전용 계산 (출퇴근 기준)
+                BigDecimal flexibleTime = calculateFlexibleWorkTime(
+                        startTime, endTime, restStart, restEnd
+                );
+
+                entity.setWorktime(flexibleTime);
+                entity.setNomaltime(flexibleTime);
                 entity.setOvertime(BigDecimal.ZERO);
                 entity.setNighttime(BigDecimal.ZERO);
-                log.info("유연근무자 근무시간 계산: {}", totalTime);
+
+                log.info("유연근무자 근무시간 계산(출퇴근 기준): {}", flexibleTime);
             } else {
                 // 일반 근무자 로직
                 entity.setWorktime(totalTime);
@@ -317,6 +322,48 @@ public class MobileMainController {
 
         }
         return result;
+    }
+    // 유연근무자 근무시간 계산
+    private BigDecimal calculateFlexibleWorkTime(
+            LocalTime start,
+            LocalTime end,
+            LocalTime restStart,
+            LocalTime restEnd) {
+
+        long totalMinutes;
+
+        // 자정 넘어가는 경우
+        if (end.isBefore(start)) {
+            totalMinutes =
+                    Duration.between(start, LocalTime.MAX).toMinutes()
+                            + Duration.between(LocalTime.MIN, end).toMinutes()
+                            + 1;
+        } else {
+            totalMinutes = Duration.between(start, end).toMinutes();
+        }
+
+        long restMinutes = calculateRestOverlapMinutes(start, end, restStart, restEnd);
+
+        long workMinutes = Math.max(totalMinutes - restMinutes, 0);
+
+        return BigDecimal.valueOf(workMinutes)
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.DOWN);
+    }
+
+    // 휴식시간 계산
+    private long calculateRestOverlapMinutes(
+            LocalTime start,
+            LocalTime end,
+            LocalTime restStart,
+            LocalTime restEnd) {
+
+        LocalTime overlapStart = start.isAfter(restStart) ? start : restStart;
+        LocalTime overlapEnd   = end.isBefore(restEnd) ? end : restEnd;
+
+        if (overlapEnd.isAfter(overlapStart)) {
+            return Duration.between(overlapStart, overlapEnd).toMinutes();
+        }
+        return 0;
     }
 
     // 좌표 -> 주소 변환 메서드
