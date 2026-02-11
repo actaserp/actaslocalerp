@@ -205,7 +205,7 @@
                     <dl style="flex: 2;">
                         <dt>
                             <label for="remark">
-                                특이사항<span class="eq"></span>
+                                지시사항<span class="eq"></span>
                             </label>
                         </dt>
                         <dd>
@@ -497,9 +497,9 @@
                             </tr>
 
                             <tr>
-                                <th><label for="remark">특이사항</label></th>
+                                <th><label for="remark">지시사항</label></th>
                                 <td colspan="5">
-                                    <textarea id="remark" name="remark" style="height:130px;"></textarea>
+                                    <textarea id="remark" name="remark" style="height:130px;" readonly></textarea>
                                 </td>
                             </tr>
                         </tbody>
@@ -677,6 +677,15 @@
 
                         result.data.mode = 'edit';       // 수정 모드 지정
                         this.showReportForm(result.data); // 팝업 열기
+
+                        // admin이면 지시사항 readonly 해제
+                        const userId = sessionStorage.getItem('userid');
+
+                        if (userId === 'admin') {
+                            setTimeout(() => {
+                                $('textarea[name="remark"]').prop('readonly', false);
+                            }, 0);
+                        }
                     });
                 });
 
