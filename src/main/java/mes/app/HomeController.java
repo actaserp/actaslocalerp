@@ -95,72 +95,25 @@ public class HomeController {
 		mv.addObject("system_title", logoTitle);
 		mv.addObject("default_menu_code", "wm_dashboard_summary");
 
+		boolean readFlag = true;
+		boolean writeFlag = true; // 유저의 실제 권한에 따라 true/false 처리
+
+		// ModelAndView에 객체 추가
+		mv.addObject("userinfo", user); // 이미 객체는 넘기고 계시네요.
+		mv.addObject("read_flag", readFlag);  // JS의 userinfo.read_flag와 매칭
+		mv.addObject("write_flag", writeFlag); // JS의 userinfo.write_flag와 매칭
+		mv.addObject("gui_code", "MAIN");
+
 		// 안읽은 알람
 		List<Notification> unreadList = notificationService.getUnread(userid, spjangcd);
 		mv.addObject("unreadAlarmCount", unreadList.size());
 		mv.addObject("unreadAlarmList", unreadList);
-		
-		String mqtt_host = settings.getProperty("mqtt_host");
-		String mqtt_web_port = settings.getProperty("mqtt_web_port");
-		String hmi_topic = settings.getProperty("hmi_topic");
-		mv.addObject("mqtt_host", mqtt_host);
-		mv.addObject("mqtt_web_port", mqtt_web_port);
-		mv.addObject("hmi_topic", hmi_topic);
 
 		mv.setViewName(isMobile ? "mobile/mobile_main" : "index");
 		
 		return mv;
 	}
-	@RequestMapping(value= "/mobile_pro/MobileFirstPage", method=RequestMethod.GET)
-	public ModelAndView pageMobileFirstPage(HttpServletRequest request, HttpSession session) {
 
-		// User-Agent 확인
-		String userAgent = request.getHeader("User-Agent").toLowerCase();
-		boolean isMobile = userAgent.contains("mobile") || userAgent.contains("android") || userAgent.contains("iphone");
-
-		SecurityContext sc = SecurityContextHolder.getContext();
-		Authentication auth = sc.getAuthentication();
-		User user = (User)auth.getPrincipal();
-		String username = user.getUserProfile().getName();
-		String userid = user.getUsername();
-		Integer groupid = user.getUserProfile().getUserGroup().getId();
-		String groupname = user.getUserProfile().getUserGroup().getName();
-		String spjangcd = user.getSpjangcd();
-
-		SystemOption sysOpt= this.systemOptionRepository.getByCode("LOGO_TITLE");
-		String logoTitle = sysOpt.getValue();
-
-		//q = this.systemOptionRepository.getByCode("main_menu");
-
-		List<Map<String, Object>> spjangList = null;
-		if (groupid == 1){ //관리자
-			spjangList = userService.getSpjangList();
-		} else {
-			spjangList = userService.getSpjang(spjangcd);
-		}
-
-		ModelAndView mv = new ModelAndView();
-		session.setAttribute("spjangList", spjangList);
-		mv.addObject("username", username);
-		mv.addObject("userid", userid);
-		mv.addObject("groupname", groupname);
-		session.setAttribute("spjangcd", spjangcd);
-		mv.addObject("userinfo", user);
-		mv.addObject("system_title", logoTitle);
-		mv.addObject("default_menu_code", "wm_dashboard_summary");
-
-
-		String mqtt_host = settings.getProperty("mqtt_host");
-		String mqtt_web_port = settings.getProperty("mqtt_web_port");
-		String hmi_topic = settings.getProperty("hmi_topic");
-		mv.addObject("mqtt_host", mqtt_host);
-		mv.addObject("mqtt_web_port", mqtt_web_port);
-		mv.addObject("hmi_topic", hmi_topic);
-
-		mv.setViewName("mobile_pro/MobileFirstPage");
-
-		return mv;
-	}
 	@RequestMapping(value= "/intro", method=RequestMethod.GET)
     public ModelAndView pageIntro(HttpServletRequest request, HttpSession session) {
 		ModelAndView mv = new ModelAndView();

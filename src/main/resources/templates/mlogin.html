@@ -730,41 +730,6 @@
   }
 
 
-
-
-  var userinfo = {
-    username: '',
-    login_id: '',
-    group_code: '',
-    read_flag: '{',
-    write_flag: '',
-    ip_address: '',
-    crtfcKey: ''
-  };
-
-  var gui = {
-    gui_code: '',
-    template_key: '',
-    action: '',
-  };
-
-  userinfo.can_read = function () {
-    let result = false;
-    if (userinfo.read_flag == 'True') {
-      result = true;
-    }
-    return result;
-  };
-
-  userinfo.can_write = function () {
-    let result = false;
-    if (userinfo.write_flag == 'True') {
-      result = true;
-    }
-    return result;
-  };
-
-
 </script>
 
 <script type="text/javascript">
@@ -1261,85 +1226,56 @@
           let redtext = document.getElementById('hint-red');
           redtext.style.display = 'block';
           Alert.alert('', '아이디 또는 비밀번호가 일치하지 않습니다.', clearFields);
-        }
-        else if (code == 'NOPW') {
-          Alert.alert('', '비밀번호가 일치하지 않습니다', function () { $('#loginPwd').val(''); $('#loginPwd').focus(); });
-        }
-        else if (code == 'ETC') {
+        } else if (code == 'NOPW') {
+          Alert.alert('', '비밀번호가 일치하지 않습니다', function () {
+            $('#loginPwd').val('');
+            $('#loginPwd').focus();
+          });
+        } else if (code == 'ETC') {
           Alert.alert('', '로그인에 실패했습니다.&lt;br&gt;다시 시도하십시요', clearFields);
         } else if (code == 'NOAUTH') {
           Alert.alert('', '시스템 접근 권한이 없습니다. 시스템관리자에게 확인하시기 바랍니다', clearFields);
         } else if (code == 'FIRST') {
-          Alert.alert('', '비밀번호를 변경하십시요.', function () { location.href = withCtx('/pwdchange'); });
+          Alert.alert('', '비밀번호를 변경하십시요.', function () {
+            location.href = withCtx('/pwdchange');
+          });
         } else if (code == 'NOTCONFIRM') {
           Alert.alert('', '승인되지 않은 사용자입니다.', clearFields);
         } else if (code == 'noactive') {
           Alert.alert('', '사용 불가능한 사용자입니다.', clearFields);
-        }
-        else {
-          if (code === 'OK') {
-            console.log("OK 진입")
-            if (clickedButtonId === 'productionManage') {
-              let lang_cd = sessionStorage.getItem('lang_code');
-              let url = '/api/common/labels';
-              let pData = { lang_code: lang_cd };
-              let fnsuccess = function (result) {
-                console.log("login /labels result success")
-                dic = {};
-                $.each(result, function (idx, item) {
-                  let storageKey = lang_cd + '_' + item.gui_code + '_' + item.template_key;
-                  let data = [];
-                  if (dic.hasOwnProperty(storageKey)) {
-                    data = dic[storageKey];
-                  } else {
-                    dic[storageKey] = data;
-                  }
-                  data.push({ 'label_code': item.label_code, 'text': item.text, 'desc': item.descr });
-                });
-
-                $.each(dic, function (k, v) {
-                  let sessionData = JSON.stringify(v);
-                  sessionStorage.setItem(k, sessionData);
-                });
-                location.href = withCtx("/mobile_pro/MobileFirstPage");
-              };
-
-              let fnfailure = function () {
-                location.href = withCtx("/login");
-              };
-              AjaxUtil.getAsyncData(url, pData, fnsuccess, fnfailure);
-              //location.href = "/";
-            } else {
-              let lang_cd = sessionStorage.getItem('lang_code');
-              let url = '/api/common/labels';
-              let pData = { lang_code: lang_cd };
-              let fnsuccess = function (result) {
-                console.log("login /labels result success")
-                dic = {};
-                $.each(result, function (idx, item) {
-                  let storageKey = lang_cd + '_' + item.gui_code + '_' + item.template_key;
-                  let data = [];
-                  if (dic.hasOwnProperty(storageKey)) {
-                    data = dic[storageKey];
-                  } else {
-                    dic[storageKey] = data;
-                  }
-                  data.push({ 'label_code': item.label_code, 'text': item.text, 'desc': item.descr });
-                });
-
-                $.each(dic, function (k, v) {
-                  let sessionData = JSON.stringify(v);
-                  sessionStorage.setItem(k, sessionData);
-                });
-                location.href = withCtx("/");
-              };
-
-              let fnfailure = function () {
-                location.href = withCtx("/login");
-              };
-              AjaxUtil.getAsyncData(url, pData, fnsuccess, fnfailure);
-              //location.href = "/";
-            }
+        } else if (code == 'null') {
+          Alert.alert('', '이용절차 확인중인 사용자입니다.', clearFields);
+        } else {
+          if (code == 'OK') {
+            location.href = withCtx("/");
+            // let lang_cd = sessionStorage.getItem('lang_code');
+            // let url = '/api/common/labels';
+            // let pData = {lang_code: lang_cd};
+            // let fnsuccess = function (result) {
+            //     dic = {};
+            //     $.each(result, function (idx, item) {
+            //         let storageKey = lang_cd + '_' + item.gui_code + '_' + item.template_key;
+            //         let data = [];
+            //         if (dic.hasOwnProperty(storageKey)) {
+            //             data = dic[storageKey];
+            //         } else {
+            //             dic[storageKey] = data;
+            //         }
+            //         data.push({'label_code': item.label_code, 'text': item.text, 'desc': item.descr});
+            //     });
+            //
+            //     $.each(dic, function (k, v) {
+            //         let sessionData = JSON.stringify(v);
+            //         sessionStorage.setItem(k, sessionData);
+            //     });
+            //     location.href = withCtx("/");
+            // };
+            //
+            // let fnfailure = function () {
+            //     location.href = withCtx("/login");
+            // };
+            // AjaxUtil.getAsyncData(url, pData, fnsuccess, fnfailure);
+            //location.href = "/";
           } else {
             location.href = withCtx('/');
           }

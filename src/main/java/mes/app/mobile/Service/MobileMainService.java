@@ -1,5 +1,6 @@
 package mes.app.mobile.Service;
 
+import mes.app.common.TenantContext;
 import mes.domain.entity.commute.TB_PB201;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,8 +71,11 @@ public class MobileMainService {
     // 사용자 출근시간 조회
     public Map<String, Object> getInOfficeTime(String username) {
 
+        String tenantId = TenantContext.get();
+
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("username", username);
+        dicParam.addValue("spjangcd", tenantId);
 
         String sql = """
                 SELECT starttime,
@@ -80,6 +84,7 @@ public class MobileMainService {
                 LEFT JOIN tb_pb201 t
                 ON t.personid = a.personid
                 WHERE a.username = :username
+                and t.spjangcd = :spjangcd
                 AND LPAD(EXTRACT(DAY FROM CURRENT_DATE)::TEXT, 2, '0') = workday
                 AND TO_CHAR(CURRENT_DATE, 'YYYYMM') = workym;
         		""";

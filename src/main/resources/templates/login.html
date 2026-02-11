@@ -697,39 +697,6 @@
     }
 
 
-    var userinfo = {
-        username: '',
-        login_id: '',
-        group_code: '',
-        read_flag: '{',
-        write_flag: '',
-        ip_address: '',
-        crtfcKey: ''
-    };
-
-    var gui = {
-        gui_code: '',
-        template_key: '',
-        action: '',
-    };
-
-    userinfo.can_read = function () {
-        let result = false;
-        if (userinfo.read_flag == 'True') {
-            result = true;
-        }
-        return result;
-    };
-
-    userinfo.can_write = function () {
-        let result = false;
-        if (userinfo.write_flag == 'True') {
-            result = true;
-        }
-        return result;
-    };
-
-
 </script>
 
 <script type="text/javascript">
@@ -1192,6 +1159,7 @@
             var submitData = $(form).serialize() + '&isChangeLang=' + isChangeLang;
             $.post(withCtx('/login'), submitData, function (result) {
                 let code = result.data.code;
+                console.log('result.data', result.data);
                 if (code == 'NOUSER') {
 
                     Alert.alert('', '아이디 또는 비밀번호가 일치하지 않습니다.');
@@ -1253,7 +1221,7 @@
                         // AjaxUtil.getAsyncData(url, pData, fnsuccess, fnfailure);
                         //location.href = "/";
                     } else {
-                        location.href = withCtx('/');
+                        location.href = withCtx("/");
                     }
                 }
             }).fail(function (e) {

@@ -65,6 +65,8 @@ public class SecurityConfiguration {
                         .antMatchers(
                                 // 기본 페이지 및 인증
                                 "/login", "/logout", "/postLogin", "/intro", "/error", "/alive",
+                                // 모바일 관련 경로 추가
+                                "/mlogin","/api/mobile_main/**",
                                 // 정적 리소스
                                 "/resource/**", "/img/**", "/images/**", "/js/**", "/css/**",
                                 "/assets_mobile/**", "/font/**", "/robots.txt", "/favicon.ico",

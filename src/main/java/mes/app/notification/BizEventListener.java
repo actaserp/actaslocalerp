@@ -20,8 +20,6 @@ public class BizEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(BizEvent event) {
 
-        System.out.println("🔥 BizEventListener ENTER");
-
         // 1️⃣ 알림 템플릿 생성
         Notification base = resolver.resolve(event);
 
@@ -40,6 +38,5 @@ public class BizEventListener {
             notificationService.save(base, receiverUserId);
         }
 
-        System.out.println("🔥 Notification fan-out COMPLETE");
     }
 }

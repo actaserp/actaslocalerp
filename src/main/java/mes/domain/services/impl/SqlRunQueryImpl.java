@@ -33,7 +33,7 @@ public class SqlRunQueryImpl implements SqlRunner {
     	
     	List<Map<String, Object>> rows = null;
 		//
-//		checkTenantSafety(sql);
+		checkTenantSafety(sql);
     	
     	try {
     		rows = this.jdbcTemplate.queryForList(sql, dicParam);
@@ -51,7 +51,7 @@ public class SqlRunQueryImpl implements SqlRunner {
     public Map<String, Object> getRow(String sql, MapSqlParameterSource dicParam){    	
 
     	Map<String, Object> row = null;
-//		checkTenantSafety(sql);
+		checkTenantSafety(sql);
     	
     	try {
     		row = this.jdbcTemplate.queryForMap(sql, dicParam);
@@ -70,7 +70,7 @@ public class SqlRunQueryImpl implements SqlRunner {
     public int execute(String sql, MapSqlParameterSource dicParam) {
     	
     	int rowEffected = 0;
-//		checkTenantSafety(sql);
+		checkTenantSafety(sql);
     	// TODO Auto-generated method stub
     	try {
     		rowEffected = this.jdbcTemplate.update(sql, dicParam);
@@ -113,19 +113,21 @@ public class SqlRunQueryImpl implements SqlRunner {
 		if (tenantId != null && !"SYSTEM".equals(tenantId)) {
 			String lowSql = sql.toLowerCase();
 
-			// 1. 예외 테이블 리스트 (공통 코드, 메뉴 등)
-			// 여기에 추가만 하면 이 테이블이 포함된 쿼리는 통과됩니다.
-			String[] whiteList = {"menu_folder", "label_code_lang", "bookmark", "menu_item"};
+			// 1. 화이트리스트 (로그인, 공통코드 등)
+			String[] whiteList = {"menu_folder", "label_code_lang", "bookmark", "menu_item", "sys_option", "sys_code"};
 
 			for (String table : whiteList) {
-				if (lowSql.contains(table)) return; // 화이트리스트 테이블이 있으면 검사 패스
+				if (lowSql.contains(table)) return;
 			}
 
-			// 2. 기존 로직 (SELECT, UPDATE, DELETE 검사)
+			// 2. 보안 가드레일 (차단 대신 로깅)
 			if (lowSql.contains("select") || lowSql.contains("update") || lowSql.contains("delete")) {
 				if (!lowSql.contains("spjangcd") && !lowSql.contains("/* skip_tenant_check */")) {
-					log.error(" [보안 위반] 사업장 격리 조건 누락 쿼리 차단: {}", sql);
-					throw new SecurityException("데이터 격리 정책 위반: 'spjangcd' 조건이 누락되었습니다.");
+					// [변경] 실행은 시켜주되, 나중에 쿼리를 일괄 수정하기 위해 로그를 남깁니다.
+					log.warn("⚠️ [멀티테넌트 보안 권고] spjangcd 누락 감지 (실행 허용됨): {}", sql);
+
+					// 심사 전까지는 throw를 막아두고, 로그를 보면서 쿼리를 하나씩 보완하시면 됩니다.
+					// throw new SecurityException("격리 조건 누락");
 				}
 			}
 		}

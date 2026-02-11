@@ -41,7 +41,7 @@ public class BaljuOrderService {
          bh."JumunDate",
          bh."JumunNumber",
          mg."Name" AS "MaterialGroupName",
-         fn_code_name('Balju_type', bh."SujuType") AS "BaljuTypeName",
+         fn_code_name('Balju_type', b."SujuType") AS "BaljuTypeName",
          b.id AS balju_id,
          m."Code" AS product_code,
          m."Name" AS product_name,

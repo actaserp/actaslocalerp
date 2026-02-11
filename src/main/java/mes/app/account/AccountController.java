@@ -103,27 +103,6 @@ public class AccountController {
 		String userAgent = request.getHeader("User-Agent").toLowerCase();
 		boolean isMobile = userAgent.contains("mobile") || userAgent.contains("android") || userAgent.contains("iphone");
 
-		String serverName = request.getServerName();
-
-//		if (isMobile && serverName.equalsIgnoreCase("actascld.co.kr")) {
-//			String redirectUrl = "https://mes.actascld.co.kr";
-//			try {
-//				response.sendRedirect(redirectUrl);
-//				return null; // redirect 했으므로 이후 처리 중단
-//			} catch (IOException e) {
-//				e.printStackTrace(); // 로그로 출력하거나, 에러 뷰로 포워딩도 가능
-//				return new ModelAndView("error/redirect_error"); // 예외 시 fallback 처리
-//			}
-//		}
-
-		// 세션을 이용해 모바일에서 한 번만 리디렉션되도록 설정
-		Boolean isMobileRedirected = (Boolean) session.getAttribute("isMobileRedirected");
-
-		if (isMobile && (isMobileRedirected == null || !isMobileRedirected)) {
-			session.setAttribute("isMobileRedirected", true);  // ✅ 모바일에서 리디렉션 상태 저장
-			return new ModelAndView("redirect:/MobileFirstPage");
-		}
-
 		// 모바일이면 "mlogin" 뷰 반환, 웹이면 "login" 뷰 반환
 		ModelAndView mv = new ModelAndView(isMobile ? "mlogin" : "login");
 		
@@ -138,12 +117,6 @@ public class AccountController {
 		}
 		
 		return mv;
-	}
-
-	@GetMapping("/MobileFirstPage")
-	public ModelAndView mobileFirstPage(HttpSession session) {
-		session.removeAttribute("isMobileRedirected");  // ✅ 모바일 첫 페이지에서 세션 값 초기화
-		return new ModelAndView("/mobile/MobileFirstPage");
 	}
 	
 	@GetMapping("/logout")

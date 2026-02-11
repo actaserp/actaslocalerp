@@ -18,7 +18,7 @@ public class WebMvcConfig implements WebMvcConfigurer{
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(spjangSecurityInterceptor)
-                .addPathPatterns("/api/**") // 검증 대상
+                .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         // 1. 인증 관련 (Security permitAll과 일치)
                         "/login", "/logout", "/postLogin", "/intro", "/error", "/alive",
@@ -35,7 +35,7 @@ public class WebMvcConfig implements WebMvcConfigurer{
                         "/pda/**", 
                         
                         // 5. spjangcd 안씀
-                        "/api/common/**", 
+
                         
                         // 6. 모바일(어차피 다 id 값으로 필터함)
                         "/api/mobile_main/**", "/api/attendance_submit/**", "/api/commute_current/**",

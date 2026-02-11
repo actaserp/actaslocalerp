@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.security.core.Authentication;
@@ -67,14 +68,18 @@ public class GuiController {
     		// 권한처리 루틴 시작
     		// 메뉴별 권한 조회
     		Map<String,Object> map = new HashMap<String,Object>();
+
+			String tenantId = TenantContext.get();
     		
 			MapSqlParameterSource dicParam = new MapSqlParameterSource();			
 			dicParam.addValue("MenuCode", gui);
+			dicParam.addValue("spjangcd", tenantId);
+			dicParam.addValue("UserGroupId", user.getUserProfile().getUserGroup().getId());
 			dicParam.addValue("UserGroupId", user.getUserProfile().getUserGroup().getId());
 			
 			String sql = """
 						select "AuthCode" from user_group_menu ugm
-						where ugm."MenuCode" = :MenuCode and "UserGroup_id" = :UserGroupId
+						where ugm."MenuCode" = :MenuCode and "UserGroup_id" = :UserGroupId and spjangcd = :spjangcd
 						""";
 			
 			map = this.sqlRunner.getRow(sql, dicParam);
@@ -83,25 +88,16 @@ public class GuiController {
 			
 			boolean read_flag = false; 
 			boolean write_flag = false;
-			
+
 			if (map != null) {
 				active = map.get("AuthCode").toString();
-				
-				// 권한처리
-				if(active.equals("RW")) {
-					read_flag = true;
-					write_flag = true;
-				} else if (active.equals("R")) {
-					read_flag = true;
-					write_flag = false;
-				} else if (active.equals("W")) {
-					read_flag = false;
-					write_flag = true;
-				} else {
-					read_flag = false;
-					write_flag = false;
-				}
+
+				// 포함 여부로 권한 판별 (RWA, RA, WA 모두 대응 가능)
+				read_flag = active.contains("R");
+				write_flag = active.contains("W");
+
 			} else {
+				// 기본값 설정
 				read_flag = true;
 				write_flag = false;
 			}

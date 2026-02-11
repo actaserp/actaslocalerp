@@ -91,11 +91,6 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
   <script th:src="@{/assets_mobile/js/ui.js}"></script> <!-- Common js -->
-
-  <script th:inline="javascript">
-    var sandanData = /*[[${session.sandanList}]]*/ [];
-  </script>
-
   <script type="text/javascript" th:src="@{/resource/ax5ui/ax5ui.all.min.js}"></script>
   <script type="text/javascript" th:src="@{/js/ax5commUtil.js}"></script>
   <script th:src="@{/js/common.js}"></script>
@@ -104,9 +99,16 @@
   <script th:src="@{/js/Mobile.js}"></script>
   <script src="https://kit.fontawesome.com/84dc79ac13.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 </head>
 
 <body>
+<script th:inline="javascript">
+
+  if (!sessionStorage.getItem("spjangcd")) {
+    sessionStorage.setItem("spjangcd", [[${session.spjangcd}]] );
+  }
+</script>
 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 <div class="mobile-wrapper page-ticket-list"><!-- ★페이지 Class명 -->
   <!-- [모바일] 헤더  -->
@@ -198,19 +200,6 @@
     </div> <!--//layout-contents end -->
   </div> <!-- //mobile-layout-contents end-->
 </div> <!-- //page-wrapper end-->
-<script th:inline="javascript">
-  // // Thymeleaf에서 값 설정: Null 체크와 기본값 처리
-  // var groupid = [[${session.groupid != null ? session.groupid : 'null'}]];
-  // var id = /*[[${id != null ? id : 'null'}]]*/;
-  // var groupname = /*[[${groupname != null ? groupname : 'null'}]]*/;
-  // var username = /*[[${username != null ? username : 'null'}]]*/;
-  //
-  // // 로컬스토리지에 값 유지 (null 또는 빈 문자열은 저장하지 않음)
-  // if (groupid && groupid !== 'null') localStorage.setItem('groupid', groupid);
-  // if (id && id !== 'null') localStorage.setItem('id', id);
-  // if (username && username !== 'null') localStorage.setItem('username', username);
-  // if (groupname && groupname !== 'null') localStorage.setItem('groupname', groupname);
-</script>
 <script type="text/javascript">
   // 현재 날짜 설정 (페이지 로딩 시 1회 설정)
   // 요일 이름 배열

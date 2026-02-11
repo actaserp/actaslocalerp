@@ -99,7 +99,6 @@ public class ComboService {
 		}
 	}
 
-
 	public ComboDataFunction area=(String cond1, String cond2, String cond3)-> {  
 		String sql = "select id as value, \"Name\" as text from area where 1=1 ";
 		if (StringUtils.hasText(cond1)) {
@@ -112,7 +111,7 @@ public class ComboService {
         dicParam.addValue("cond3", cond3);
         return this.sqlRunner.getRows(sql, dicParam);	
 	};
-	
+
 	ComboDataFunction bom_version=(String cond1, String cond2, String cond3) -> { //확인 
 		String sql = "select id as value, \"Version\" as text from bom where 1=1";
 		if (StringUtils.hasText(cond1)) {
@@ -232,18 +231,24 @@ public class ComboService {
         return this.sqlRunner.getRows(sql, dicParam);
 	};
 	
-	ComboDataFunction defect_type=(String cond1, String cond2, String cond3) -> { 
-		String sql = "select id as Value, \"Name\" as text from defect_type where 1=1 order by \"Name\" ";
+	ComboDataFunction defect_type=(String cond1, String cond2, String cond3) -> {
+
+		String tenantId = TenantContext.get();
+
+		String sql = "select id as Value, \"Name\" as text from defect_type where spjangcd = :spjangcd order by \"Name\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		dicParam.addValue("spjangcd", tenantId);
         dicParam.addValue("cond1", cond1);
         dicParam.addValue("cond2", cond2);
         dicParam.addValue("cond3", cond3);
         return this.sqlRunner.getRows(sql, dicParam);
 	};
 	
-	ComboDataFunction depart=(String cond1, String cond2, String cond3) -> { //성공? 데이터 없음 
-		String sql = "select id as Value, \"Name\" as text from depart where 1=1 order by \"Name\" ";
+	ComboDataFunction depart=(String cond1, String cond2, String cond3) -> { //성공? 데이터 없음
+		String tenantId = TenantContext.get();
+		String sql = "select id as Value, \"Name\" as text from depart where spjangcd = :spjangcd order by \"Name\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		dicParam.addValue("spjangcd", tenantId);
         dicParam.addValue("cond1", cond1);
         dicParam.addValue("cond2", cond2);
         dicParam.addValue("cond3", cond3);
@@ -351,8 +356,10 @@ public class ComboService {
 	};
 	
 	ComboDataFunction factory=(String cond1, String cond2, String cond3) -> {
-		String sql = "select id as Value, \"Name\" as text from factory where 1=1 order by \"Name\" ";
+		String tenantId = TenantContext.get();
+		String sql = "select id as Value, \"Name\" as text from factory where spjangcd = :spjangcd order by \"Name\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		dicParam.addValue("spjangcd", tenantId);
         dicParam.addValue("cond1", cond1);
         dicParam.addValue("cond2", cond2);
         dicParam.addValue("cond3", cond3);
@@ -436,7 +443,7 @@ public class ComboService {
 	
 	ComboDataFunction material_group = (String cond1, String cond2, String cond3)-> { 
 		String sql ="""
-		select id as value,"Name" as text from mat_grp where 1=1
+		select id as value,"Name" as text from mat_grp where spjangcd = :spjangcd
 		""";
 		if(StringUtils.hasText(cond1)) {
 			sql +=" and \"MaterialType\" in (select unnest(string_to_array(:cond1,',')))";
@@ -452,6 +459,8 @@ public class ComboService {
 		sql += " order by \"Name\" ";
 		
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		String tenantId = TenantContext.get();
+		dicParam.addValue("spjangcd", tenantId);
 		dicParam.addValue("cond1", cond1);
 		dicParam.addValue("cond2", cond2);
 		dicParam.addValue("cond3", cond3);
@@ -581,6 +590,7 @@ public class ComboService {
 		        inner join work_center wc on wc."Process_id" = psc."Process_id" 
 		        inner join equ e on e."WorkCenter_id" = wc.id 
 	            where 1=1
+	            and sc.spjangcd = :spjangcd
 				""";
 			if (StringUtils.hasText(cond2)) {
 				sql += " and e.id = :cond2 ";
@@ -594,6 +604,7 @@ public class ComboService {
 		        inner join proc_stop_cause psc on psc."StopCause_id" = sc.id 
 		        inner join work_center wc on wc."Process_id" = psc."Process_id" 
 	            where 1=1
+	            and sc.spjangcd = :spjangcd
 				""";
 			if (StringUtils.hasText(cond2)) {
 				sql += "and wc.id = :cond2";
@@ -606,6 +617,7 @@ public class ComboService {
 		        from stop_cause sc 
 		        inner join proc_stop_cause psc on psc."StopCause_id" = sc.id 
 	            where 1=1 
+	            and sc.spjangcd = :spjangcd
 				""";
 			if (StringUtils.hasText(cond2)) {
 				sql += "and psc.Process_id = cond2";
@@ -617,10 +629,13 @@ public class ComboService {
 				select sc.id as value, sc."StopCauseName" as text
 		        from stop_cause sc 
 		        where 1 = 1
+		        and sc.spjangcd = :spjangcd
 	            order by 2
 				""";
 		}
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		String tenantId = TenantContext.get();
+		dicParam.addValue("spjangcd", tenantId);
 		dicParam.addValue("cond1", cond1);
 		dicParam.addValue("cond2", cond2);
 		dicParam.addValue("cond3", cond3);
@@ -788,19 +803,20 @@ public class ComboService {
 	
 	ComboDataFunction user_group=(String cond1, String cond2, String cond3)-> {
 
-		String tenantId = TenantContext.get();
+
 
 		String sql = """
-		select id as value, "Name" as text from user_group where spjangcd = :spjangcd order by "Name"
+		select id as value, "Name" as text from user_group where 1=1 and spjangcd = :spjangcd order by "Name"
 		""";
 		
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		String tenantId = TenantContext.get();
 		dicParam.addValue("spjangcd", tenantId);
 		dicParam.addValue("cond1", cond1);
 		dicParam.addValue("cond2", cond2);
 		dicParam.addValue("cond3", cond3);
 		return this.sqlRunner.getRows(sql, dicParam);		
-	};		
+	};
 	
 	ComboDataFunction user_profile=(String cond1, String cond2, String cond3)-> {
 		String sql = "select \"User_id\" as Value, \"Name\" as text from user_profile where 1=1 order by \"Name\" ";
@@ -976,10 +992,12 @@ public class ComboService {
 
 	ComboDataFunction workcd=(String cond1, String cond2, String cond3)-> {
 		String sql = """
-				select "workcd" as Value , "worknm" as text from tb_pb210
+				select "workcd" as Value , "worknm" as text from tb_pb210 where spjangcd = :spjangcd
 				""";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		String tenantId = TenantContext.get();
 		dicParam.addValue("cond1", cond1);
+		dicParam.addValue("spjangcd", tenantId);
 		return this.sqlRunner.getRows(sql, dicParam);
 	};
 
