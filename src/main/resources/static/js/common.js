@@ -2111,7 +2111,6 @@ let yullinAuth = {
     //    });
     //},
     removeWriteButton: function ($content) {
-        console.log('slkdfjlsajdlfkjalksdjf');
         let $items;
         if ($content)
             $items = $content.find('.y_write_auth');

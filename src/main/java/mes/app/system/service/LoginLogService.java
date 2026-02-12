@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,9 @@ public class LoginLogService {
 	SqlRunner sqlRunner;
 
 	public List<Map<String, Object>> getLoginLogList(Timestamp start, Timestamp end, String keyword, String type) {
-
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
+		dicParam.addValue("spjangcd", tenantId);
 		dicParam.addValue("start", start);
 		dicParam.addValue("end", end);
 		dicParam.addValue("keyword", keyword);
@@ -36,6 +38,7 @@ public class LoginLogService {
             left join auth_user au ON au.id = ll."User_id" 
             left join user_profile up on up."User_id" = ll."User_id" 
             where ll._created between :start and :end
+            and ll.spjangcd = :spjangcd
             """;
 
 		// 'login', 'logout' 타입을 적용할 경우 필터 추가

@@ -27,7 +27,6 @@
     <script th:src="@{/js/utilscript.js}"></script>
 
     <script th:inline="javascript">
-        var spjangList = /*[[${session.spjangList}]]*/ [];
         sessionStorage.setItem("username", [[${session.username}]] );
         sessionStorage.setItem("userid", [[${session.userid}]] );
         sessionStorage.setItem("groupid", [[${session.groupid}]] );
@@ -379,7 +378,7 @@
                     "></div>
                     <!-- 알림 -->
                     <!-- 사용자 로그인 상태-->
-                    <div id="spjangSelectWrapper">
+                    <div id="spjangSelectWrapper" style="display: none;">
                         <!-- 사업장 리스트 -->
                     </div>
                     <a class="help" title="유지보수" href="#" id="">
@@ -2233,36 +2232,10 @@
         // 1. 현재 sessionStorage에 저장된 값을 가져옴
         let currentSpjangcd = sessionStorage.getItem('spjangcd');
 
-        // 2. 저장된 값이 "진짜로" 없을 때만 기본값(ZZ 또는 첫 번째) 설정
-        if (!currentSpjangcd) {
-            const zzItem = spjangList.find(item => item.spjangcd === 'ZZ');
-            if (zzItem) {
-                currentSpjangcd = 'ZZ';
-            } else if (spjangList.length > 0) {
-                currentSpjangcd = spjangList[0].spjangcd;
-            }
-            // 결정된 기본값을 저장
-            if (currentSpjangcd) {
-                sessionStorage.setItem('spjangcd', currentSpjangcd);
-            }
-        }
-
         // 3. 셀렉트 박스 옵션 생성
         select.id = 'spjangcd';
         select.name = 'spjangcd';
         select.classList.add('select-no-border');
-
-        spjangList.forEach((item) => {
-            const option = document.createElement('option');
-            option.value = item.spjangcd;
-            option.textContent = item.spjangnm;
-
-            // 위에서 확정된 currentSpjangcd와 일치하면 선택 상태로 만듦
-            if (item.spjangcd === currentSpjangcd) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
 
         // 4. 변경 시 저장 및 새로고침
         select.addEventListener('change', function () {

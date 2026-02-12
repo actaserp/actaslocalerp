@@ -46,7 +46,7 @@ public class ScheduledTaskRunner {
     }
 
     //@Scheduled(cron = "0 0 3 * * *")
-    @Scheduled(cron = "0 29 * * * *")
+//    @Scheduled(cron = "0 29 * * * *")
     public void runLogProcessorBatchTasks(){
 
         JobParameters jobParameters = new JobParametersBuilder()
