@@ -1,19 +1,26 @@
 package mes.app.filter;
 
 
+import mes.app.util.RedisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 
 @Component
 public class ControllerExecutionTimeAspect implements Filter {
 
     Logger log = LoggerFactory.getLogger("API_EXEC_TIME_LOGGER");
+
+    @Autowired
+    RedisService redisService;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -29,7 +36,7 @@ public class ControllerExecutionTimeAspect implements Filter {
         }
 
         // /api 로 시작하는 요청만 측정
-        if (!uri.startsWith("/api")) {
+        if (!uri.startsWith("/api") || isExcludedPath(uri)) {
             chain.doFilter(request, response);
             return;
         }
@@ -42,15 +49,22 @@ public class ControllerExecutionTimeAspect implements Filter {
         } finally {
 
             long end = System.currentTimeMillis();
+             double seconds = (end - start) / 1000.0;
 
-            //TODO: 개선방향성
-            /**
-             * 나중에 성능병목이 오면 로그파일을 파싱해서 데이터 수집하는 것으로변경하자
-             * 지금은 로그찍자마자 비동기로 저장하지만, 이것마저도 병목이 오면 그냥 로그파일에서 수집하는 것으로
-             * **/
-            double seconds = (end - start) / 1000.0;
+             String spjangcd = request.getParameter("spjangcd");
+
+             if(spjangcd != null && !spjangcd.isEmpty()){
+                 String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+                 String redisKey = "MES:" + spjangcd + ":" + today;
+
+                 redisService.incrementValue(redisKey);
+             }
+
             log.info("[API 실행시간] {} {} → {}초",
                     method, uri, String.format("%.3f", seconds));
+
+
 
             /*ApiLogEntry entry = new ApiLogEntry();
             entry.setOccurrenceTime(LocalDateTime.now().toString());
@@ -59,6 +73,10 @@ public class ControllerExecutionTimeAspect implements Filter {
             entry.setDurationSecond((long)((end - start) / 1000.0));
 */
         }
+    }
+
+    private boolean isExcludedPath(String uri){
+        return uri.startsWith("/api/system/") || uri.startsWith("/api/common");
     }
 
 }

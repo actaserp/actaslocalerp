@@ -1,7 +1,11 @@
 package mes.domain.model;
 
-public class AjaxResult {
-	
+import java.io.Serializable;
+
+public class AjaxResult implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
 	public AjaxResult() {
 		
 	}
