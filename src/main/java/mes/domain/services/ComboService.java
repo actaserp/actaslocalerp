@@ -165,26 +165,30 @@ public class ComboService {
 	};
 	
 	ComboDataFunction company=(String cond1, String cond2, String cond3)-> { 
-		String sql = "select id as value, \"Name\" as text from company where 1=1 ";
+		String sql = "select id as value, \"Name\" as text from company where 1=1 and spjangcd =:spjangcd ";
 		if (StringUtils.hasText(cond1)) { 
 			//sql +="and \"CompanyType\" = :cond1 ";
 			sql += " and \"CompanyType\" in (select unnest(string_to_array(:cond1, ',')))";
 		}
 		sql += " order by \"Name\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
-        dicParam.addValue("cond1", cond1);
-        dicParam.addValue("cond2", cond2);
-        dicParam.addValue("cond3", cond3);
-        return this.sqlRunner.getRows(sql, dicParam);		
+		String tenantId = TenantContext.get();
+		dicParam.addValue("spjangcd", tenantId);
+		dicParam.addValue("cond1", cond1);
+		dicParam.addValue("cond2", cond2);
+		dicParam.addValue("cond3", cond3);
+		return this.sqlRunner.getRows(sql, dicParam);
 	};
 	
 	ComboDataFunction consu_mat_type=(String cond1, String cond2, String cond3)-> { 
-		String sql = "select \"Code\" as Value , \"Value\" as text from sys_code where \"CodeType\" = 'mat_type' and \"Code\" != 'product' order by \"_ordering\" ";
+		String sql = "select \"Code\" as Value , \"Value\" as text from sys_code where \"CodeType\" = 'mat_type' and \"Code\" != 'product' and spjangcd =:spjangcd order by \"_ordering\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
-        dicParam.addValue("cond1", cond1);
-        dicParam.addValue("cond2", cond2);
-        dicParam.addValue("cond3", cond3);
-        return this.sqlRunner.getRows(sql, dicParam);		
+		String tenantId = TenantContext.get();
+		dicParam.addValue("spjangcd", tenantId);
+		dicParam.addValue("cond1", cond1);
+		dicParam.addValue("cond2", cond2);
+		dicParam.addValue("cond3", cond3);
+		return this.sqlRunner.getRows(sql, dicParam);
 	};
 	
 	ComboDataFunction das_server=(String cond1, String cond2, String cond3)-> { 
@@ -563,12 +567,14 @@ public class ComboService {
 	};
 	
 	ComboDataFunction shift=(String cond1, String cond2, String cond3)-> { 
-		String sql = "select \"Code\" as Value, \"Name\" as text from shift where 1=1 order by \"Code\" ";
+		String sql = "select \"Code\" as Value, \"Name\" as text from shift where 1=1 and spjangcd =:spjangcd order by \"Code\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
-        dicParam.addValue("cond1", cond1);
-        dicParam.addValue("cond2", cond2);
-        dicParam.addValue("cond3", cond3);
-        return this.sqlRunner.getRows(sql, dicParam);
+		String tenantId = TenantContext.get();
+		dicParam.addValue("spjangcd", tenantId);
+		dicParam.addValue("cond1", cond1);
+		dicParam.addValue("cond2", cond2);
+		dicParam.addValue("cond3", cond3);
+		return this.sqlRunner.getRows(sql, dicParam);
 	};
 
 	ComboDataFunction issuediv=(String cond1, String cond2, String cond3)-> {
@@ -828,7 +834,7 @@ public class ComboService {
 	};
 
 	ComboDataFunction workcenter=(String cond1, String cond2, String cond3)-> { 
-		String	sql = "select id as value,\"Name\" as text from work_center where 1=1 ";
+		String	sql = "select id as value,\"Name\" as text from work_center where 1=1 and spjangcd =:spjangcd ";
 		if (StringUtils.hasText(cond1)) { 
 			sql +="and \"Process_id\" in (select unnest(string_to_array(:cond1,','))::int)";
 		}
@@ -837,10 +843,12 @@ public class ComboService {
 		}
 		sql += " order by \"Name\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
-        dicParam.addValue("cond1", cond1);
-        dicParam.addValue("cond2", cond2);
-        dicParam.addValue("cond3", cond3);
-        return this.sqlRunner.getRows(sql, dicParam);
+		String tenantId = TenantContext.get();
+			dicParam.addValue("spjangcd", tenantId);
+			dicParam.addValue("cond1", cond1);
+			dicParam.addValue("cond2", cond2);
+			dicParam.addValue("cond3", cond3);
+			return this.sqlRunner.getRows(sql, dicParam);
 	};
 
 	ComboDataFunction iotype=(String cond1, String cond2, String cond3)-> {

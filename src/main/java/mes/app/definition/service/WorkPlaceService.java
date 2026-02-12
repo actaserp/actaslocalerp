@@ -1,5 +1,6 @@
 package mes.app.definition.service;
 
+import mes.app.common.TenantContext;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -17,6 +18,8 @@ public class WorkPlaceService {
     public String getTaxnm(String taxcd){
 
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
+				String tenantId = TenantContext.get();
+				dicParam.addValue("spjangcd", tenantId);
         dicParam.addValue("taxcd", taxcd);
         String sql = """
 			select taxnm

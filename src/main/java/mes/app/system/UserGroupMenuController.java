@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.transaction.Transactional;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.security.core.Authentication;
@@ -72,7 +73,9 @@ public class UserGroupMenuController {
 			}
 			if (a) authCode += "A";
 			
-			MapSqlParameterSource dicParam = new MapSqlParameterSource();			
+			MapSqlParameterSource dicParam = new MapSqlParameterSource();
+			String tenantId = TenantContext.get();
+			dicParam.addValue("spjangcd", tenantId);
 			dicParam.addValue("auth_code", authCode);
 			dicParam.addValue("menu_code", menuCode);
 			dicParam.addValue("group_id", groupId);
@@ -81,8 +84,8 @@ public class UserGroupMenuController {
 			if(ugm_id==null) {
 				//insert
 				String sql = """
-				insert into user_group_menu("UserGroup_id", "MenuCode", "AuthCode", _creater_id, _created)
-				values(:group_id, :menu_code, :auth_code, :user_id, now())
+				insert into user_group_menu("UserGroup_id", "MenuCode", "AuthCode", _creater_id, _created, spjangcd)
+				values(:group_id, :menu_code, :auth_code, :user_id, now(), :spjangcd)
 				""";
 				this.sqlRunner.execute(sql, dicParam);				
 			}
@@ -90,7 +93,7 @@ public class UserGroupMenuController {
 				//update
 				dicParam.addValue("id", ugm_id);
 				String sql = """
-				update user_group_menu set "UserGroup_id"=:group_id, "MenuCode"=:menu_code, "AuthCode" = :auth_code, _modifier_id=:user_id, _modified=now()
+				update user_group_menu set "UserGroup_id"=:group_id, "MenuCode"=:menu_code, "AuthCode" = :auth_code, _modifier_id=:user_id, _modified=now(), spjangcd=:spjangcd
 				where id=:id
 				""";
 				this.sqlRunner.execute(sql, dicParam);
