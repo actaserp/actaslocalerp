@@ -28,10 +28,10 @@
   "wm_yearamt": {"name": "매입매출년마감", "templates": { "default": "definition/yearamt.html" } },
   "wm_workplace": {"name": "사업장 정보", "templates": { "default": "definition/workplace.html" } },
   "wm_manage_credit_cards": {"name": "신용카드 등록", "templates": { "default": "definition/manage_credit_cards.html" } },
-
+  "wm_shop_floor": { "name": "현장 관리", "templates": { "default": "definition/shop_floor.html" } },
   "wm_bom_proc_comp": { "name": "공정별BOM", "templates": { "default": "definition/bom_proc_comp.html" } },
   "wm_routing": { "name": "라우팅", "templates": { "default": "definition/routing.html" } },
-
+  "wm_factory": { "name": "공장 정보", "templates": { "default": "definition/factory.html" } },
 
   "wm_suju_upload": { "name": "수주 등록(일괄)", "templates": { "default": "sales/suju_upload.html" } },
   "wm_suju_list_a": { "name": "수주 및 계획량 등록", "templates": { "default": "sales/suju_list_a.html" } },
