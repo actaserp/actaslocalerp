@@ -32,7 +32,7 @@ public class SystemController {
 	@Autowired
 	SqlRunner sqlRunner;
 
-	@Cacheable(value = "menus",  key = "#auth.name")
+//	@Cacheable(value = "menus",  key = "#auth.name")
 	@SuppressWarnings("unchecked")
 	@GetMapping("/menus")
 	public AjaxResult menus(Authentication auth) {

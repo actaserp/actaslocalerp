@@ -29,7 +29,7 @@ public class TenantSqlInspector implements StatementInspector {
         }
 
         // 3. 보안 검증: DML(SELECT, UPDATE, DELETE) 쿼리인데 spjangcd가 없는 경우
-        if (lowSql.contains("select") || lowSql.contains("update") || lowSql.contains("delete")) {
+        if (lowSql.contains("select") || lowSql.contains("update") || lowSql.contains("delete")|| lowSql.contains("insert")) {
             if (!lowSql.contains("spjangcd") && !lowSql.contains("/* skip_tenant_check */")) {
 
                 // 쿼리를 수정하지 않고, 위반 사항만 명확히 기록합니다.
