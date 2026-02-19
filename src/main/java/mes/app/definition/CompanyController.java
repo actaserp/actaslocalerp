@@ -1,15 +1,21 @@
 package mes.app.definition;
 
+
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import mes.app.naverCloud.Enum.NcpMetric;
+import mes.app.naverCloud.dto.DataQueryRequest;
+import mes.app.naverCloud.service.NcpMonitoringService;
+import mes.app.naverCloud.strategy.MonthlyRange;
+import mes.app.naverCloud.strategy.RealTimeRange;
 import org.apache.groovy.parser.antlr4.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +33,7 @@ import mes.domain.entity.Company;
 import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
 import mes.domain.repository.CompanyRepository;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/definition/company")
@@ -40,6 +47,10 @@ public class CompanyController {
 	
 	@Autowired
 	private PriceService priceService;
+
+    @Autowired
+    private NcpMonitoringService ncpMonitoringService;
+
 	
 	/**
 	 * @apiNote 업체조회
@@ -61,7 +72,10 @@ public class CompanyController {
 		
 		return result;
 	}
-	
+
+
+
+
 	// 업체 상세정보 조회
 	@GetMapping("/detail")
 	public AjaxResult getCompnayDetail(

@@ -58,10 +58,10 @@ public class ControllerExecutionTimeAspect implements Filter {
 
                  String redisKey = "MES:" + spjangcd + ":" + today;
 
-//                 redisService.incrementValue(redisKey);
+                 redisService.incrementValue(redisKey);
              }
 
-            log.info("[API 실행시간] {} {} → {}초",
+            log.info("[API 실행시간111] {} {} → {}초",
                     method, uri, String.format("%.3f", seconds));
 
 

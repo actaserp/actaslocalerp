@@ -241,7 +241,7 @@
     <script th:src="@{/resource/apexcharts/apexcharts.3.26.min.js}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
-        class CustomOrderPage {
+        class MonitoringDashBoardPage {
             constructor() {
                 // 그리드와 차트 객체를 저장할 변수 선언
                 this.apiCallGrid = null;
@@ -249,6 +249,8 @@
                 this.monthlySignupGrid = null;
                 this.requestGrid = null;
                 this.adminUsageGrid = null;
+                
+                this.url = '/api/monitoring';
 
                 this.charts = {};
 
@@ -259,6 +261,39 @@
                 this.initGrids();
                 this.initCharts(); // 기존 게이지 차트 로직 (유지)
                 this.setData();
+            }
+
+            searchMainData(){
+                let _this = this;
+                let data = {
+
+                }
+
+                let result = AjaxUtil.getSyncData(this.url + "/read", data);
+
+                console.log(result);
+
+                if(result.success){
+                    console.log('result: ' , result.data);
+
+                    
+                    const resource = result.data.resource;
+                    if(resource){
+                        this.updateGaugeCharts(resource);
+                    }
+
+                    const traffic = result.data.traffic;
+                    if(traffic && this.charts.network){
+                        this.charts.network.data.labels = traffic.labels;
+                        this.charts.network.data.datasets[0].data = traffic.inboundData;
+                        this.charts.network.data.datasets[1].data = traffic.outboundData;
+                        this.charts.network.update();
+                    }
+
+
+                }else{
+                    Alert.alert('', result.message);
+                }
             }
 
             initGrids() {
@@ -336,15 +371,7 @@
                     });
             }
 
-            initCharts() {
-                // 이전에 작성한 vCPU, RAM 게이지 차트 초기화 로직
-                this.charts.cpu = this.createGaugeChart('cpuChart', '#3b82f6');
-                this.charts.ram = this.createGaugeChart('ramChart', '#10b981');
-
-                // 네트워크 라인 차트 초기화
-                this.initNetworkChart();
-            }
-
+            
             /* 네트워크 차트 초기 설정 전용 메서드 */
             initNetworkChart() {
                 const ctx = document.getElementById('networkChart').getContext('2d');
@@ -388,7 +415,7 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: { display: true, text: 'GB' },
+                                title: { display: true, text: 'bps' },
                                 grid: { color: '#f1f3f5' } // 배경 선 연하게
                             },
                             x: {
@@ -398,6 +425,16 @@
                     }
                 });
             }
+            
+            initCharts() {
+                // 이전에 작성한 vCPU, RAM 게이지 차트 초기화 로직
+                this.charts.cpu = this.createGaugeChart('cpuChart', '#3b82f6');
+                this.charts.ram = this.createGaugeChart('ramChart', '#10b981');
+
+                // 네트워크 라인 차트 초기화
+                this.initNetworkChart();
+            }
+            
 
             // 게이지 차트 생성 공통 함수 (차트 부분)
             createGaugeChart(canvasId, color) {
@@ -418,8 +455,8 @@
             setData() {
                 // 1. VM 사용량 차트 데이터 세팅 (목데이터)
                 const mockChartData = { cpuUsage: 48, ramUsage: 76 };
-                this.updateGauge(this.charts.cpu, 'cpuValue', mockChartData.cpuUsage);
-                this.updateGauge(this.charts.ram, 'ramValue', mockChartData.ramUsage);
+                //this.updateGauge(this.charts.cpu, 'cpuValue', mockChartData.cpuUsage);
+                //this.updateGauge(this.charts.ram, 'ramValue', mockChartData.ramUsage);
 
                 // 2. API 콜 횟수 그리드 데이터 세팅
                 // 실제 운영시: let apiData = AjaxUtil.getSyncData('/api/dashboard/api_calls');
@@ -492,29 +529,52 @@
                 this.adminUsageGrid.itemsSource = adminUsageData.data;
 
                 // 네트워크 목데이터 세팅
-                    const networkData = {
-                        inbound: [12, 19, 15, 25, 22, 30, 28],
-                        outbound: [8, 12, 10, 18, 15, 22, 20]
-                    };
+                    // const networkData = {
+                    //     inbound: [12, 19, 15, 25, 22, 30, 28],
+                    //     outbound: [8, 12, 10, 18, 15, 22, 20]
+                    // };
 
-                    this.charts.network.data.datasets[0].data = networkData.inbound;
-                    this.charts.network.data.datasets[1].data = networkData.outbound;
-                    this.charts.network.update();
+                    // this.charts.network.data.datasets[0].data = networkData.inbound;
+                    // this.charts.network.data.datasets[1].data = networkData.outbound;
+                    // this.charts.network.update();
             }
 
             // 게이지 업데이트용 함수
-            updateGauge(chart, valueElementId, value) {
-                if (!chart) return;
-                chart.data.datasets[0].data = [value, 100 - value];
-                chart.update();
-                const valEl = document.getElementById(valueElementId);
-                if (valEl) valEl.innerText = value + '%';
+            // updateGauge(chart, valueElementId, value) {
+            //     if (!chart) return;
+            //     chart.data.datasets[0].data = [value, 100 - value];
+            //     chart.update();
+            //     const valEl = document.getElementById(valueElementId);
+            //     if (valEl) valEl.innerText = value + '%';
+            // }
+
+            //게이지 업데이트 함수
+            updateGaugeCharts(resource){
+                //cpu
+                const cpu = resource.avg_cpu_used_rto || 0;
+                const ram = resource.mem_usert || 0;
+
+                this.updateGaugeWithText(this.charts.cpu, 'cpuValue', cpu);
+                this.updateGaugeWithText(this.charts.ram, 'ramValue', ram);
+            }
+
+            updateGaugeWithText(chartObj, textId, value){
+                chartObj.data.datasets[0].data = [value, 100 - value];
+                chartObj.update();
+            
+                // 중앙 텍스트 갱신
+                const textElement = document.getElementById(textId);
+                if (textElement) {
+                    textElement.innerText = `${value}%`;
+                }
             }
         }
 
         let page = null;
         $(document).ready(function (e) {
-            page = new CustomOrderPage();
+            page = new MonitoringDashBoardPage();
+
+            page.searchMainData();
         });
     </script>
 </th:block>

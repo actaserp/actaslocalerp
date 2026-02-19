@@ -133,11 +133,7 @@
     font-size: 12px;
 }
 
-/* Wijmo Grid 커스텀 */
-#settlement-detail-grid {
-    height: 400px;
-    border-top: 2px solid #333;
-}
+
 
 /* 추가 사용량 등 강조 스타일 */
 .text-danger {
@@ -155,7 +151,7 @@
 }
 
 #settlement-detail-grid {
-    height: 400px;
+    height: 280px;
     border-top: 2px solid #333;
     min-width: 1200px; /* 모든 컬럼이 여유 있게 보일 최소 가로 너비 강제 */
 }
@@ -185,8 +181,8 @@
                             <div class="summary-card-blue">
                                 <h3>결제 예정 금액</h3>
                                 <div class="amount-wrap">
-                                    <p class="month-label">1월 예정금액</p>
-                                    <h1 class="main-amount">264,000 <span class="unit">원/월</span></h1>
+                                    <p class="month-label">월 예정금액</p>
+                                    <h1 class="main-amount" id="realTimeBill">- <span class="unit">원/월</span></h1>
                                 </div>
                             </div>
 
@@ -201,19 +197,19 @@
                                     <tbody>
                                     <tr>
                                         <td>총 서비스 요금</td>
-                                        <td class="text-right" style="font-weight: 600;">240,000 원/월</td>
+                                        <td class="text-right" style="font-weight: 600;" id="service_amt">- 원/월</td>
                                     </tr>
                                     <tr>
-                                        <td>부가가치세</td>
-                                        <td class="text-right" style="font-weight: 600;">24,000 원/월</td>
+                                        <td>초과분(api 호출)</td>
+                                        <td class="text-right" style="font-weight: 600;" id="over_cnt">- 회/월</td>
                                     </tr>
                                     <tr>
-                                        <td>위약금</td>
-                                        <td class="text-right" style="font-weight: 600;">0 원/월</td>
+                                        <td>초과금액</td>
+                                        <td class="text-right" style="font-weight: 600;" id="over_amt">- 원/월</td>
                                     </tr>
                                     <tr class="total-row">
                                         <td>합계 (VAT 포함)</td>
-                                        <td class="text-right total-amount">264,000 원/월</td>
+                                        <td class="text-right total-amount" id="total_amt">- 원/월</td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -238,34 +234,37 @@
     <script th:src="@{/resource/apexcharts/apexcharts.3.26.min.js}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
-        class CustomOrderPage {
+        class AmountUse {
             constructor() {
+
+                this.url = '/api/realtime';
+                this.viewData = new wijmo.collections.CollectionView(); 
+                this.grid = null;
                 this.init();
-                this.setData();
+                //this.setData();
             }
+
+            
 
             init() {
-                this.initGrids();
-
-            }
-
-                    initGrids() {
-            this.settlementGrid = new wijmo.grid.FlexGrid('#settlement-detail-grid', {
+                let _this = this;
+            
+                this.grid = new wijmo.grid.FlexGrid('#settlement-detail-grid', {
                 autoGenerateColumns: false,
                 headersVisibility: wijmo.grid.HeadersVisibility.Column,
                 selectionMode: wijmo.grid.SelectionMode.None,
                 isReadOnly: true,
                 allowSorting: false,
-                itemsSource: [], // 데이터 바인딩
+                itemsSource: this.viewData, // 데이터 바인딩
                 columns: [
-                    { header: '서비스명', binding: 'service_name', width: 150 },
-                    { header: '단가', binding: 'unit_price', width: 120, align: 'right', format: 'n0' },
-                    { header: '기본제공(스토리지/api호출)', binding: 'base_qty', width: '*', align: 'center' },
-                    { header: '초과분(스토리지/api호출)', binding: 'extra_qty', width: '*', align: 'center' },
-                    { header: '현재 사용량', binding: 'cur_usage', width: 120, align: 'center' },
+                    { header: '서비스명', binding: 'name', width: 150 },
+                    { header: '단가', binding: 'price', width: 120, align: 'right', format: 'n0' },
+                    { header: '기본제공(api호출)', binding: 'api_call_limit', width: '*', align: 'center' },
+                    { header: '초과분(api호출)', binding: 'over_api_cnt', width: '*', align: 'center' },
+                    { header: '현재 사용량', binding: 'totalRealTimeCnt', width: 120, align: 'center' },
                     { header: '비고', binding: 'remark', width: '*', align: 'left' },
-                    { header: '사용기간', binding: 'period', width: 180, align: 'center' },
-                    { header: '청구금액', binding: 'amount', width: 150, align: 'right', format: 'n0' }
+                    { header: '사용기간', binding: '', width: 180, align: 'center' },
+                    { header: '청구금액', binding: 'bill', width: 150, align: 'right', format: 'n0' }
                 ],
                 formatItem: (s, e) => {
                     if (e.panel === s.cells) {
@@ -285,6 +284,51 @@
                 }
             });
         }
+
+            searchMainData(){
+                let _this = this;
+                let data = {
+
+                }
+
+                let result = AjaxUtil.getSyncData(this.url + "/read", data);
+
+                if(result.success){
+                    console.log('result', result.data);
+
+                    const data = result.data[0];
+
+                    this.renderBillingInfo(data);
+
+                    
+
+                    _this.viewData.sourceCollection = result.data;
+                }
+            }
+
+            renderBillingInfo(data) {
+                // 숫자에 콤마를 찍어주는 내부 유틸리티 함수
+                const formatComma = (val) => {
+                    if (!val) return "0";
+                    const num = parseFloat(String(val).replace(/[^0-9.-]/g, ""));
+                    return isNaN(num) ? "0" : num.toLocaleString();
+                };
+
+                // 1. 메인 대시보드 예정 금액 (기존 로직 유지)
+                $('#realTimeBill').html(data.bill + ' <span class="unit">원/월</span>');
+
+                // 2. 총 서비스 요금 (기본료)
+                $('#service_amt').text(formatComma(data.price) + "원");
+
+                // 3. 초과분 호출 수
+                $('#over_cnt').text(formatComma(data.over_api_cnt) + "회");
+
+                // 4. 초과 금액
+                $('#over_amt').text(formatComma(data.over_api_amt) + "원");
+
+                // 5. 합계 (서버에서 받은 bill 그대로 표시)
+                $('#total_amt').text(data.bill);
+            }
 
             setData() {
             // 실무에서는 AjaxUtil.getSyncData('/api/dashboard/custom_order') 등을 사용하겠지만,
@@ -307,13 +351,35 @@
             this.settlementGrid.itemsSource = mockData;
 
 
-        }
+            }
         }
 
         let page = null;
 
         $(document).ready(function (e) {
-            page = new CustomOrderPage();
+
+            //현재 월 업데이트 
+            updateCurrentMonth();
+
+            page = new AmountUse();
+
+            page.searchMainData();
+
+
+            function updateCurrentMonth() {
+                // 현재 날짜 기준 월 계산 (1~12)
+                const currentMonth = new Date().getMonth() + 1;
+                
+                // 대상 요소 선택
+                const $monthLabel = $('.month-label');
+                
+                if ($monthLabel.length > 0) {
+                    // 텍스트 변경
+                    $monthLabel.text(currentMonth + '월 예정금액');
+                }
+            }
+            
+            
         });
     </script>
 </th:block>

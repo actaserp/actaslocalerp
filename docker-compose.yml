@@ -25,6 +25,7 @@ services:
         -Dmaven.main.skip=true 
         -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       environment:
+        - TZ=Asia/Seoul
         - SPRING_DATA_REDIS_HOST=my-redis # 컨테이너 서비스 이름으로 연결
         - SPRING_DATA_REDIS_PORT=6379
         - BASE_PATH=/app
@@ -33,5 +34,9 @@ services:
         - MES_DB_PASSWORD=${MES_DB_PASSWORD}
         - SPRING_PROFILES_ACTIVE=mes
         - OPENAI_API_KEY=${OPENAI_API_KEY}
+        - ncp_api_accessKey=${ncp_api_accessKey}
+        - ncp_api_secretKey=${ncp_api_secretKey}
+        - ncp_api_cwKey=${ncp_api_cwKey}
+        - ncp_api_instanceNo=${ncp_api_instanceNo}
       depends_on:
         - my-redis

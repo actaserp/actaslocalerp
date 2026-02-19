@@ -4,6 +4,7 @@ package mes.app.Scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mes.app.Scheduler.SchedulerService.AccountSyncService;
+import mes.app.Scheduler.SchedulerService.ApiUsageService;
 import mes.app.SpringBatch.ApiTimeLogProcessor.job.ApiLogCollectBatchJobConfig;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -18,6 +19,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executor;
 
 @Component
@@ -26,8 +29,10 @@ import java.util.concurrent.Executor;
 public class ScheduledTaskRunner {
 
     private final Executor schedulerExecutor;
+
     private final AccountSyncService accountSyncService;
-    //private final ApiTimeLogCollectService apiTimeLogCollectService;
+    private final ApiUsageService apiUsageService;
+
     private final JobLauncher jobLauncher;
     private final ApiLogCollectBatchJobConfig apiLogCollectBatchJobConfig;
 
@@ -44,6 +49,24 @@ public class ScheduledTaskRunner {
         schedulerExecutor.execute(() -> safeRun(accountSyncService::run, "계좌수집"));
         //schedulerExecutor.execute(() -> safeRun(apiTimeLogCollectService::run, "API경과시간"));
     }
+
+    /**
+     * [SaaS 인증용] 매일 새벽 0시 5분에 전날 Redis API 호출 내역을 DB로 이관
+     * TODO: migrateDailyApiUsage에서 시간수정, 여기서 스케줄러 시간수정 필
+     */
+    //@Scheduled(cron = "0 10 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 35 14 17 * *", zone = "Asia/Seoul")
+    public void runApiUsageMigration(){
+
+        // 스케줄러가 인식하는 현재 시간 로그 출력
+        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        log.info("[스케줄러 감지] 현재 서버 시간: {} | 작업명: api 콜 집계", currentTime);
+
+        schedulerExecutor.execute(() -> safeRun(apiUsageService::migrateMonthlyApiUsage, "api 콜 집계"));
+    }
+
+
+
 
     //@Scheduled(cron = "0 0 3 * * *")
 //    @Scheduled(cron = "0 29 * * * *")

@@ -32,7 +32,7 @@ public class CustomerCurrentService {
 
         String sql = """
                     select row_number() over (order by expirationdate desc) as seq,
-                                        * 
+                                        *
                                         from tb_xa012
                     where "subscriptiondate" between :st and :en
                 """;
