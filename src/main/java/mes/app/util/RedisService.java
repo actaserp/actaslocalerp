@@ -1,5 +1,6 @@
 package mes.app.util;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,8 @@ public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    //localCache 조회
+    @Getter
     private final Map<String, Object> localCache = new ConcurrentHashMap<>();
 
     public RedisService(RedisTemplate<String, Object> redisTemplate) {
@@ -68,6 +71,40 @@ public class RedisService {
         }
     }
 
+    // hash 구조로 set
+    public Long incrementHashValue(String key, String field){
+        try{
+
+            Long count = redisTemplate.opsForHash().increment(key, field, 1L);
+
+            // Hash 전체 키에 대한 TTL입니다.
+            if (count != null && count == 1) {
+                redisTemplate.expire(key, 45, TimeUnit.DAYS);
+            }
+            return count;
+        }catch(Exception e){
+            log.error("Redis HINCRBY 실패 - Key: {}, Field: {}", key, field);
+            // 로컬 캐시 처리 시 키와 필드를 조합해서 저장
+            String localKey = key + ":" + field;
+            return (Long) localCache.compute(localKey, (k, v) -> (v == null) ? 1L : (long) v + 1L);
+        }
+    }
+
+    public Long incrementValue(String key, Long value){
+        try{
+            Long count = redisTemplate.opsForValue().increment(key, value);
+            return  count;
+        }catch(Exception e){
+            log.error("Redis 연결 실패! 로컬 캐시에 임시 저장합니다. Key: {}, Value: {}", key, value);
+
+            // 로컬 캐시에 합산 (기존 값이 없으면 value, 있으면 합산)
+            // compute 메서드는 ConcurrentHashMap의 원자적 연산을 보장합니다.
+            localCache.merge(key, value, (oldVal, newVal) -> (Long) oldVal + (Long) newVal);
+
+            return -1L; // 에러 발생 신호로 -1 반환 (또는 적절한 값)
+        }
+    }
+
     // 5. 데이터 삭제 (DEL)
     public void deleteValues(String key) {
         try{
@@ -107,4 +144,16 @@ public class RedisService {
                     ));
         }
     }
+
+    //현재 레디스가 연결된 상태인지 확인
+    public boolean isRedisAvailable(){
+        try {
+            String pong = redisTemplate.getConnectionFactory().getConnection().ping();
+            return "PONG".equals(pong);
+        }catch(Exception e){
+            log.error("Redis 연결상태 확인 실패");
+            return false;
+        }
+    }
+
 }

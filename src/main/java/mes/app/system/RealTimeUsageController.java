@@ -1,6 +1,7 @@
 package mes.app.system;
 
 
+import lombok.extern.slf4j.Slf4j;
 import mes.app.system.service.RealTimeUsageService;
 import mes.app.util.RedisService;
 import mes.domain.model.AjaxResult;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/realtime")
+@Slf4j
 public class RealTimeUsageController {
 
     @Autowired
@@ -73,6 +75,16 @@ public class RealTimeUsageController {
             item.put("bill_raw", totalBill);
         }
 
+        //만약 localCache 값이 있다면 redis가 비정상 종료된것 -> 데이터를 안내려줌 (에러가 났다는걸 명시적으로 표시한다.)
+        // 1. 현재 레디스 연결이 끊겼거나
+        // 2. 장애 상황에서 로컬 캐시에 쌓인 데이터가 아직 이관되지 않았다면
+        // 사용자에게 부정확한 데이터를 보여주지 않기 위해 null 처리
+
+        //만약 redis가 끊어진것 같으면 /api/monitoring/local_cache/save 를 get으로 호출해서 로컬캐시 -> redis로 데이터 이관
+        if (!redisService.isRedisAvailable()) {
+            log.warn("[SaaS] Redis 장애 감지 또는 미이관 데이터 존재로 인해 사용량 조회를 차단합니다.");
+            usageList = null;
+        }
 
         return AjaxResult.success(null, usageList);
     }

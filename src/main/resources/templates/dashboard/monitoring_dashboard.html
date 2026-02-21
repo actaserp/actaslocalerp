@@ -244,9 +244,14 @@
         class MonitoringDashBoardPage {
             constructor() {
                 // 그리드와 차트 객체를 저장할 변수 선언
-                this.apiCallGrid = null;
                 this.ratePlanGrid = null;
+
                 this.monthlySignupGrid = null;
+                this.montly_viewData = new wijmo.collections.CollectionView();  
+                
+                this.apiCallGrid = null;
+                this.apiCall_viewData = new wijmo.collections.CollectionView();
+                
                 this.requestGrid = null;
                 this.adminUsageGrid = null;
                 
@@ -266,34 +271,78 @@
             searchMainData(){
                 let _this = this;
                 let data = {
-
+                    'monthlyStartDate' : $('#monthPicker').val()
                 }
 
-                let result = AjaxUtil.getSyncData(this.url + "/read", data);
+                AjaxUtil.getAsyncData(this.url + "/read", data, function(result){
+                        console.log('서버에서 온 실제 데이터: ', result);
+                        if(result.success){
+                            const resData = result.data;
 
-                console.log(result);
+                            // VM 사용량 (게이지 차트)
+                            if (resData.resource) {
+                                _this.updateGaugeCharts(resData.resource);
+                            }
 
-                if(result.success){
-                    console.log('result: ' , result.data);
+                            // 네트워크 이용내역 (라인 차트)
+                            const traffic = resData.traffic;
+                            if (traffic && _this.charts.network) {
+                                _this.charts.network.data.labels = traffic.labels;
+                                _this.charts.network.data.datasets[0].data = traffic.inboundData;
+                                _this.charts.network.data.datasets[1].data = traffic.outboundData;
+                                _this.charts.network.update();
+                            }
 
-                    
-                    const resource = result.data.resource;
-                    if(resource){
-                        this.updateGaugeCharts(resource);
-                    }
+                            // 월별 가입현황
+                            if (resData.monthly) {
+                                _this.montly_viewData.sourceCollection = resData.monthly;
+                            }
 
-                    const traffic = result.data.traffic;
-                    if(traffic && this.charts.network){
-                        this.charts.network.data.labels = traffic.labels;
-                        this.charts.network.data.datasets[0].data = traffic.inboundData;
-                        this.charts.network.data.datasets[1].data = traffic.outboundData;
-                        this.charts.network.update();
-                    }
+                            // API 콜 횟수
+                            if (resData.apiCntList) {
+                                _this.apiCall_viewData.sourceCollection = resData.apiCntList;
+                            }
+                        }else {
+                            Alert.alert('', result.message);
+                        }
+                });
+
+                // console.log(result);
+
+                // if(result.success){
+                //     console.log('result: ' , result.data);
+
+                //     const resData = result.data;
+
+                //     // 1) VM 사용량 (게이지 차트)
+                //     if (resData.resource) {
+                //         console.log('resource', res.Data.resource);
+                //         _this.updateGaugeCharts(resData.resource);
+                //     }
+
+                //     //네트워크 이용내역
+                //     const traffic = result.data.traffic;
+                //     if(traffic && this.charts.network){
+                //         this.charts.network.data.labels = traffic.labels;
+                //         this.charts.network.data.datasets[0].data = traffic.inboundData;
+                //         this.charts.network.data.datasets[1].data = traffic.outboundData;
+                //         this.charts.network.update();
+                //     }
 
 
-                }else{
-                    Alert.alert('', result.message);
-                }
+                //     //월별 가입현황
+                //     const montly = result.data.monthly;
+                //     _this.montly_viewData.sourceCollection = montly;
+
+
+                //     //api 콜 횟수
+                //     const apiCntList = result.data.apiCntList;
+                //     _this.apiCall_viewData.sourceCollection = apiCntList;
+
+
+                // }else{
+                //     Alert.alert('', result.message);
+                // }
             }
 
             initGrids() {
@@ -301,11 +350,12 @@
                     autoGenerateColumns: false,
                     headersVisibility: wijmo.grid.HeadersVisibility.Column,
                     isReadOnly: true,
+                    itemsSource: this.apiCall_viewData,
                     // ... (기존 설정 유지)
                     columns: [
-                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
+                        { header: '고객사명', binding: 'spjangnm', width: '*', align: 'left' },
                         { header: '상태', binding: 'status', width: 80, align: 'center' },
-                        { header: '콜 횟수', binding: 'callCount', width: 120, align: 'right', format: 'n0' }
+                        { header: '콜 횟수', binding: 'apiCallCount', width: 120, align: 'right', format: 'n0' }
                     ]
                 });
 
@@ -325,11 +375,12 @@
                     autoGenerateColumns: false,
                     headersVisibility: wijmo.grid.HeadersVisibility.Column,
                     isReadOnly: true,
+                    itemsSource: this.montly_viewData,
                     // ... (기존 설정 유지)
                     columns: [
-                        { header: '고객사명', binding: 'customer', width: '*', align: 'left' },
-                        { header: '승인여부', binding: 'approval', width: 80, align: 'center' },
-                        { header: '가입일시', binding: 'joinDate', width: 120, align: 'left', format: 'n0' }
+                        { header: '고객사명', binding: 'spjangnm', width: '*', align: 'left' },
+                        { header: '승인여부', binding: 'state_text', width: 80, align: 'center' },
+                        { header: '가입일시', binding: 'subscriptiondate', width: 120, align: 'left', format: 'n0' }
                     ]
                 });
 
@@ -460,16 +511,16 @@
 
                 // 2. API 콜 횟수 그리드 데이터 세팅
                 // 실제 운영시: let apiData = AjaxUtil.getSyncData('/api/dashboard/api_calls');
-                let apiData = {
-                    data: [
-                        { customer: '(주)테크솔루션', status: '정상', callCount: 12540 },
-                        { customer: '에이아이 소프트', status: '정상', callCount: 8900 },
-                        { customer: '클라우드 시스템', status: '주의', callCount: 7210 },
-                        { customer: '데이터 웍스', status: '정상', callCount: 4300 },
-                        { customer: '네트워크 보안', status: '정상', callCount: 2100 },
-                        { customer: '미래 정보통신', status: '대기', callCount: 1500 }
-                    ]
-                };
+                // let apiData = {
+                //     data: [
+                //         { customer: '(주)테크솔루션', status: '정상', callCount: 12540 },
+                //         { customer: '에이아이 소프트', status: '정상', callCount: 8900 },
+                //         { customer: '클라우드 시스템', status: '주의', callCount: 7210 },
+                //         { customer: '데이터 웍스', status: '정상', callCount: 4300 },
+                //         { customer: '네트워크 보안', status: '정상', callCount: 2100 },
+                //         { customer: '미래 정보통신', status: '대기', callCount: 1500 }
+                //     ]
+                // };
 
                 let rateApiData = {
                     data: [
@@ -482,16 +533,16 @@
                     ]
                 };
 
-                let monthlySignApiData = {
-                    data: [
-                        { customer: '(주)테크솔루션', approval: '승인', joinDate: '2026-02-06 12:39:20' },
-                        { customer: '에이아이 소프트', approval: '승인', joinDate: '2026-02-04 19:39:21' },
-                        { customer: '클라우드 시스템', approval: '미승인', joinDate: '2026-02-02 01:39:00' },
-                        { customer: '엠프리어스 테크', approval: '미승인', joinDate: '2026-02-02 00:39:30' },
-                        { customer: '플래닛랩스', approval: '승인', joinDate: '2026-02-01 20:18:21' },
-                        { customer: '미래 정보통신', approval: '승인', joinDate: '2026-02-01 12:39:49' }
-                    ]
-                };
+                // let monthlySignApiData = {
+                //     data: [
+                //         { customer: '(주)테크솔루션', approval: '승인', joinDate: '2026-02-06 12:39:20' },
+                //         { customer: '에이아이 소프트', approval: '승인', joinDate: '2026-02-04 19:39:21' },
+                //         { customer: '클라우드 시스템', approval: '미승인', joinDate: '2026-02-02 01:39:00' },
+                //         { customer: '엠프리어스 테크', approval: '미승인', joinDate: '2026-02-02 00:39:30' },
+                //         { customer: '플래닛랩스', approval: '승인', joinDate: '2026-02-01 20:18:21' },
+                //         { customer: '미래 정보통신', approval: '승인', joinDate: '2026-02-01 12:39:49' }
+                //     ]
+                // };
 
                 let requestData = {
                     data: [
@@ -522,9 +573,9 @@
                 };
 
 
-                this.apiCallGrid.itemsSource = apiData.data;
+                //this.apiCallGrid.itemsSource = apiData.data;
                 this.ratePlanGrid.itemsSource = rateApiData.data;
-                this.monthlySignupGrid.itemsSource = monthlySignApiData.data;
+                //this.monthlySignupGrid.itemsSource = monthlySignApiData.data;
                 this.requestGrid.itemsSource = requestData.data;
                 this.adminUsageGrid.itemsSource = adminUsageData.data;
 
@@ -573,8 +624,30 @@
         let page = null;
         $(document).ready(function (e) {
             page = new MonitoringDashBoardPage();
-
+            document.getElementById('monthPicker').value = new Date().toISOString().slice(0,7);
             page.searchMainData();
+
+
+            //날짜 바꾸면 다시 조회
+            $('#monthPicker').on('change', function(){
+
+                let _this = page;
+
+                const selectedDate = $(this).val();
+
+                if(selectedDate){
+                    let data = { 'monthlyStartDate' : selectedDate }
+                    let result = AjaxUtil.getSyncData("/api/monitoring/monthly_read", data);
+
+                    if(result.success){
+                        console.log('mon:' , result.data);
+
+                        _this.montly_viewData.sourceCollection = result.data;
+                    }
+
+                }
+            })
+            
         });
     </script>
 </th:block>
