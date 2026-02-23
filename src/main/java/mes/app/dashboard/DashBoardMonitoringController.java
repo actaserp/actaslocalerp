@@ -40,7 +40,10 @@ public class DashBoardMonitoringController {
 
 
     @GetMapping("/read")
-    public AjaxResult GetDataList(@RequestParam String monthlyStartDate){
+    public AjaxResult GetDataList(@RequestParam String monthlyStartDate,
+                                  @RequestParam(defaultValue = "1") int pageNumber,
+                                  @RequestParam(defaultValue = "10") int pageSize
+                                  ){
 
         // CPU와 RAM 메트릭을 '실시간(30분)' 정책으로 묶어서 단일 시간 요청
         CompletableFuture<Map<String, Double>> resourceSummary = CompletableFuture.supplyAsync(() ->
@@ -60,21 +63,27 @@ public class DashBoardMonitoringController {
         );
 
         //월별 가입현황 대시보드 데이터
+
         CompletableFuture<List<Map<String, Object>>> montlyList = CompletableFuture.supplyAsync(() ->
-                ncpMonitoringService.getMontlyRegisterList(monthlyStartDate)
+                ncpMonitoringService.getMontlyRegisterList(monthlyStartDate, pageNumber, pageSize)
                 ,asyncExecutors
         );
 
+        //CompletableFuture<List<Map<String, Object>>> montlyList = null
+
         //api 콜 횟수 (고객사별) 대시보드 데이터
+
         CompletableFuture<List<Map<String, Object>>> apiCntListBySpjangcd = CompletableFuture.supplyAsync(() ->
-                ncpMonitoringService.getApiCntListBySpjangcd()
+                ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize)
                 ,asyncExecutors
         );
 
         Map<String, Object> dataList = new HashMap<>();
         try{
-            dataList.put("resource", resourceSummary.join());
-            dataList.put("traffic", trafficHistory.join());
+            dataList.put("resource", null);
+            //dataList.put("resource", resourceSummary.join());
+            dataList.put("traffic", null);
+            //dataList.put("traffic", trafficHistory.join());
             dataList.put("monthly", montlyList.join());
             dataList.put("apiCntList", apiCntListBySpjangcd.join());
         }catch (Exception e){
@@ -84,10 +93,25 @@ public class DashBoardMonitoringController {
     }
 
     @GetMapping("/monthly_read")
-    public AjaxResult getMontlyList(@RequestParam String monthlyStartDate){
+    public AjaxResult getMontlyList(@RequestParam String monthlyStartDate,
+                                    @RequestParam(defaultValue = "1") int pageNumber,
+                                    @RequestParam(defaultValue = "10") int pageSize
+                                    ){
 
-        List<Map<String, Object>> data = ncpMonitoringService.getMontlyRegisterList(monthlyStartDate);
+        List<Map<String, Object>> data = ncpMonitoringService.getMontlyRegisterList(
+                monthlyStartDate, pageNumber, pageSize
+        );
 
+
+        return AjaxResult.success(null, data);
+    }
+
+    @GetMapping("/api_count_list")
+    public AjaxResult getApiCntList(
+            @RequestParam(defaultValue = "1") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize
+    ){
+        List<Map<String, Object>> data = ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize);
 
         return AjaxResult.success(null, data);
     }

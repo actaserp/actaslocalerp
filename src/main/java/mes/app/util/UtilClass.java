@@ -18,6 +18,24 @@ import java.util.Optional;
 
 public class UtilClass {
 
+    //안전하게 int 반환 , 기본값 지정 및 캐스팅 실패시 defaultValue로 리턴
+    public static Integer toIntOrDefault(Object obj, int defaultValue){
+
+            if(obj instanceof Number){
+                return ((Number) obj).intValue();
+            }
+
+            if(obj instanceof String){
+                try {
+                    return Integer.parseInt((String) obj);
+                }catch (NumberFormatException e){
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
+    }
+
+
     public static Integer getInt(Map<String, Object> map, String key) {
         if (map == null || key == null) return null;
 
@@ -88,6 +106,7 @@ public class UtilClass {
         }
         return null;
     }
+
     /***
      * 세션에서 사업자번호 추출하는 메서드
      * **/

@@ -10,6 +10,7 @@ import mes.app.naverCloud.dto.NcpMetricResponse;
 import mes.app.naverCloud.dto.NetworkChartDto;
 import mes.app.naverCloud.strategy.MetricTimeRangeStrategy;
 import mes.app.util.RedisService;
+import mes.app.util.UtilClass;
 import mes.domain.model.AjaxResult;
 import mes.domain.services.SqlRunner;
 
@@ -154,13 +155,17 @@ public class NcpMonitoringService {
 
     //region: 월별 고객사 가입현황
     //월별 가입현황 조회
-    public List<Map<String, Object>> getMontlyRegisterList(String date){
+    public List<Map<String, Object>> getMontlyRegisterList(String date, int pageNumber, int pageSize){
 
         date = date.replaceAll("-", "");
+        int offset = (pageNumber - 1) * pageSize;
 
         MapSqlParameterSource param = new MapSqlParameterSource();
 
         param.addValue("date", "%" + date + "%");
+        param.addValue("limit", pageSize);
+        param.addValue("offset", offset);
+
 
         String sql = """
                 select spjangnm,
@@ -170,10 +175,13 @@ public class NcpMonitoringService {
                 	WHEN "state" = 'X' THEN '미승인'
                 	ELSE "state"
                 END AS "state_text",
-                subscriptiondate
+                subscriptiondate,
+                COUNT(*) OVER() as total_count
                 from
                 tb_xa012
                 where subscriptiondate like :date
+                order by subscriptiondate, spjangcd desc
+                limit :limit offset :offset
                 """;
         List<Map<String, Object>> items = this.sqlRunner.getRows(sql, param);
 
@@ -183,40 +191,53 @@ public class NcpMonitoringService {
 
     //region: api 콜 횟수 (고객사별)
     //facade : 최종호출 로직 (api 콜 횟수)
-    public List<Map<String, Object>> getApiCntListBySpjangcd(){
+    public List<Map<String, Object>> getApiCntListBySpjangcd(int pageNumber, int pageSize) {
 
-        //이번달 모든 사업장들의 api 콜 횟수
-        Map<String, Object> thisMonthDataPaged = getThisMonthDataPaged(0, 10);
-        List<Map<String, Object>> redisDataList = (List<Map<String, Object>>) thisMonthDataPaged.get("data");
+        // 1. RDB에서 먼저 페이징된 사업장 목록 가져오기
+        List<Map<String, Object>> spjangList = getSpjangList(pageNumber, pageSize);
+
+        // 2. 사업장 코드 추출해서 Redis 조회
+        List<String> codes = spjangList.stream()
+                .map(m -> String.valueOf(m.get("spjangcd")))
+                .collect(Collectors.toList());
+
+        Map<String, Object> thisMonthData = getThisMonthData(codes);
+        List<Map<String, Object>> redisDataList = (List<Map<String, Object>>) thisMonthData.get("data");
 
         Map<String, Long> redisMap = redisDataList.stream()
                 .collect(Collectors.toMap(
                         item -> String.valueOf(item.get("spjangcd")),
-                        item -> (Long)item.getOrDefault("totalCount", 0L),
+                        item -> (Long) item.getOrDefault("totalCount", 0L),
                         (existing, replacement) -> existing
                 ));
 
-        //RDB에서 가져온 사업장명과 사업장코드들
-        List<Map<String, Object>> spjangList = getSpjangList();
 
         List<Map<String, Object>> ApicombinedList = new ArrayList<>();
 
         for(Map<String, Object> spjang : spjangList){
             String spjangCode = String.valueOf(spjang.get("spjangcd"));
-            Integer apiCallLimit = Optional.ofNullable((Integer) spjang.get("api_call_limit")).orElse(0);
+            Integer apiCallLimit = UtilClass.toIntOrDefault(spjang.get("api_call_limit"), 0);
 
             String status = "";
+            long overCall = 0L;
+            long overCallFee = 0L;
 
             Long callCount = redisMap.getOrDefault(spjangCode, 0L);
+            Integer DefaultPrice = UtilClass.toIntOrDefault(spjang.get("price"), 0);
 
             if(apiCallLimit - callCount > 0){
                 status = "정상";
+                overCallFee = DefaultPrice;
             }else{
                 status = "초과";
+                overCall = callCount - apiCallLimit;
+                overCallFee = (overCall * 4) + DefaultPrice;
             }
 
             spjang.put("apiCallCount", callCount);
             spjang.put("status", status);
+            spjang.put("overCall", overCall);
+            spjang.put("overCallFee", overCallFee);
 
             ApicombinedList.add(spjang);
         }
@@ -224,29 +245,17 @@ public class NcpMonitoringService {
     }
 
 
-    //redis에서 고객사별로 api 콜 호출 횟수 조회 (페이징)
+    //redis에서 고객사별로 api 콜 호출 횟수 조회
     //TODO: 분석필요
-    private Map<String, Object> getThisMonthDataPaged(int page, int size) {
+    private Map<String, Object> getThisMonthData(List<String> codes) {
         // 1. 현재 날짜 정보 가져오기
         LocalDate today = LocalDate.now();
         String currentYearMonth = today.format(DateTimeFormatter.ofPattern("yyyyMM"));
-        int currentDay = today.getDayOfMonth(); // 오늘이 19일이면 19까지
+        int currentDay = today.getDayOfMonth();
 
-        // 2. 모든 사업장 코드 추출 (MES:*:202602* 패턴으로 이번 달 데이터가 있는 사업장만 스캔)
-        Set<String> allSpjangCodes = getSpjangCodesByScan(currentYearMonth);
-        List<String> sortedCodes = allSpjangCodes.stream().sorted().collect(Collectors.toList());
-
-        // 3. 페이징 처리
-        int totalCount = sortedCodes.size();
-        int fromIndex = Math.min(page * size, totalCount);
-        int toIndex = Math.min(fromIndex + size, totalCount);
-
-        if (fromIndex >= totalCount) return Map.of("data", Collections.emptyList(), "total", 0);
-        List<String> pagedCodes = sortedCodes.subList(fromIndex, toIndex);
-
-        // 4. 파이프라인으로 이번 달 1일부터 오늘까지의 데이터만 '딱 한 번' 통신
+        // 2. 파이프라인으로 이번 달 1일부터 오늘까지의 데이터만 '딱 한 번' 통신
         List<Object> rawResults = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (String code : pagedCodes) {
+            for (String code : codes) {
                 for (int day = 1; day <= currentDay; day++) {
                     String key = "MES:" + code + ":" + currentYearMonth + String.format("%02d", day);
                     connection.stringCommands().get(key.getBytes());
@@ -255,10 +264,10 @@ public class NcpMonitoringService {
             return null;
         });
 
-        // 5. 결과 가공 (사업장별로 1일~오늘치 합산)
+        // 3. 결과 가공 (사업장별로 1일~오늘치 합산)
         List<Map<String, Object>> finalData = new ArrayList<>();
         int resultIdx = 0;
-        for (String code : pagedCodes) {
+        for (String code : codes) {
             long monthlySum = 0;
             for (int j = 0; j < currentDay; j++) {
                 Object val = rawResults.get(resultIdx++);
@@ -277,8 +286,6 @@ public class NcpMonitoringService {
 
         return Map.of(
                 "data", finalData,
-                "total", totalCount,
-                "page", page,
                 "currentMonth", currentYearMonth
         );
     }
@@ -303,20 +310,31 @@ public class NcpMonitoringService {
 
 
     // 계약 고객사 현황 리스트
-    private List<Map<String, Object>> getSpjangList(){
+    private List<Map<String, Object>> getSpjangList(int pageNumber, int pageSize){
+
+        int offset = (pageNumber - 1) * pageSize;
 
         MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("limit", pageSize);
+        param.addValue("offset", offset);
+
 
         String sql = """
                 select
                 a.spjangnm,
                 a.spjangcd,
-                b.api_call_limit
+                b.name, -- 서비스이름
+                b.price, --기본요금
+                b.api_call_limit, --기본제공 api 호출량
+                b.extra_api_unit_price, --1회 호출당 가격
+                COUNT(*) OVER() AS total_count
                 from
                 tb_xa012 a
                 left join bill_plans b
                 on a.bill_plans_id = b.id
                 where "state" = 'O'
+                order by subscriptiondate, spjangcd desc
+                limit :limit offset :offset
                 """;
         List<Map<String, Object>> items = this.sqlRunner.getRows(sql, param);
 
