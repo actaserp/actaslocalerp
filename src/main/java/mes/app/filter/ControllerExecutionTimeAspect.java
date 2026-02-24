@@ -76,7 +76,8 @@ public class ControllerExecutionTimeAspect implements Filter {
     }
 
     private boolean isExcludedPath(String uri){
-        return uri.startsWith("/api/system/") || uri.startsWith("/api/common");
+        return uri.startsWith("/api/system/") || uri.startsWith("/api/common")
+                || uri.contains("/pages");
     }
 
 }

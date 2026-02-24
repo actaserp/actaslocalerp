@@ -355,7 +355,6 @@
             init() {
                 this.initGrids();
                 this.initCharts(); // 기존 게이지 차트 로직 (유지)
-                this.setData();
             }
 
             searchMainData(){
@@ -412,7 +411,7 @@
                     'pageSize': this.pageSize
                 };
 
-                AjaxUtil.getAsyncData("/api/monitoring/monthly_read", params, function(result) {
+                AjaxUtil.getAsyncData("/api/monitoring/pages/monthly", params, function(result) {
                     if (result.success) {
                         const totalCount = result.data.length > 0 
                             ? parseInt(result.data[0].total_count) 
@@ -439,7 +438,7 @@
                     'pageSize': this.usagePageSize
                 };
 
-                AjaxUtil.getAsyncData("/api/monitoring/api_count_list", params, function(result) {
+                AjaxUtil.getAsyncData("/api/monitoring/pages/usage", params, function(result) {
                     if (result.success) {
                         const totalCount = result.data.length > 0
                             ? parseInt(result.data[0].total_count)
@@ -511,16 +510,21 @@
                                     if (overCallValue > 0) {
                                         e.cell.style.color = 'red';
                                         e.cell.style.fontWeight = 'bold'; // 가독성을 위해 굵게 추가
+                                    } else {
+                                        e.cell.style.color = '';
+                                        e.cell.style.fontWeight = '';
                                     }
                                 }
 
                                 // 기존 트래픽 초과 조건부 서식 유지
                                 if (item.is_traffic_excess) {
                                     e.cell.classList.add('usage-excess');
+                                } else {
+                                    e.cell.classList.remove('usage-excess');
                                 }
                             }
                         }
-                    });
+                        });
             }
 
             
@@ -636,46 +640,6 @@
                 $('#btnFirst_usage, #btnPrev_usage').prop('disabled', this.usageCurrentPage <= 1);
                 $('#btnNext_usage, #btnLast_usage').prop('disabled', this.usageCurrentPage >= this.usageTotalPages);
             }
-
-            setData() {
-                // 1. VM 사용량 차트 데이터 세팅 (목데이터)
-                const mockChartData = { cpuUsage: 48, ramUsage: 76 };
-                //this.updateGauge(this.charts.cpu, 'cpuValue', mockChartData.cpuUsage);
-                //this.updateGauge(this.charts.ram, 'ramValue', mockChartData.ramUsage);
-
-                let rateApiData = {
-                    data: [
-                        { customer: '(주)테크솔루션', grade: 'Premium', userNum: '사용중 : (3/5)' },
-                        { customer: '에이아이 소프트', grade: 'Basic', userNum: '사용중 : (2/5)' },
-                        { customer: '클라우드 시스템', grade: 'Standard', userNum: '사용중 : (1/5)' },
-                        { customer: '데이터 웍스', grade: 'Enterprise', userNum: '사용중 : (3/50)' },
-                        { customer: '네트워크 보안', grade: 'Basic', userNum: '사용중 : (3/5)' },
-                        { customer: '미래 정보통신', grade: 'Standard', userNum: '사용중 : (2/5)' }
-                    ]
-                };
-
-                let requestData = {
-                    data: [
-                        { customer: '(주)테크솔루션', user_id: 'tech_admin', confirmation: '확인완료 (26.02.05)' },
-                        { customer: '에이아이 소프트', user_id: 'ai_user01', confirmation: '대기중' },
-                        { customer: '클라우드 시스템', user_id: 'cloud_master', confirmation: '확인완료 (26.02.04)' },
-                        { customer: '데이터 웍스', user_id: 'dw_manager', confirmation: '진행중' },
-                        { customer: '네트워크 보안', user_id: 'secu_09', confirmation: '대기중' },
-                        { customer: '미래 정보통신', user_id: 'future_dev', confirmation: '확인완료 (26.02.01)' },
-                        { customer: '글로벌 링크', user_id: 'link_ceo', confirmation: '대기중' },
-                        { customer: '이노베이션 랩', user_id: 'lab_staff', confirmation: '확인완료 (26.01.30)' }
-                    ]
-                };
-            }
-
-            // 게이지 업데이트용 함수
-            // updateGauge(chart, valueElementId, value) {
-            //     if (!chart) return;
-            //     chart.data.datasets[0].data = [value, 100 - value];
-            //     chart.update();
-            //     const valEl = document.getElementById(valueElementId);
-            //     if (valEl) valEl.innerText = value + '%';
-            // }
 
 
             //게이지 업데이트 함수

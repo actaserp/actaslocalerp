@@ -7,12 +7,10 @@ import mes.app.naverCloud.dto.NetworkChartDto;
 import mes.app.naverCloud.service.NcpMonitoringService;
 import mes.app.naverCloud.strategy.MonthlyRange;
 import mes.app.naverCloud.strategy.RealTimeRange;
-import mes.app.util.RedisService;
 import mes.domain.model.AjaxResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/monitoring")
@@ -80,10 +77,10 @@ public class DashBoardMonitoringController {
 
         Map<String, Object> dataList = new HashMap<>();
         try{
-            dataList.put("resource", null);
-            //dataList.put("resource", resourceSummary.join());
-            dataList.put("traffic", null);
-            //dataList.put("traffic", trafficHistory.join());
+            //dataList.put("resource", null);
+            dataList.put("resource", resourceSummary.join());
+            //dataList.put("traffic", null);
+            dataList.put("traffic", trafficHistory.join());
             dataList.put("monthly", montlyList.join());
             dataList.put("apiCntList", apiCntListBySpjangcd.join());
         }catch (Exception e){
@@ -92,12 +89,13 @@ public class DashBoardMonitoringController {
         return AjaxResult.success(null, dataList);
     }
 
-    @GetMapping("/monthly_read")
+    //월별 가입현황 (페이징)
+    //@GetMapping("/monthly_read")
+    @GetMapping("/pages/monthly")
     public AjaxResult getMontlyList(@RequestParam String monthlyStartDate,
                                     @RequestParam(defaultValue = "1") int pageNumber,
                                     @RequestParam(defaultValue = "10") int pageSize
                                     ){
-
         List<Map<String, Object>> data = ncpMonitoringService.getMontlyRegisterList(
                 monthlyStartDate, pageNumber, pageSize
         );
@@ -106,7 +104,9 @@ public class DashBoardMonitoringController {
         return AjaxResult.success(null, data);
     }
 
-    @GetMapping("/api_count_list")
+    //실시간 사용량 및 정산현황 (페이징)
+    //@GetMapping("/api_count_list")
+    @GetMapping("/pages/usage")
     public AjaxResult getApiCntList(
             @RequestParam(defaultValue = "1") int pageNumber,
             @RequestParam(defaultValue = "10") int pageSize
@@ -119,7 +119,8 @@ public class DashBoardMonitoringController {
     @GetMapping("/local_cache/save")
     public AjaxResult localCacheSetRDB(){
 
-        ncpMonitoringService.syncCacheToDb();
+        ncpMonitoringService.redisDataSync();
+        //ncpMonitoringService.syncCacheToDb();
 
         return AjaxResult.success(null, null);
     }

@@ -380,4 +380,46 @@ public class NcpMonitoringService {
             log.info("[Sync] 총 {} 건의 데이터가 Redis로 합산 완료되었습니다.", syncedKeys.size());
         }
     }
+
+    public void redisDataSync() {
+        // 1. RDB에서 사업장코드 조회
+        String sql = "SELECT spjangcd FROM tb_xa012 WHERE state = 'O'";
+        List<Map<String, Object>> spjangList = sqlRunner.getRows(sql, new MapSqlParameterSource());
+
+        // 2. 이번달 1일~오늘까지 날짜 생성
+        LocalDate today = LocalDate.now();
+        String yearMonth = today.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        int currentDay = today.getDayOfMonth();
+
+
+        // 3. 파이프라인으로 한번에 삽입
+        redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            int rna = 1;
+
+            for (Map<String, Object> spjang : spjangList) {
+
+                rna++;
+
+                String code = String.valueOf(spjang.get("spjangcd"));
+                for (int day = 1; day <= currentDay; day++) {
+                    String key = "MES:" + code + ":" + yearMonth + String.format("%02d", day);
+
+                    int randomValue;
+                    if(rna % 2 == 0){
+                        randomValue = (int)(Math.random() * 1000001);
+                    }else{
+                        randomValue = (int)(Math.random() * 1001);
+                    }
+
+                    connection.stringCommands().set(
+                            key.getBytes(),
+                            String.valueOf(randomValue).getBytes()
+                    );
+                }
+            }
+            return null;
+        });
+
+        System.out.println("Redis 목데이터 삽입 완료");
+    }
 }
