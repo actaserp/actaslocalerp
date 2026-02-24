@@ -382,6 +382,13 @@ public class NcpMonitoringService {
     }
 
     public void redisDataSync() {
+
+        // 0. 기존 MES 데이터 삭제
+        Set<String> keys = redisTemplate.keys("MES:*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+
         // 1. RDB에서 사업장코드 조회
         String sql = "SELECT spjangcd FROM tb_xa012 WHERE state = 'O'";
         List<Map<String, Object>> spjangList = sqlRunner.getRows(sql, new MapSqlParameterSource());
