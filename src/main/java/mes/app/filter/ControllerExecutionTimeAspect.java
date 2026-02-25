@@ -44,22 +44,21 @@ public class ControllerExecutionTimeAspect implements Filter {
         long start = System.currentTimeMillis();
         String method = req.getMethod();
 
+        String spjangcd = request.getParameter("spjangcd");
+        if(spjangcd != null && !spjangcd.isEmpty()){
+            String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+            String redisKey = "MES:" + spjangcd + ":" + today;
+
+            redisService.incrementValue(redisKey);
+        }
+
         try {
             chain.doFilter(request, response);
         } finally {
 
             long end = System.currentTimeMillis();
-             double seconds = (end - start) / 1000.0;
-
-             String spjangcd = request.getParameter("spjangcd");
-
-             if(spjangcd != null && !spjangcd.isEmpty()){
-                 String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
-                 String redisKey = "MES:" + spjangcd + ":" + today;
-
-                 redisService.incrementValue(redisKey);
-             }
+            double seconds = (end - start) / 1000.0;
 
             log.info("[API 실행시간111] {} {} → {}초",
                     method, uri, String.format("%.3f", seconds));
@@ -77,7 +76,7 @@ public class ControllerExecutionTimeAspect implements Filter {
 
     private boolean isExcludedPath(String uri){
         return uri.startsWith("/api/system/") || uri.startsWith("/api/common")
-                || uri.contains("/pages");
+                || uri.contains("/pages") || uri.contains("/api/monitoring");
     }
 
 }

@@ -454,7 +454,6 @@
 
             initGrids() {
 
-
                 this.monthlySignupGrid = new wijmo.grid.FlexGrid('#monthlySignupGrid', {
                     autoGenerateColumns: false,
                     headersVisibility: wijmo.grid.HeadersVisibility.Column,
@@ -491,11 +490,11 @@
                             { header: '사업장코드', binding: 'spjangcd', width: 100, align: 'center' },
                             { header: '사업장명', binding: 'spjangnm', width: 150, align: 'left' },
                             { header: '이용서비스플랜', binding: 'name', width: '*', align: 'left' },
-                            { header: '기본요금', binding: 'price', width: '*', align: 'left' },
+                            { header: '기본요금', binding: 'price', width: '*', align: 'right' },
                             
-                            { header: '기본제공 api 호출량', binding: 'api_call_limit', width: '*', align: 'left' },
-                            { header: 'api 호출량', binding: 'apiCallCount', width: 150, align: 'center' },
-                            { header: 'api 초과호출량', binding: 'overCall', width: 150, align: 'center' },
+                            { header: '기본제공 api 호출량', binding: 'api_call_limit', width: '*', align: 'right' },
+                            { header: 'api 호출량', binding: 'apiCallCount', width: 150, align: 'right' },
+                            { header: 'api 초과호출량', binding: 'overCall', width: 150, align: 'right' },
                             { header: '이용료', binding: 'overCallFee', width: 120, align: 'right', format: 'n0' }
                         ],
                         formatItem: (s, e) => {
