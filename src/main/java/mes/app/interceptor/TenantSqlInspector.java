@@ -23,7 +23,7 @@ public class TenantSqlInspector implements StatementInspector {
                 || lowSql.contains("sys_option")
                 || lowSql.contains("label_code")
                 || lowSql.contains("label_code_lang")
-                || lowSql.contains("sys_common_code")
+                || lowSql.contains("sys_code")
         ) {
             return sql;
         }

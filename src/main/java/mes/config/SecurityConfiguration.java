@@ -64,7 +64,7 @@ public class SecurityConfiguration {
                 .authorizeRequests(auth -> auth
                         .antMatchers(
                                 // 기본 페이지 및 인증
-                                "/login", "/logout", "/postLogin", "/intro", "/error", "/alive",
+                                "/login", "/logout", "/postLogin", "/intro", "/error", "/alive", "/bill_plan_read", "/biz/save",
                                 // 모바일 관련 경로 추가
                                 "/mlogin","/api/mobile_main/**",
                                 // 정적 리소스

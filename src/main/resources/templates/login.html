@@ -234,6 +234,10 @@
             padding: 20px; /* 살짝 여백만 */
         }
 
+        .extra-charge{
+            font-size: 0.85em;
+        }
+
         @media (max-width: 768px) {
             .login-wrap .left {
                 display: none;
@@ -391,10 +395,9 @@
                             <tr>
                                 <th>선택한 구독 플랜</th>
                                 <td colspan="3">
-                                    <select id="spjangcd" name="spjangcd" class="wp35">
+                                    <select id="bill_plan" name="bill_plan" class="wp35">
                                         <option value="">플랜을 선택해 주세요</option>
-                                        <option value="standard">Standard (월 300,000원)</option>
-                                        <option value="premium">Premium (월 3,000,000원)</option>
+
                                     </select>
                                     <span class="hint-text" style="margin-left: 10px; color: #666;">* 입금 확인 후 최종 승인됩니다.</span>
                                 </td>
@@ -523,24 +526,7 @@
             <div class="popup-contents">
 
                 <div class="plan-container">
-                    <div class="plan-box active">
-                        <h3>Standard</h3>
-                        <p class="price">월 300,000원</p>
-                        <ul>
-                            <li>사용자 5인 포함</li>
-                            <li>스토리지 10GB</li>
-                            <li>Api호출 50,000건 무료</li>
-                        </ul>
-                    </div>
-                    <div class="plan-box">
-                        <h3>Premium</h3>
-                        <p class="price">월 3,000,000원</p>
-                        <ul>
-                            <li>사용자 50인 포함</li>
-                            <li>스토리지 10GB</li>
-                            <li>Api호출 500,000건 무료</li>
-                        </ul>
-                    </div>
+
                 </div>
 
             </div>
@@ -670,6 +656,8 @@
 
         popup.style.display = 'block';
         wrapper.style.display = 'block';
+
+        RegisterUserOpen();
     }
 
     function RegisterUserClose() {
@@ -684,8 +672,50 @@
         let popup = document.getElementById('popup2');
         let wrapper = document.getElementById('wrapper2');
 
-        popup.style.display = 'block';
-        wrapper.style.display = 'block';
+        let fnSuccess = function (res) {
+            if (res.success) {
+                let list = res.data;
+                let html = "";
+
+                list.forEach((plan, index) => {
+                    // 첫 번째 요금제나 특정 조건에 active 클래스 부여
+                    let activeClass = index === 0 ? "active" : "";
+
+                    // 금액 포맷팅 (200000 -> 200,000)
+                    let formattedPrice = Number(plan.price).toLocaleString();
+                    let formattedLimit = Number(plan.api_call_limit).toLocaleString();
+
+                    html += `
+                    <div class="plan-box ${activeClass}" onclick="selectPlan(this, ${plan.id})">
+                        <h3>${plan.name}</h3>
+                        <p class="price">월 ${formattedPrice}원</p>
+                        <ul>
+                            <li>사용자 ${plan.user_limit}인 포함</li>
+                            <li>Api호출 ${formattedLimit}건 무료</li>
+                            <li class="extra-charge">초과 호출 시 건당 ${plan.extra_api_unit_price}원 (종량제)</li>
+                        </ul>
+                    </div>
+                `;
+                });
+
+                document.querySelector('.plan-container').innerHTML = html;
+
+                popup.style.display = 'block';
+                wrapper.style.display = 'block';
+            } else {
+                Alert.alert('', res.message);
+            }
+        }
+        // 데이터 조회 시 보낼 파라미터가 없다면 빈 객체 {} 전달
+        AjaxUtil.getAsyncData("/bill_plan_read", {}, fnSuccess);
+    }
+
+    // 요금제 박스 클릭 시 시각적 효과를 주는 함수
+    function selectPlan(element, planId) {
+        document.querySelectorAll('.plan-box').forEach(box => box.classList.remove('active'));
+        element.classList.add('active');
+        // 선택된 planId를 전역변수나 버튼의 data 속성에 저장해두면 '구독 신청' 시 편리합니다.
+        document.getElementById('btnRequestSub').dataset.selectedPlanId = planId;
     }
 
     function subscriptionModalClose() {
@@ -696,10 +726,84 @@
         wrapper.style.display = 'none';
     }
 
+    // 요금제 카드 클릭 이벤트
+    $('.plan-box').click(function() {
+        // 1. 모든 카드의 active 제거 후 클릭한 것만 추가
+        $('.plan-box').removeClass('active');
+        $(this).addClass('active');
 
-</script>
+        // 2. 카드 내의 타이틀 텍스트를 읽어서 select box 변경
+        const planName = $(this).find('h3').text().toLowerCase();
+        $('#selectedPlan').val(planName);
+    });
 
-<script type="text/javascript">
+    // select box 변경 시 카드 active 변경
+    $('#selectedPlan').change(function() {
+        const selected = $(this).val();
+        $('.plan-box').removeClass('active');
+
+        $('.plan-box').each(function() {
+            if ($(this).find('h3').text().toLowerCase() === selected) {
+                $(this).addClass('active');
+            }
+        });
+    });
+
+    // 1. 구독 모달에서 [구독 신청하기] 버튼 클릭 시
+    $('#btnRequestSub').click(function() {
+        // 현재 선택된 플랜 확인 (active 클래스가 붙은 카드)
+        let selectedPlanValue = "";
+        if ($('.plan-box.active h3').text().toLowerCase().indexOf('standard') !== -1) {
+            selectedPlanValue = "1";
+        } else {
+            selectedPlanValue = "2";
+        }
+
+        // 구독 모달 닫기
+        subscriptionModalClose();
+
+        // 사업장 신청 모달 열기
+        RegisterUserOpen();
+
+        // 신청 모달 내의 select 박스 값을 해당 플랜으로 자동 변경
+        $('#spjangcd').val(selectedPlanValue);
+    });
+
+    // 2. 사업장 신청 모달 열기 함수 (기존 함수 보완)
+    function RegisterUserOpen() {
+        // 1. 폼 초기화
+        $('#registerForm')[0].reset();
+
+        // 2. 요금제 정보 로드
+        let fnSuccess = function (res) {
+            if (res.success) {
+                let list = res.data;
+                let $select = $('#bill_plan');
+
+                // 기본 옵션만 남기고 초기화
+                $select.empty();
+                $select.append('<option value="">플랜을 선택해 주세요</option>');
+
+                // API로 가져온 리스트 추가
+                list.forEach(plan => {
+                    let formattedPrice = Number(plan.price).toLocaleString();
+                    // value값은 테이블의 id, 텍스트는 이름과 가격 표시
+                    let optionHtml = `<option value="${plan.id}">${plan.name} (월 ${formattedPrice}원)</option>`;
+                    $select.append(optionHtml);
+                });
+
+                // 3. 팝업 표시
+                $('#popup1').fadeIn();
+                $('#wrapper1').fadeIn();
+            } else {
+                Alert.alert('', '요금제 정보를 불러오는데 실패했습니다.');
+            }
+        };
+
+        // 요금제 데이터 조회 호출
+        AjaxUtil.getAsyncData("/bill_plan_read", {}, fnSuccess);
+    }
+
     var isChangeLang = 'N';
 
 
@@ -974,6 +1078,49 @@
             });
         });
 
+        $('#BtnAuthenticationRegister').click(function (e) {
+
+            console.log('클릭');
+            let email = document.getElementById('email');
+            let mail = email.value;
+
+            let usernm = document.getElementById('name').value;
+            let content = "사용자권한신청";
+
+
+            if (mail.trim().length === 0) {
+                Alert.alert('', '이메일을 입력해주세요.');
+                email.focus();
+                return;
+            }
+            if (!emailValidate(mail.trim())) {
+                Alert.alert('', '유효한 이메일 형식을 입력하세요.');
+                email.focus();
+                return false;
+            }
+            let data = {usernm: usernm || "신규사용자", mail, content, type: "new"}
+            showLoader();
+            let fnSuccess = function (res) {
+                if (res.success) {
+                    hideLoader();
+
+                    Alert.alert('', res.message, function (e) {
+
+                        startTimer(180, 'timer2');
+                    });
+                } else if (!res.success) {
+                    hideLoader();
+                    Alert.alert('', res.message, function () {
+                    });
+
+                }
+            };
+            AjaxUtil.postAsyncData("/user-auth/AuthenticationEmail", data, fnSuccess, function () {
+                hideLoader();
+                Alert.alert('', '서버통신 실패');
+            });
+        });
+
 
         //비밀번호 재설정
         $('#btnPwSearch').click(function () {
@@ -1040,57 +1187,102 @@
         })
 
 
-        $('#btnSaveAuth').click(function (e) {
+        $('#btnSaveAuth').off('click').on('click', function (e) {
+            const $form = $('#registerForm');
+            let data = FormUtil.extractForm($form);
+            console.log('data', data);
 
-            const emailInput = document.getElementById('email');
-            const emailValue = emailInput.value.trim();
-
-            if (!emailValidate(emailValue.trim())) {
-                Alert.alert('', '유효한 이메일 형식을 입력하세요.');
+            // 1. 계정 정보 검사
+            if (!data.id || !data.id.trim() ) {
+                console.log('data', data);
+                Alert.alert('', 'ID를 입력하세요.');
                 return false;
             }
 
-
-            let password = document.getElementById('password').value;
-            let password2 = document.getElementById('passwordchk').value;
-
-            if (password !== password2) {
-                Alert.alert('', '비밀번호가 맞지 않습니다.');
-                return;
+            if (!data.password || data.password !== data.passwordchk) {
+                Alert.alert('', '비밀번호가 입력되지 않았거나 일치하지 않습니다.');
+                return false;
             }
 
-            let data = FormUtil.extractForm($('#bomForm'));
-
-
-            let spjangcd = $('#spjangcd').val();
-            if (!spjangcd) {
-                Alert.alert('', '사업장을 선택해주세요.');
-                return;
+            if (!data.name.trim()) {
+                Alert.alert('', '성명을 입력해 주세요.');
+                return false;
             }
-            data.spjangcd = spjangcd;
 
+            // 2. 사업장 정보 검사
+            if (!data.bizName.trim()) {
+                Alert.alert('', '사업자명을 입력해 주세요.');
+                return false;
+            }
 
+            if (!data.bizNo.trim()) {
+                Alert.alert('', '사업자 등록번호를 입력해 주세요.');
+                return false;
+            }
+
+            if (!data.bill_plan) {
+                Alert.alert('', '구독 플랜을 선택해 주세요.');
+                return false;
+            }
+
+            // [Step 1] 사업장 정보(tb_xa012)부터 저장
+            $.ajax({
+                url: withCtx('/biz/save'),
+                method: 'POST',
+                data: {
+                    bizName: data.bizName,
+                    bizNo: data.bizNo,
+                    bizType: data.bizType,
+                    bizItem: data.bizItem,
+                    bizAddr: data.bizAddr,
+                    bill_plan_id: data.bill_plan
+                },
+                headers: { 'X-CSRF-TOKEN': $('input[name="_csrf"]').val() },
+                success: function (bizRes) {
+                    if (bizRes.success) {
+                        // 사업장 생성 성공 시 반환된 spjangcd를 추출
+                        const generatedSpjangcd = bizRes.data;
+
+                        // [Step 2] 유저 정보 저장 (생성된 spjangcd 전달)
+                        saveUserInfo(data, generatedSpjangcd);
+                    } else {
+                        Alert.alert('', bizRes.message);
+                    }
+                },
+                error: function () {
+                    Alert.alert('', '사업장 정보 저장 중 에러가 발생하였습니다.');
+                }
+            });
+        });
+
+        function saveUserInfo(formData, spjangcd) {
             $.ajax({
                 url: withCtx('/user-auth/save'),
                 method: 'POST',
-                data: data,
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken
+                data: {
+                    id: formData.id,
+                    password: formData.password,
+                    name: formData.name,
+                    tel: formData.tel,
+                    spjangcd: spjangcd, // 생성된 코드 주입
+                    is_active: false    // 승인 대기 상태
                 },
-                success: function (response) {
-                    $("#modal-close-button").trigger('click');
-                    RegisterUserClose();
-                    $('#bomForm').find('#idx').val('');
-                    $('#bomForm')[0].reset();
-                    Alert.alert('', '이용신청이 완료되었습니다.');
+                headers: { 'X-CSRF-TOKEN': $('input[name="_csrf"]').val() },
+                success: function (userRes) {
+                    if (userRes.success) {
+                        Alert.alert('', '이용신청이 완료되었습니다. 승인 후 이용 가능합니다.', function() {
+                            RegisterUserClose();
+                            location.reload();
+                        });
+                    } else {
+                        Alert.alert('', userRes.message);
+                    }
                 },
-                error: function (error) {
-                    Alert.alert('', '에러가 발생하였습니다.');
+                error: function () {
+                    Alert.alert('', '계정 생성 중 에러가 발생하였습니다.');
                 }
             });
-
-
-        })
+        }
 
         function clearForm(param) {
             let clearValue = document.getElementById(param);
@@ -1231,64 +1423,6 @@
 
         $('#loginFrm').validate({submitHandler: submitHandler});
 
-
-    });
-
-    $(document).ready(function() {
-        // 요금제 카드 클릭 이벤트
-        $('.plan-box').click(function() {
-            // 1. 모든 카드의 active 제거 후 클릭한 것만 추가
-            $('.plan-box').removeClass('active');
-            $(this).addClass('active');
-
-            // 2. 카드 내의 타이틀 텍스트를 읽어서 select box 변경
-            const planName = $(this).find('h3').text().toLowerCase();
-            $('#selectedPlan').val(planName);
-        });
-
-        // select box 변경 시 카드 active 변경
-        $('#selectedPlan').change(function() {
-            const selected = $(this).val();
-            $('.plan-box').removeClass('active');
-
-            $('.plan-box').each(function() {
-                if ($(this).find('h3').text().toLowerCase() === selected) {
-                    $(this).addClass('active');
-                }
-            });
-        });
-
-        // 1. 구독 모달에서 [구독 신청하기] 버튼 클릭 시
-        $('#btnRequestSub').click(function() {
-            // 현재 선택된 플랜 확인 (active 클래스가 붙은 카드)
-            let selectedPlanValue = "";
-            if ($('.plan-box.active h3').text().toLowerCase().indexOf('standard') !== -1) {
-                selectedPlanValue = "standard";
-            } else {
-                selectedPlanValue = "premium";
-            }
-
-            // 구독 모달 닫기
-            subscriptionModalClose();
-
-            // 사업장 신청 모달 열기
-            RegisterUserOpen();
-
-            // 신청 모달 내의 select 박스 값을 해당 플랜으로 자동 변경
-            $('#spjangcd').val(selectedPlanValue);
-        });
-
-        // 2. 사업장 신청 모달 열기 함수 (기존 함수 보완)
-        function RegisterUserOpen() {
-            // 폼 초기화 (이전 입력값 삭제)
-            $('#registerForm')[0].reset();
-
-            // 만약 버튼을 통해서 온 게 아니라 직접 메뉴에서 들어온 경우라면 '선택' 기본값
-            // $('#spjangcd').val(""); // 필요시 설정
-
-            $('#popup1').fadeIn();
-            $('#wrapper1').fadeIn();
-        }
     });
 
 </script>

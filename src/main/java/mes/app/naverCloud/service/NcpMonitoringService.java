@@ -413,9 +413,9 @@ public class NcpMonitoringService {
 
                     int randomValue;
                     if(rna % 2 == 0){
-                        randomValue = (int)(Math.random() * 1000001);
+                        randomValue = (int)(Math.random() * 5001);
                     }else{
-                        randomValue = (int)(Math.random() * 1001);
+                        randomValue = (int)(Math.random() * 50);
                     }
 
                     connection.stringCommands().set(

@@ -112,4 +112,28 @@ public class Tb_xa012 {
 
     @Column(name = "eddate", length = 8)
     private String eddate;
+
+    @Column(name = "subscribe", length = 20)
+    private String subscribe;
+
+    @Column(name = "subscribeunit", length = 20)
+    private String subscribeunit;
+
+    @Column(name = "state", length = 20)
+    private String state;
+
+    @Column(name = "billingdate")
+    private Integer billingdate;
+
+    @Column(name = "expirationdate", length = 8)
+    private String expirationdate;
+
+    @Column(name = "chargeamount", length = 15)
+    private String chargeamount;
+
+    @Column(name = "subscriptiondate", length = 8)
+    private String subscriptiondate;
+
+    @Column(name = "bill_plans_id")
+    private Integer bill_plans_id;
 }

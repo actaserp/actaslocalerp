@@ -90,6 +90,19 @@ public class AccountService {
 		 return result;
 	 }
 
+	 public List<Map<String, Object>> getBillPlans() {
+
+		 MapSqlParameterSource dicParam = new MapSqlParameterSource();
+
+		 String sql = """
+                SELECT * FROM bill_plans
+            """;
+		 // SQL 실행
+		 List<Map<String, Object>> results = this.sqlRunner.getRows(sql, dicParam);
+
+		 return results;
+	 }
+
 
 
 }

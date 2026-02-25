@@ -21,7 +21,7 @@ public class WebMvcConfig implements WebMvcConfigurer{
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         // 1. 인증 관련 (Security permitAll과 일치)
-                        "/login", "/logout", "/postLogin", "/intro", "/error", "/alive",
+                        "/login", "/logout", "/postLogin", "/intro", "/error", "/alive", "/bill_plan_read", "/biz/save",
 
                         // 2. 정적 리소스 (이게 빠지면 화면 레이아웃이 깨집니다)
                         "/resource/**", "/img/**", "/images/**", "/js/**", "/css/**",

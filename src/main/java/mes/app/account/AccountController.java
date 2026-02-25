@@ -3,6 +3,8 @@ package mes.app.account;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +17,9 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
 import mes.app.MailService;
+import mes.app.transaction.service.SalesInvoiceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -53,6 +57,9 @@ public class AccountController {
 
 	@Autowired
 	MailService emailService;
+
+	@Autowired
+	SalesInvoiceService salesInvoiceService;
 
 	private final ConcurrentHashMap<String, String> tokenStore = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<String, Long> tokenExpiry = new ConcurrentHashMap<>();
@@ -389,8 +396,110 @@ public class AccountController {
 
 	}
 
+	@PostMapping("/biz/save")
+	@Transactional
+	public AjaxResult saveBiz(@RequestParam Map<String, Object> params) {
+		AjaxResult result = new AjaxResult();
 
+		try {
+			// 1. 데이터 추출
+			String bizName = (String) params.get("bizName");
+			String bizNo = (String) params.get("bizNo"); // 000-00-00000 형식
+			String bizType = (String) params.get("bizType");
+			String bizItem = (String) params.get("bizItem");
+			String bizAddr = (String) params.get("bizAddr");
+			String billPlanId = (String) params.get("bill_plan_id");
+			String corpNum = bizNo.replaceAll("-", ""); // 하이픈 제거
 
+			// 2. 휴/폐업 및 유효성 체크
+			// salesInvoiceService를 사용하여 국세청 기준 유효성 검사
+			if (salesInvoiceService.validateSingleBusiness(corpNum) == null) {
+				result.success = false;
+				result.message = "휴/폐업 또는 유효하지 않은 사업자번호입니다.\n사업자 등록번호를 확인해주세요.";
+				return result;
+			}
+
+			// 3. 이미 가입된 사업자인지 확인 (saupnum 컬럼 기준)
+			String checkSql = "SELECT COUNT(*) FROM tb_xa012 WHERE saupnum = :saupnum";
+			MapSqlParameterSource checkParam = new MapSqlParameterSource("saupnum", corpNum);
+
+			// queryForObject를 사용하여 Integer 클래스로 결과를 받습니다.
+			Integer count = this.sqlRunner.queryForObject(
+					checkSql,
+					checkParam,
+					new SingleColumnRowMapper<Integer>(Integer.class)
+			);
+
+			if (count != null && count > 0) {
+				result.success = false;
+				result.message = "이미 등록된 사업자번호입니다.";
+				return result;
+			}
+
+			// 4. spjangcd 결정
+			String spjangcd = generateUniqueSpjangCd();
+
+			// 5. tb_xa012 저장 SQL (엔티티 컬럼명 매핑)
+			String sql = """
+            INSERT INTO tb_xa012 
+            (spjangcd, saupnum, spjangnm, biztype, item, adresa, bill_plans_id, state, subscriptiondate)
+            VALUES 
+            (:spjangcd, :saupnum, :spjangnm, :biztype, :item, :adresa, :bill_plans_id, :state, :subscriptiondate)
+        """;
+
+			MapSqlParameterSource dicParam = new MapSqlParameterSource();
+			dicParam.addValue("spjangcd", spjangcd);
+			dicParam.addValue("saupnum", corpNum); // 하이픈 제거된 번호
+			dicParam.addValue("spjangnm", bizName);
+			dicParam.addValue("biztype", bizType);
+			dicParam.addValue("item", bizItem);
+			dicParam.addValue("adresa", bizAddr);
+			dicParam.addValue("bill_plans_id", Integer.parseInt(billPlanId));
+			dicParam.addValue("state", "신청"); // 초기 상태값
+			dicParam.addValue("subscriptiondate", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+
+			this.sqlRunner.execute(sql, dicParam);
+
+			// 6. 성공 시 반환 (유저 저장 시 spjangcd 연결)
+			result.success = true;
+			result.data = spjangcd;
+
+		} catch (Exception e) {
+			result.success = false;
+			result.message = "사업장 정보 저장 중 오류가 발생했습니다: " + e.getMessage();
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
+	// 중복되지 않는 2자리 코드 생성 함수 (내부 로직)
+	private String generateUniqueSpjangCd() {
+		String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		Random random = new Random();
+		String newCd = "";
+		boolean isDuplicate = true;
+
+		while (isDuplicate) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < 2; i++) {
+				sb.append(chars.charAt(random.nextInt(chars.length())));
+			}
+			newCd = sb.toString();
+
+			// DB에 존재하는지 확인
+			String checkSql = "SELECT COUNT(*) FROM tb_xa012 WHERE spjangcd = :spjangcd";
+			MapSqlParameterSource param = new MapSqlParameterSource("spjangcd", newCd);
+
+			// 이전에 해결한 RowMapper 방식 적용
+			Integer count = this.sqlRunner.queryForObject(checkSql, param, (rs, rowNum) -> rs.getInt(1));
+
+			if (count == null || count == 0) {
+				isDuplicate = false; // 중복 아니면 탈출
+			}
+		}
+		return newCd;
+	}
 
 	@PostMapping("/user-auth/save")
 	@Transactional
@@ -580,4 +689,19 @@ public class AccountController {
 
 		return result;
 	}
+
+	@GetMapping("/bill_plan_read") // Post로 통일
+	public AjaxResult getBillPlans(){
+		AjaxResult result = new AjaxResult();
+		try {
+			List<Map<String, Object>> list = accountService.getBillPlans();
+			result.data = list;
+			result.success = true; // 성공 플래그 명시
+		} catch (Exception e) {
+			result.success = false;
+			result.message = "요금제 정보를 불러오는데 실패했습니다.";
+		}
+		return result;
+	}
+
 }

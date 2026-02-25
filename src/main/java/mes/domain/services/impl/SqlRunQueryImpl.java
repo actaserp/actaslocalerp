@@ -114,7 +114,11 @@ public class SqlRunQueryImpl implements SqlRunner {
 			String lowSql = sql.toLowerCase();
 
 			// 1. 화이트리스트 (로그인, 공통코드 등)
-			String[] whiteList = {"menu_folder", "label_code_lang", "bookmark", "menu_item", "sys_option", "sys_code"};
+			String[] whiteList =
+					{"menu_folder", "label_code_lang"
+							, "bookmark", "menu_item"
+							, "sys_option", "sys_code"
+							, "bill_plans"};
 
 			for (String table : whiteList) {
 				if (lowSql.contains(table)) return;
