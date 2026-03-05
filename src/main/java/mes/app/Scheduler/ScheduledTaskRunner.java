@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mes.app.Scheduler.SchedulerService.AccountSyncService;
 import mes.app.Scheduler.SchedulerService.ApiUsageService;
-import mes.app.SpringBatch.ApiTimeLogProcessor.job.ApiLogCollectBatchJobConfig;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -33,12 +33,6 @@ public class ScheduledTaskRunner {
     private final AccountSyncService accountSyncService;
     private final ApiUsageService apiUsageService;
 
-    private final JobLauncher jobLauncher;
-    private final ApiLogCollectBatchJobConfig apiLogCollectBatchJobConfig;
-
-    @Qualifier("ApiTimeLogProcesserJob")
-    private final Job apiTimeLogProcesserJob;
-
     //@Scheduled(cron = "0 5 * * * *")
     @Scheduled(cron = "0 0 * * * *") //5분주기
     public void runScheduledTasks() {
@@ -63,29 +57,6 @@ public class ScheduledTaskRunner {
         log.info("[스케줄러 감지] 현재 서버 시간: {} | 작업명: api 콜 집계", currentTime);
 
         schedulerExecutor.execute(() -> safeRun(apiUsageService::migrateMonthlyApiUsage, "api 콜 집계"));
-    }
-
-
-
-
-    //@Scheduled(cron = "0 0 3 * * *")
-//    @Scheduled(cron = "0 29 * * * *")
-    public void runLogProcessorBatchTasks(){
-
-        JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis())
-                        .toJobParameters();
-
-            schedulerExecutor.execute(() -> safeRun(
-                    () -> {
-                        try{
-                            jobLauncher.run(apiTimeLogProcesserJob, jobParameters);
-
-                        }catch(Exception e){
-                            throw new RuntimeException("Batch job execution failed", e);
-                        }
-                    }, "API경과시간"
-            ));
     }
 
 
