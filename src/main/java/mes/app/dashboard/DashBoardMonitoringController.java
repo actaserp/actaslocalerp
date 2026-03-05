@@ -38,6 +38,7 @@ public class DashBoardMonitoringController {
 
     @GetMapping("/read")
     public AjaxResult GetDataList(@RequestParam String monthlyStartDate,
+                                  @RequestParam String monthlyStartDate2,
                                   @RequestParam(defaultValue = "1") int pageNumber,
                                   @RequestParam(defaultValue = "10") int pageSize
                                   ){
@@ -71,7 +72,7 @@ public class DashBoardMonitoringController {
         //api 콜 횟수 (고객사별) 대시보드 데이터
 
         CompletableFuture<List<Map<String, Object>>> apiCntListBySpjangcd = CompletableFuture.supplyAsync(() ->
-                ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize)
+                ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize, monthlyStartDate2)
                 ,asyncExecutors
         );
 
@@ -108,10 +109,11 @@ public class DashBoardMonitoringController {
     //@GetMapping("/api_count_list")
     @GetMapping("/pages/usage")
     public AjaxResult getApiCntList(
+            @RequestParam String monthlyStartDate2,
             @RequestParam(defaultValue = "1") int pageNumber,
             @RequestParam(defaultValue = "10") int pageSize
     ){
-        List<Map<String, Object>> data = ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize);
+        List<Map<String, Object>> data = ncpMonitoringService.getApiCntListBySpjangcd(pageNumber, pageSize, monthlyStartDate2);
 
         return AjaxResult.success(null, data);
     }

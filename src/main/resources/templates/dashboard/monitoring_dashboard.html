@@ -287,6 +287,7 @@
                             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa;">
                                 <strong>[관리자 전용] 실시간 사용량 및 정산 현황</strong>
                                 <div class="header-tools">
+                                    <input type="month" id="monthPicker2" ...>
                                     <button class="btn-excel" style="padding: 5px 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">
                                         엑셀 다운로드
                                     </button>
@@ -359,8 +360,14 @@
 
             searchMainData(){
                 let _this = this;
+
+                this.currentPage = 1;
+                this.usageCurrentPage = 1;
+                
+
                 let data = {
-                    'monthlyStartDate' : $('#monthPicker').val()
+                    'monthlyStartDate' : $('#monthPicker').val(),
+                    'monthlyStartDate2' : $('#monthPicker2').val()
                 }
 
                 AjaxUtil.getAsyncData(this.url + "/read", data, function(result){
@@ -384,12 +391,24 @@
 
                             // 월별 가입현황
                             if (resData.monthly) {
+                                
+                                const totalCount = resData.monthly.length > 0 ? parseInt(resData.monthly[0].total_count) : 0;
+                                _this.totalCount = totalCount;
                                 _this.montly_viewData.sourceCollection = resData.monthly;
+                                _this.montly_viewData.refresh();
+
+                                _this.updatePagerUI();
                             }
 
                             // API 콜 횟수
                             if (resData.apiCntList) {
+
+                                const totalCount = resData.apiCntList.length > 0 ? parseInt(resData.apiCntList[0].total_count) : 0;
+
+                               _this.usageTotalCount = totalCount;
                                _this.adminUsageGrid_viewData.sourceCollection = resData.apiCntList;
+                               _this.adminUsageGrid_viewData.refresh();
+                               _this.updateUsagePagerUI();  
                                // _this.apiCall_viewData.sourceCollection = resData.apiCntList;
                             }
                         }else {
@@ -431,9 +450,12 @@
 
             searchUsageData(pageNo) {
                 let _this = this;
+                let selectedDate = $('#monthPicker2').val();
+
                 this.usageCurrentPage = pageNo || this.usageCurrentPage;
 
                 let params = {
+                    'monthlyStartDate2' : selectedDate,
                     'pageNumber': this.usageCurrentPage,
                     'pageSize': this.usagePageSize
                 };
@@ -666,10 +688,13 @@
         let page = null;
         $(document).ready(function (e) {
             page = new MonitoringDashBoardPage();
+            
             document.getElementById('monthPicker').value = new Date().toISOString().slice(0,7);
+            document.getElementById('monthPicker2').value = new Date().toISOString().slice(0,7);
+
             page.searchMainData();
-            page.searchMonthlyData(1);
-            page.searchUsageData(1);
+            //page.searchMonthlyData(1);
+            //page.searchUsageData(1);
            
             //날짜 바꾸면 다시 조회
             $('#monthPicker').on('change', function(){
@@ -680,6 +705,18 @@
                     // 1페이지부터 다시 조회
                     _this.currentPage = 1;
                     _this.searchMonthlyData(1);
+                }
+            });
+
+
+            //날짜 바꾸면 다시 조회
+            $('#monthPicker2').on('change', function(){
+                let _this = page;
+                const selectedDate = $(this).val();
+
+                if(selectedDate){
+                    _this.usageCurrentPage = 1;
+                    _this.searchUsageData(1);
                 }
             });
             

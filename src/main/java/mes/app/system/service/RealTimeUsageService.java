@@ -21,7 +21,9 @@ public class RealTimeUsageService {
         param.addValue("spjangcd", spjangcd);
 
         String sql = """
-                select b.name
+                select
+                TO_CHAR(CURRENT_DATE, 'YYYY-MM') AS stat_day
+                ,b.name
                 ,b.price  --단가
                 ,b.api_call_limit as api_call_limit --기본제공 api
                 ,b.remark --비고
@@ -32,6 +34,30 @@ public class RealTimeUsageService {
                 spjangcd = :spjangcd
                 """;
 
+        List<Map<String, Object>> items = this.sqlRunner.getRows(sql, param);
+
+        return items;
+    }
+
+    public List<Map<String, Object>> getApiUsageHistory(String spjangcd){
+
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("spjangcd", spjangcd);
+
+        String sql = """
+                select
+                TO_CHAR(stat_day, 'YYYY-MM') as stat_day,
+                bill_plan_name as name,
+                price,
+                sum(total_count) as total_count,
+                api_call_limit,
+                '서비스 월 요금' as remark,
+                extra_api_unit_price
+                from api_log_entry
+                where spjangcd = :spjangcd
+                GROUP BY 1, bill_plan_name, price, api_call_limit, remark, extra_api_unit_price
+                order by TO_CHAR(stat_day, 'YYYY-MM') desc
+                """;
         List<Map<String, Object>> items = this.sqlRunner.getRows(sql, param);
 
         return items;

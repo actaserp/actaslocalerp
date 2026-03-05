@@ -30,6 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -191,57 +192,108 @@ public class NcpMonitoringService {
 
     //region: api 콜 횟수 (고객사별)
     //facade : 최종호출 로직 (api 콜 횟수)
-    public List<Map<String, Object>> getApiCntListBySpjangcd(int pageNumber, int pageSize) {
+    public List<Map<String, Object>> getApiCntListBySpjangcd(int pageNumber, int pageSize, String date) {
 
-        // 1. RDB에서 먼저 페이징된 사업장 목록 가져오기
-        List<Map<String, Object>> spjangList = getSpjangList(pageNumber, pageSize);
-
-        // 2. 사업장 코드 추출해서 Redis 조회
-        List<String> codes = spjangList.stream()
-                .map(m -> String.valueOf(m.get("spjangcd")))
-                .collect(Collectors.toList());
-
-        Map<String, Object> thisMonthData = getThisMonthData(codes);
-        List<Map<String, Object>> redisDataList = (List<Map<String, Object>>) thisMonthData.get("data");
-
-        Map<String, Long> redisMap = redisDataList.stream()
-                .collect(Collectors.toMap(
-                        item -> String.valueOf(item.get("spjangcd")),
-                        item -> (Long) item.getOrDefault("totalCount", 0L),
-                        (existing, replacement) -> existing
-                ));
-
-
+        date = date.replaceAll("-", "");
+        String currentMonth = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.ofPattern("yyyyMM"));
         List<Map<String, Object>> ApicombinedList = new ArrayList<>();
 
-        for(Map<String, Object> spjang : spjangList){
-            String spjangCode = String.valueOf(spjang.get("spjangcd"));
-            Integer apiCallLimit = UtilClass.toIntOrDefault(spjang.get("api_call_limit"), 0);
+        /// 이번달은 RDB에 없고 REDIS에 있음
+        if(date.equals(currentMonth)){
+            // 1. RDB에서 먼저 페이징된 사업장 목록 가져오기
+            List<Map<String, Object>> spjangList = getSpjangList(pageNumber, pageSize);
 
-            String status = "";
-            long overCall = 0L;
-            long overCallFee = 0L;
+            // 2. 사업장 코드 추출해서 Redis 조회
+            List<String> codes = spjangList.stream()
+                    .map(m -> String.valueOf(m.get("spjangcd")))
+                    .collect(Collectors.toList());
 
-            Long callCount = redisMap.getOrDefault(spjangCode, 0L);
-            Integer DefaultPrice = UtilClass.toIntOrDefault(spjang.get("price"), 0);
 
-            if(apiCallLimit - callCount > 0){
-                status = "정상";
-                overCallFee = DefaultPrice;
-            }else{
-                status = "초과";
-                overCall = callCount - apiCallLimit;
-                overCallFee = (overCall * 4) + DefaultPrice;
+            Map<String, Object> thisMonthData = getThisMonthData(codes);
+            List<Map<String, Object>> redisDataList = (List<Map<String, Object>>) thisMonthData.get("data");
+
+            Map<String, Long> redisMap = redisDataList.stream()
+                    .collect(Collectors.toMap(
+                            item -> String.valueOf(item.get("spjangcd")),
+                            item -> (Long) item.getOrDefault("totalCount", 0L),
+                            (existing, replacement) -> existing
+                    ));
+
+            for (Map<String, Object> spjang : spjangList) {
+                String spjangCode = String.valueOf(spjang.get("spjangcd"));
+                Long callCount = redisMap.getOrDefault(spjangCode, 0L);
+
+                // 공통 함수로 계산만 수행
+                fillBillingData(spjang, callCount);
+                ApicombinedList.add(spjang);
             }
 
-            spjang.put("apiCallCount", callCount);
-            spjang.put("status", status);
-            spjang.put("overCall", overCall);
-            spjang.put("overCallFee", overCallFee);
+        }else{
+            /// 지난달은 RDB에 있음
 
-            ApicombinedList.add(spjang);
+            MapSqlParameterSource param = new MapSqlParameterSource();
+            param.addValue("targetMonth", date);
+            param.addValue("limit", pageSize);
+            param.addValue("offset", (pageNumber - 1) * pageSize);
+
+            String sql = """
+                    SELECT\s
+                        spjangnm,\s
+                        spjangcd,\s
+                        bill_plan_name AS name,\s
+                        price,\s
+                        api_call_limit,\s
+                        extra_api_unit_price,
+                        -- 사용량 합계는 자바에서 계산용으로 쓸 별칭으로 지정 (충돌 방지)
+                        SUM(total_count) AS api_usage_sum,\s
+                        -- 전체 데이터 개수를 프론트가 원하는 'total_count'로 지정
+                        COUNT(*) OVER() AS total_count\s
+                    FROM api_log_entry
+                    WHERE TO_CHAR(stat_day, 'YYYYMM') = :targetMonth
+                    GROUP BY spjangnm, spjangcd, bill_plan_name, price, api_call_limit, extra_api_unit_price
+                    ORDER BY spjangcd ASC
+                    LIMIT :limit OFFSET :offset
+            """;
+
+            List<Map<String, Object>> historyList = sqlRunner.getRows(sql, param);
+
+            for (Map<String, Object> history : historyList) {
+//              1. SQL에서 SUM한 '진짜 사용량'을 별칭(api_usage_sum)으로 안전하게 꺼냄
+                long callCount = ((Number) history.getOrDefault("api_usage_sum", 0L)).longValue();
+
+                // 실시간과 똑같은 공통 함수로 계산 수행
+                fillBillingData(history, callCount);
+                ApicombinedList.add(history);
+            }
         }
+
+
         return ApicombinedList;
+    }
+
+    private void fillBillingData(Map<String, Object> spjang, long callCount) {
+        Integer apiCallLimit = UtilClass.toIntOrDefault(spjang.get("api_call_limit"), 0);
+        Integer DefaultPrice = UtilClass.toIntOrDefault(spjang.get("price"), 0);
+
+        String status = "";
+        long overCall = 0L;
+        long overCallFee = 0L;
+
+        // 기존 로직 유지 (apiCallLimit - callCount > 0)
+        if (apiCallLimit - callCount > 0) {
+            status = "정상";
+            overCallFee = DefaultPrice;
+        } else {
+            status = "초과";
+            overCall = callCount - apiCallLimit;
+            // 기존에 하드코딩된 * 4 유지 (필요시 extra_api_unit_price 사용으로 변경 가능)
+            overCallFee = (overCall * 4) + DefaultPrice;
+        }
+
+        spjang.put("apiCallCount", callCount);
+        spjang.put("status", status);
+        spjang.put("overCall", overCall);
+        spjang.put("overCallFee", overCallFee);
     }
 
 
@@ -413,12 +465,9 @@ public class NcpMonitoringService {
 
                     int randomValue;
                     if(rna % 2 == 0){
-                        // (0 ~ 1,500) 사이 랜덤값 + 50,000
-                        randomValue = (int)(Math.random() * 1501) + 18000;
-                        System.out.println("생성된 값: " + randomValue);
-                    } else {
-                        // (0 ~ 1,500) 사이 랜덤값 + 50,000
-                        randomValue = (int)(Math.random() * 1501) + 18000;
+                        randomValue = (int)(Math.random() * 5001);
+                    }else{
+                        randomValue = (int)(Math.random() * 50);
                     }
 
                     connection.stringCommands().set(

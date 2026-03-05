@@ -5,17 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mes.app.Scheduler.SchedulerService.AccountSyncService;
 import mes.app.Scheduler.SchedulerService.ApiUsageService;
-
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.JobParametersInvalidException;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
-import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
-import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -45,11 +34,12 @@ public class ScheduledTaskRunner {
     }
 
     /**
-     * [SaaS 인증용] 매일 새벽 0시 5분에 전날 Redis API 호출 내역을 DB로 이관
+     * [SaaS 인증용] 매달 전달의 Redis API 호출 내역을 DB로 이관
      * TODO: migrateDailyApiUsage에서 시간수정, 여기서 스케줄러 시간수정 필
+     * todo: 만약 해당 스케줄러 작업이 실패했을 경우에 대한 대비책도 강구해야함.
      */
-    //@Scheduled(cron = "0 10 0 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 35 14 17 * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 3 1 * *", zone = "Asia/Seoul") /// 매월 1일 새벽 3시
+    //@Scheduled(cron = "0 07 14 * * *", zone = "Asia/Seoul")
     public void runApiUsageMigration(){
 
         // 스케줄러가 인식하는 현재 시간 로그 출력

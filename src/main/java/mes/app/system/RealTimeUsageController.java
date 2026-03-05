@@ -36,44 +36,28 @@ public class RealTimeUsageController {
 
         String currentMonth = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.ofPattern("yyyyMM"));
 
-
+        DecimalFormat df = new DecimalFormat("###,###");
         String myPattern = "MES:" + spjangcd + ":" + currentMonth + "*";
 
+        /// [A] 이번 달 (실시간)
         //redis 데이터
         Map<String, Integer> redisData = redisService.getValuesByPattern(myPattern);
-
         //RDB 데이터
-        List<Map<String, Object>> usageList = realTimeUsageService.getUsageList(spjangcd);
-
+        List<Map<String, Object>> currentUsage = realTimeUsageService.getUsageList(spjangcd);
         //이번 달 총 사용량 합산
         int totalRealTimeCnt = redisData.values().stream().mapToInt(Integer::intValue).sum();
-
-        DecimalFormat df = new DecimalFormat("###,###");
-
         // 결과 조립
-        for (Map<String, Object> item : usageList) {
-            // 1. 계산에 필요한 값들을 먼저 안전하게 숫자로 변환 (Raw Data)
-            int apiCallLimit = (int) Double.parseDouble(String.valueOf(item.get("api_call_limit")));
-            int basePrice = (int) Double.parseDouble(String.valueOf(item.get("price")));
-            int extraUnitPrice = (int) Double.parseDouble(String.valueOf(item.get("extra_api_unit_price")));
-
-            // 2. 비즈니스 로직 계산 (순수 숫자 연산)
-            int overApiCnt = Math.max(0, totalRealTimeCnt - apiCallLimit);
-            int overApiAmt = overApiCnt * extraUnitPrice;
-            int totalBill = basePrice + (overApiAmt);
-
-            // 3. 결과 조립 (화면 표시용 데이터는 새로운 키에 담거나 포맷팅)
-            item.put("totalRealTimeCnt", totalRealTimeCnt + "건");
-            item.put("api_call_limit", apiCallLimit + "건"); // 기존 값을 덮어쓰기
-            item.put("over_api_cnt", overApiCnt + "건");
-            item.put("over_api_amt", overApiAmt);
-
-            // 천 단위 콤마 추가 (예: 264,000원)
-            item.put("bill", df.format(totalBill) + "원");
-
-            // 계산된 순수 숫자값도 필요할 수 있으니 남겨둠 (선택사항)
-            item.put("bill_raw", totalBill);
+        for (Map<String, Object> item : currentUsage) {
+            processBillingRow(item, totalRealTimeCnt, df);
         }
+
+        //// [B] 과거 이력 (RDB)
+        List<Map<String, Object>> historyUsage = realTimeUsageService.getApiUsageHistory(spjangcd);
+        for(Map<String, Object> item : historyUsage){
+            int historyTotal = ((Number) item.get("total_count")).intValue();
+            processBillingRow(item, historyTotal, df); // 똑같은 공통 함수 호출!
+        }
+        currentUsage.addAll(historyUsage);
 
         //만약 localCache 값이 있다면 redis가 비정상 종료된것 -> 데이터를 안내려줌 (에러가 났다는걸 명시적으로 표시한다.)
         // 1. 현재 레디스 연결이 끊겼거나
@@ -83,9 +67,30 @@ public class RealTimeUsageController {
         //만약 redis가 끊어진것 같으면 /api/monitoring/local_cache/save 를 get으로 호출해서 로컬캐시 -> redis로 데이터 이관
         if (!redisService.isRedisAvailable()) {
             log.warn("[SaaS] Redis 장애 감지 또는 미이관 데이터 존재로 인해 사용량 조회를 차단합니다.");
-            usageList = null;
+            currentUsage = null;
         }
 
-        return AjaxResult.success(null, usageList);
+        return AjaxResult.success(null, currentUsage);
+    }
+
+
+    private void processBillingRow(Map<String, Object> item, int totalUsage, DecimalFormat df) {
+        // 1. 원본 데이터 추출 (타입 안정성 확보)
+        int apiCallLimit = (int) Double.parseDouble(String.valueOf(item.getOrDefault("api_call_limit", 0)));
+        int basePrice = (int) Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
+        int extraUnitPrice = (int) Double.parseDouble(String.valueOf(item.getOrDefault("extra_api_unit_price", 0)));
+
+        // 2. 비즈니스 로직 계산
+        int overApiCnt = Math.max(0, totalUsage - apiCallLimit);
+        int overApiAmt = overApiCnt * extraUnitPrice;
+        int totalBill = basePrice + overApiAmt;
+
+        // 3. 포맷팅 및 결과 조립 (Key 이름을 완전히 통일)
+        item.put("totalRealTimeCnt", totalUsage + "건");
+        item.put("api_call_limit", apiCallLimit + "건");
+        item.put("over_api_cnt", overApiCnt + "건");
+        item.put("over_api_amt", overApiAmt);
+        item.put("bill", df.format(totalBill) + "원");
+        item.put("bill_raw", totalBill);
     }
 }
