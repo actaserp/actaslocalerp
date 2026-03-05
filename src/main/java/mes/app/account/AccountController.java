@@ -18,6 +18,8 @@ import javax.transaction.Transactional;
 
 import mes.app.MailService;
 import mes.app.transaction.service.SalesInvoiceService;
+import mes.domain.entity.Tb_xa012;
+import mes.domain.repository.Tb_xa012Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -61,6 +63,9 @@ public class AccountController {
 	@Autowired
 	SalesInvoiceService salesInvoiceService;
 
+	@Autowired
+	Tb_xa012Repository xa012Repository;
+
 	private final ConcurrentHashMap<String, String> tokenStore = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<String, Long> tokenExpiry = new ConcurrentHashMap<>();
 	private Boolean flag;
@@ -97,7 +102,7 @@ public class AccountController {
 						} else {
 							Cookie clearCookie = new Cookie("MES_AUTO_LOGIN", null);
 							clearCookie.setMaxAge(0);
-							clearCookie.setPath("/");
+							clearCookie.setPath(request.getContextPath().equals("") ? "/" : request.getContextPath()); // 경로 통일
 							response.addCookie(clearCookie);
 						}
 					}
@@ -134,7 +139,7 @@ public class AccountController {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();		
 		SecurityContextLogoutHandler handler =  new SecurityContextLogoutHandler();
 		
-		this.accountService.saveLoginLog("logout", auth);
+		this.accountService.saveLoginLog("logout", auth, request);
 		
 		handler.logout(request, response, auth);
 
@@ -184,22 +189,27 @@ public class AccountController {
 
 			if (!user.getActive()) {  // user.getActive()가 false인 경우
 				data.put("code", "noactive");
-			} else {
-				data.put("code", "OK");
+			} else{
+				String spjangcd = user.getSpjangcd();
+				Tb_xa012 xa012 = xa012Repository.findById(spjangcd).orElse(null);
+				if (xa012 == null) {
+					data.put("code", "noactive");
+				} else if ("중지".equals(xa012.getState())) {
+					data.put("code", "STOPPED"); // 중지된 사업체
+				} else if (!"O".equals(xa012.getState())) {
+					data.put("code", "NOTCONFIRM"); // 미승인
+				} else{
+					data.put("code", "OK");
 
-				try {
-					this.accountService.saveLoginLog("login", auth);
-				} catch (UnknownHostException e) {
-					// Handle the exception (e.g., log it)
-					e.printStackTrace();
-				}
-				// 자동 로그인
-				if ("on".equals(autoLogin)) {
-					Cookie autoLoginCookie = new Cookie("MES_AUTO_LOGIN", username);
-					autoLoginCookie.setHttpOnly(true);
-					autoLoginCookie.setPath("/");
-					autoLoginCookie.setMaxAge(60 * 60 * 24 * 365); // 자동 로그인
-					response.addCookie(autoLoginCookie);
+					this.accountService.saveLoginLog("login", auth, request);
+					// 자동 로그인
+					if ("on".equals(autoLogin)) {
+						Cookie autoLoginCookie = new Cookie("MES_AUTO_LOGIN", username);
+						autoLoginCookie.setHttpOnly(true);
+						autoLoginCookie.setPath(request.getContextPath().equals("") ? "/" : request.getContextPath());
+						autoLoginCookie.setMaxAge(60 * 60 * 24 * 365); // 자동 로그인
+						response.addCookie(autoLoginCookie);
+					}
 				}
 			}
 		} else {
@@ -207,12 +217,12 @@ public class AccountController {
 			data.put("code", "NOID");
 		}
 
-		SecurityContext sc = SecurityContextHolder.getContext();
-		sc.setAuthentication(auth);
-
-		HttpSession session = request.getSession(true);
-		session.setAttribute("SPRING_SECURITY_CONTEXT", sc);
-
+		if ("OK".equals(data.get("code"))) {
+			SecurityContext sc = SecurityContextHolder.getContext();
+			sc.setAuthentication(auth);
+			HttpSession session = request.getSession(true);
+			session.setAttribute("SPRING_SECURITY_CONTEXT", sc);
+		}
 		return result;
 	}
 

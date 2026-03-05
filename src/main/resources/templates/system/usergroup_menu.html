@@ -108,102 +108,30 @@
 
         var theGrid;
         var viewdata;
-        let selectedFiles = [];
-        let SelectItem;
-        let csrfToken = $("[name=_csrf]").val();
 
         document.readyState === 'complete' ? init() : window.onload = init;
 
-        let columns = [
-            {binding: 'id', header: 'id', width: '*', align: 'center', visible: false},
-            {binding: 'code', header: '코드', width: '*', align: 'center'},
-            {binding: 'name', header: '그룹명', width: '*', align: 'center'},
-            {binding: 'description', header: '설명', width: '*', align: 'center'},
-            {binding: 'gmenu', header: 'Dashboard', width: '*', align: 'center', visible: false},
-            {binding: 'gmenuname', header: 'Dashboard', width: '*', align: 'center'},
-            {binding: 'flag', header: 'flag', width: '*', align: 'center', visible: false},
-        ]
+        let menuGroupName = new wijmo.collections.PropertyGroupDescription('메뉴명', function (item) {
+            return item.gpname;
+        });
 
         function init() {
-            let data2 = [];
-            let group_id = $('#cboUserGroup2').val();
-            let folder_id = $('#cboMenuFolder').val();
-
-            $.ajax({
-                url: '/api/system/usergroupmenu/read',
-                type: 'GET',
-                data: {
-                    'group_id': group_id,
-                    'folder_id': folder_id
-                },
-                async: false,
-                success: function (data) {
-                    data2 = data.data;
-
-                    // 중분류 메뉴를 제외한 데이터 필터링
-                    data2 = data.data.filter(item => item.r !== null || item.w !== null|| item.a !== null);
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.error('Error fetching log_list data:', textStatus, errorThrown);
-                }
-            });
-
-
-            viewdata = new wijmo.collections.CollectionView(data2, {
-                groupDescriptions: [
-                    menuGroupName
-                ]
-            });
-
-
             theGrid = new wijmo.grid.FlexGrid('#theGrid', {
                 autoGenerateColumns: false,
                 showMarquee: true,
                 columns: [
-                    {
-                        binding: 'name',
-                        header: '코드명',
-                        width: 250,
-                        align: 'center',
-                    },
-                    {
-                        binding: 'r',
-                        header: '읽기',
-                        width: 200,
-                        align: 'center',
-                        dataType: wijmo.DataType.Boolean,
-                        isReadOnly: false,
-                    },
-                    {
-                        binding: 'w',
-                        header: '쓰기',
-                        width: 200,
-                        align: 'center',
-                        dataType: wijmo.DataType.Boolean,
-                        isReadOnly: false,
-                    },
-                    {
-                        binding: 'a',
-                        header: '알람',
-                        width: 200,
-                        align: 'center',
-                        dataType: wijmo.DataType.Boolean,
-                        isReadOnly: false,
-                    },
-                    {binding: '', header: '', width: "*", align: 'center'},
-
+                    {binding: 'name', header: '코드명', width: 250, align: 'left'},
+                    {binding: 'r', header: '읽기', width: 200, align: 'center', dataType: wijmo.DataType.Boolean, isReadOnly: false},
+                    {binding: 'w', header: '쓰기', width: 200, align: 'center', dataType: wijmo.DataType.Boolean, isReadOnly: false},
+                    {binding: 'a', header: '알람', width: 200, align: 'center', dataType: wijmo.DataType.Boolean, isReadOnly: false},
+                    {binding: '', header: '', width: '*', align: 'center'},
                 ],
-                itemsSource: viewdata,
                 formatItem: function (s, e) {
-                    // 특정 컬럼과 행에 대해 readonly 속성을 부여
                     if (e.panel.cellType == wijmo.grid.CellType.Cell) {
                         var col = s.columns[e.col];
-                        var item = s.rows[e.row].dataItem;
-
-                        // 예: 첫 번째 컬럼의 셀을 읽기 전용으로 설정
                         if (col.binding == 'name') {
-                            e.cell.style.pointerEvents = 'none';  // 마우스 클릭 비활성화
-                            e.cell.style.userSelect = 'none';  // 텍스트 선택 비활성화
+                            e.cell.style.pointerEvents = 'none';
+                            e.cell.style.userSelect = 'none';
                         }
                     }
                 }
@@ -211,33 +139,34 @@
 
             theGrid.rowHeaders.columns.splice(0, 1);
 
-            /*new FlexGridContextMenu(theGrid);*/
+            // 전체 체크박스 이벤트
+            document.getElementById('AllcheckRead').addEventListener('change', function () {
+                for (var i = 0; i < theGrid.rows.length; i++) {
+                    theGrid.setCellData(i, 'r', this.checked);
+                }
+            });
+
+            document.getElementById('AllcheckWrite').addEventListener('change', function () {
+                for (var i = 0; i < theGrid.rows.length; i++) {
+                    theGrid.setCellData(i, 'w', this.checked);
+                }
+            });
+
+            document.getElementById('AllcheckAlarm').addEventListener('change', function () {
+                for (var i = 0; i < theGrid.rows.length; i++) {
+                    theGrid.setCellData(i, 'a', this.checked);
+                }
+            });
+
+            $('#btnSave2').click(saveUserGroupMenu);
+
+            $('#cboUserGroup2, #cboMenuFolder').change(function () {
+                searchData2();
+            });
+
+            // 초기 데이터 로드
+            searchData2();
         }
-
-        // "읽기" 체크박스 클릭 이벤트 핸들러
-        document.getElementById('AllcheckRead').addEventListener('change', function () {
-            var checked = this.checked;
-            for (var i = 0; i < theGrid.rows.length; i++) {
-                theGrid.setCellData(i, 'r', checked);
-            }
-        });
-
-        // "쓰기" 체크박스 클릭 이벤트 핸들러
-        document.getElementById('AllcheckWrite').addEventListener('change', function () {
-            var checked = this.checked;
-            for (var i = 0; i < theGrid.rows.length; i++) {
-                theGrid.setCellData(i, 'w', checked);
-            }
-        });
-
-        document.getElementById('AllcheckAlarm').addEventListener('change', function () {
-            var checked = this.checked;
-            for (var i = 0; i < theGrid.rows.length; i++) {
-                theGrid.setCellData(i, 'a', checked);
-            }
-        });
-
-        $('#btnSave2').click(saveUserGroupMenu);
 
         function searchData2() {
             let group_id = $('#cboUserGroup2').val();
@@ -252,134 +181,63 @@
                 },
                 async: false,
                 success: function (data) {
-                    /* console.log("서버 응답 데이터:", data); //서버에서 반환된 데이터 로그 출력*/
-
                     if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
-                        let filteredData = filterDataByFolder(data.data, data.folder_id);
-                        grid_binding2(filteredData);    // 서버에서 반환된 데이터
+                        grid_binding2(data.data);
                     } else {
-                        console.warn('서버에서 반환된 데이터가 없습니다.');
-                        console.log("응답 데이터 형식 확인:", data);
-
+                        grid_binding2([]);
                     }
-
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    console.error('Error fetching log_list data:', textStatus, errorThrown);
+                    console.error('Error fetching data:', textStatus, errorThrown);
                 }
             });
         }
 
-        function filterDataByFolder(data, folderId) {
-            // folderId에 해당하는 데이터만 필터링
-            return data.filter(item => item.folder_id === folderId);
-
-        }
-
-        let menuGroupName = new wijmo.collections.PropertyGroupDescription('메뉴명', function (item) {
-            return item.gpname;
-        })
-
-
         function grid_binding2(data) {
-            // 중분류 메뉴가 아닌 데이터만 필터링
-            let UserMenuData = data
-                .filter(item => item.r !== null || item.w !== null|| item.a !== null) // 읽기(r) 또는 쓰기(w)가 null이 아닌 항목만 선택
+            let filteredData = data
+                .filter(item => item.r !== null || item.w !== null || item.a !== null)
                 .map(item => ({
                     name: item.name,
                     r: item.r,
                     w: item.w,
                     a: item.a,
-                    gpname: item.gpname,  // 그룹화를 위한 속성 추가
-                    menu_code: item.menu_code, // 추가: menu_code 필드 포함
-                    ugm_id: item.ugm_id // 추가: ugm_id 필드 포함
+                    gpname: item.gpname,
+                    menu_code: item.menu_code,
+                    ugm_id: item.ugm_id
                 }));
 
-            theGrid.columns.clear();
-            theGrid.autoGenerateColumns = false;
-
-            var columns = [
-                {binding: 'name', header: '코드명', width: 250, align: 'left'},
-                {
-                    binding: 'r',
-                    header: '읽기',
-                    width: 200,
-                    align: 'center',
-                    dataType: wijmo.DataType.Boolean,
-                    isReadOnly: false
-                },
-                {
-                    binding: 'w',
-                    header: '쓰기',
-                    width: 200,
-                    align: 'center',
-                    dataType: wijmo.DataType.Boolean,
-                    isReadOnly: false
-                },
-                {
-                    binding: 'a',
-                    header: '알람',
-                    width: 200,
-                    align: 'center',
-                    dataType: wijmo.DataType.Boolean,
-                    isReadOnly: false
-                },
-                {binding: '', header: '', width: "*", align: 'center'},
-            ];
-
-            columns.forEach(colDef => {
-                let col = new wijmo.grid.Column(colDef);
-                theGrid.columns.push(col);
-            });
-
-            // **클릭 이벤트 처리**
-            theGrid.cellEditEnded.addHandler((s, e) => {
-                let item = s.itemsSource[e.row];
-                let column = theGrid.columns[e.col];
-
-                if (column.binding === 'r' || column.binding === 'w'|| column.binding === 'a') {
-                    item[column.binding] = !item[column.binding]; // 상태 토글
-                    console.log(`Updated ${column.binding} for ${item.menu_code}: ${item[column.binding]}`);
-                }
-            });
-
-            viewdata = new wijmo.collections.CollectionView(UserMenuData);
-
+            viewdata = new wijmo.collections.CollectionView(filteredData);
             viewdata.groupDescriptions.push(menuGroupName);
+
             theGrid.itemsSource = viewdata;
         }
 
         function saveUserGroupMenu() {
             let group_id = $('#cboUserGroup2').val();
-            let folder_id = $('#cboMenuFolder').val();
 
             let url = '/api/system/usergroupmenu/save';
-            let data = {group_id: group_id, Q: ''};
             let items = [];
 
-            // itemsSource의 sourceCollection을 사용하여 데이터 순회
             let sourceCollection = theGrid.itemsSource.sourceCollection || [];
-            /*console.log("Source Collection Length:", sourceCollection.length);*/
-
             sourceCollection.forEach(item => {
-                items.push({
-                    menu_code: item.menu_code,
-                    ugm_id: item.ugm_id,
-                    r: !!item.r, // 읽기 상태
-                    w: !!item.w, // 쓰기 상태
-                    a: !!item.a, // 알람 상태
-                });
+                if (item.ugm_id || item.r || item.w || item.a) {
+                    items.push({
+                        menu_code: item.menu_code,
+                        ugm_id: item.ugm_id,
+                        r: !!item.r,
+                        w: !!item.w,
+                        a: !!item.a,
+                    });
+                }
             });
 
-            /*  console.log("Items to be sent:", JSON.stringify(items, null, 2));*/
-            data.Q = JSON.stringify(items);
+            let data = {group_id: group_id, Q: JSON.stringify(items)};
 
             Alert.confirm('', '저장하시겠습니까?', function () {
                 let fnSuccess = function (result) {
-                    /* console.log("Server response:", JSON.stringify(result, null, 2));*/
                     if (result.success) {
                         Alert.alert('', '저장되었습니다');
-                        searchData2(); // 저장 후 데이터 갱신
+                        searchData2();
                     } else {
                         console.error('저장 실패:', result.message);
                     }
@@ -388,22 +246,7 @@
             });
         }
 
-
-        $('#cboUserGroup2, #cboMenuFolder').change(function () {
-            // 값이 변경되었을 때 searchData 함수를 호출
-            searchData2();
-        });
-
-        // 체크박스 초기화
-        function clearForm2() {
-            ['AllcheckRead', 'AllcheckWrite'].forEach(id => {
-                document.getElementById(id).checked = false;
-            });
-        }
-
-        $(document).ready(function (e) {
-
-            // 초기 콤보박스 채우기
+        $(document).ready(function () {
             AjaxUtil.fillSelectOptions($('#cboUserGroup2'), 'user_group', '', '');
             AjaxUtil.fillSelectOptions($('#cboMenuFolder'), 'menu_folder', 'all', '');
         });

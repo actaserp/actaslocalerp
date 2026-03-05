@@ -293,11 +293,8 @@
         async: false,
         success: function (data) {
           data2 = data.data;
-          data2.forEach(item =>{
-          })
-          while (data2.length < 19) {
-            data2.push({});
-          }
+          console.log('data2', data2);
+
         }
       })
 
@@ -332,12 +329,24 @@
             // 행(row), 행의 데이터(item) 정보 가져오기
             let row = hitTest.row;
             let item = theGrid.rows[row].dataItem;
+
+            ['spjangcd2','spjangnm','saupnum','prenm','compnum','biztype','item',
+              'openymd','eddate','tel1','fax','zipcd','adresa','adresb',
+              'zipcd2','adres2a','adres2b','taxnm','comtaxoff','taxagentnm',
+              'taxagentcd','taxagenttel','taxagentsp','taxaccnum','agnertel1',
+              'agnertel2','emailadres','ajongcd'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = '';
+            });
+            document.querySelectorAll('input[name="custperclsf"]').forEach(r => r.checked = false);
+
             if(item != null && Object.keys(item).length > 0) {
 
               document.getElementById('spjangcd2').value = item.spjangcd;
               console.log('binded spjangcd2 : ', item.spjangcd);
               document.getElementById('spjangnm').value = item.spjangnm;
-              document.querySelector(`input[name="custperclsf"][value="${item.custperclsf}"]`).checked = true;
+              const radio = document.querySelector(`input[name="custperclsf"][value="${item.custperclsf}"]`);
+              if (radio) radio.checked = true;
               document.getElementById('saupnum').value = item.saupnum;
               document.getElementById('prenm').value = item.prenm;
               document.getElementById('compnum').value = item.compnum;
@@ -381,7 +390,8 @@
           if(item != null && Object.keys(item).length > 0) {
             document.getElementById('spjangcd2').value = item.spjangcd;
             document.getElementById('spjangnm').value = item.spjangnm;
-            document.querySelector(`input[name="custperclsf"][value="${item.custperclsf}"]`).checked = true;
+            const radio = document.querySelector(`input[name="custperclsf"][value="${item.custperclsf}"]`);
+            if (radio) radio.checked = true;
             document.getElementById('saupnum').value = item.saupnum;
             document.getElementById('prenm').value = item.prenm;
             document.getElementById('compnum').value = item.compnum;

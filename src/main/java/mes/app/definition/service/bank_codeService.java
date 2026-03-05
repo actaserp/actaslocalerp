@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -20,9 +21,10 @@ public class bank_codeService {
      * 은행코드 목록 조회
      */
     public List<Map<String, Object>> getBankCodeList(String name) {
+        String tenantId = TenantContext.get();
         MapSqlParameterSource param = new MapSqlParameterSource();
         param.addValue("name", name);
-
+        param.addValue("spjangcd", tenantId);
         String sql = """
             SELECT bankid AS id,
                    "banknm" AS name,
@@ -33,10 +35,11 @@ public class bank_codeService {
                    "subcd",
                    xbs.refbanknm as refbanksubnm,
                    xbss.refbanknm as refbankpopnm
-            FROM tb_xbank
+            FROM tb_xbank x
             LEFT JOIN tb_xbanksub xbs ON xbs.refcd = banksubcd
             LEFT JOIN tb_xbanksub xbss ON xbss.refcd = bankpopcd
             WHERE useyn = '1'
+            and x.spjangcd = :spjangcd
         """;
 
         if (StringUtils.isNotEmpty(name)) {
@@ -49,23 +52,31 @@ public class bank_codeService {
     }
 
     public List<Map<String, Object>> getPopbillList() {
+        String tenantId = TenantContext.get();
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("spjangcd", tenantId);
         String sql = """
         SELECT refcd AS code, refbanknm AS name
         FROM tb_xbanksub
         WHERE flag = '0'
+        and spjangcd = :spjangcd
         ORDER BY refcd
     """;
-        return this.sqlRunner.getRows(sql, new MapSqlParameterSource());
+        return this.sqlRunner.getRows(sql, param);
     }
 
     public List<Map<String, Object>> getParticipantList() {
+        String tenantId = TenantContext.get();
+        MapSqlParameterSource param = new MapSqlParameterSource();
+        param.addValue("spjangcd", tenantId);
         String sql = """
         SELECT refcd AS code, refbanknm AS name
         FROM tb_xbanksub
         WHERE flag = '1'
+        and spjangcd = :spjangcd
         ORDER BY refcd
     """;
-        return this.sqlRunner.getRows(sql, new MapSqlParameterSource());
+        return this.sqlRunner.getRows(sql, param);
     }
 
 

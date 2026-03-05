@@ -3,6 +3,7 @@ package mes.app.summary.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,13 @@ public class ProductionDefectTypeMonthService {
 
 	public List<Map<String, Object>> getList(String cboYear, Integer cboMatType, Integer cboMatGrpPk,
 											 Integer txtProductId) {
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("cboYear", cboYear);
 		paramMap.addValue("cboMatType", cboMatType);
 		paramMap.addValue("cboMatGrpPk", cboMatGrpPk);
 		paramMap.addValue("txtProductId", txtProductId);
-		
+		paramMap.addValue("spjangcd", tenantId);
 		//String data_column = "";
 		
 		String data_year = cboYear;
@@ -49,6 +51,7 @@ public class ProductionDefectTypeMonthService {
 	                left join mat_grp mg on mg.id = m."MaterialGroup_id"		
 		            where jr."ProductionDate" between cast(:date_form as date) and cast(:date_to as date) 
                     and jr."State" = 'finished'
+                    and jr.spjangcd = :spjangcd
 				""";
 		
 		if(cboMatType != null) {
@@ -106,12 +109,13 @@ public class ProductionDefectTypeMonthService {
 	}
 
 	public List<Map<String, Object>> getProductList(String cboYear, String cboMatType, Integer cboMatGrpPk, Integer txtProductId) {
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("cboYear", cboYear);
 		paramMap.addValue("cboMatType", cboMatType);
 		paramMap.addValue("cboMatGrpPk", cboMatGrpPk);
 		paramMap.addValue("txtProductId", txtProductId);
-
+		paramMap.addValue("spjangcd", tenantId);
 		String data_column = "";
 
 		String data_year = cboYear;
@@ -142,6 +146,7 @@ public class ProductionDefectTypeMonthService {
 				inner join defect_type dt on dt.id = jrd."DefectType_id"
 	            where jr."ProductionDate" between cast(:date_form as date) and cast(:date_to as date)
                 and jr."State" = 'finished'
+                and jr.spjangcd = :spjangcd
 				""";
 
 		if(cboMatType != null && !cboMatType.trim().isEmpty()) {

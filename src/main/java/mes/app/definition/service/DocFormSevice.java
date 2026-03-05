@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,11 @@ public class DocFormSevice {
 
 	// 문서종류 리스트 조회
 	public List<Map<String, Object>> getDocFormList(String formType, String keyword){
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource(); 
 		dicParam.addValue("formType", formType);
 		dicParam.addValue("keyword", keyword);
+		dicParam.addValue("spjangcd", tenantId);
 
         String sql = """
 		   select df.id 
@@ -29,6 +32,7 @@ public class DocFormSevice {
 			    , df."Description" as description
 	         from doc_form df 
 	        where df."FormType" = :formType 
+	        and df.spjangcd = :spjangcd
             """;
         if (StringUtils.isEmpty(keyword)==false) 
         	sql += "and upper(df.\"FormName\") like concat('%%',upper( :keyword ),'%%') ";

@@ -35,6 +35,7 @@ public class ControllerExecutionTimeAspect implements Filter {
             uri = uri.substring(contextPath.length());
         }
 
+
         // /api 로 시작하는 요청만 측정
         if (!uri.startsWith("/api") || isExcludedPath(uri)) {
             chain.doFilter(request, response);
@@ -63,14 +64,6 @@ public class ControllerExecutionTimeAspect implements Filter {
             log.info("[API 실행시간111] {} {} → {}초",
                     method, uri, String.format("%.3f", seconds));
 
-
-
-            /*ApiLogEntry entry = new ApiLogEntry();
-            entry.setOccurrenceTime(LocalDateTime.now().toString());
-            entry.setMethod(method);
-            entry.setApiAddress(uri);
-            entry.setDurationSecond((long)((end - start) / 1000.0));
-*/
         }
     }
 

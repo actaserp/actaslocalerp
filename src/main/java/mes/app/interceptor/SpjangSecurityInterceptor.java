@@ -22,9 +22,19 @@ public class SpjangSecurityInterceptor implements HandlerInterceptor {
 
         HttpSession session = request.getSession(false);
 
-        // 1. 인증 및 세션 체크
         if (session == null || session.getAttribute("spjangcd") == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
+            return false;
+        }
+
+        // 2. userid 조작 체크
+        String sessionUserId = String.valueOf(session.getAttribute("userid"));
+        String paramUserId = request.getParameter("userid");
+
+        if (paramUserId != null && !paramUserId.equals(sessionUserId)) {
+            log.warn("[보안위반 차단] userid 조작 시도 - SessionUser: {}, Param: {}, URI: {}",
+                    sessionUserId, paramUserId, uri);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "잘못된 접근입니다.");
             return false;
         }
 

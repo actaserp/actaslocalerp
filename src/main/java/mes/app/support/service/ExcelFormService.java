@@ -3,6 +3,7 @@ package mes.app.support.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,10 @@ public class ExcelFormService {
 	
 	// searchMainData
 	public List<Map<String, Object>> getExcelFormList(String keyword) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("keyword", keyword);
-			
+		paramMap.addValue("spjangcd", tenantId);
 		String sql = """
 	           select id
                 , "FormName" as form_name
@@ -29,6 +30,7 @@ public class ExcelFormService {
                 , "Description" as description
                 from doc_form
                 where "FormType" = 'excel'
+                and spjangcd = :spjangcd
 				""";
 		
 		if (!keyword.isEmpty() && keyword != null) {

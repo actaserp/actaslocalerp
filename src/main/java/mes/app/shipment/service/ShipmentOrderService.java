@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import mes.app.common.TenantContext;
 import mes.domain.entity.Suju;
 import mes.domain.repository.SujuRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class ShipmentOrderService {
 	
 	public List<Map<String, Object>> getSujuList(String dateFrom, String dateTo, String notShip, String compPk,
 			String matGrpPk, String matPk, String keyword) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("dateFrom", dateFrom);
 		paramMap.addValue("dateTo", dateTo);
@@ -36,7 +37,8 @@ public class ShipmentOrderService {
 		paramMap.addValue("matGrpPk", matGrpPk);
 		paramMap.addValue("matPk", matPk);
 		paramMap.addValue("keyword", keyword);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
         String sql = """ 
     			with s as (
                 select suju.id as suju_pk
@@ -56,6 +58,7 @@ public class ShipmentOrderService {
                 left join company c2 on c2.id = suju."Company_id"
 	            where suju."JumunDate" between cast(:dateFrom as date) and cast(:dateTo as date) 
 	            AND suju."State" NOT IN ('canceled', 'force_completion')
+	            and suju.spjangcd = :spjangcd
                 """;
         
         if (StringUtils.isEmpty(compPk)==false)  sql += " and suju.\"Company_id\" = cast(:compPk as Integer) ";
@@ -140,7 +143,7 @@ public class ShipmentOrderService {
 	
 	// 출하지시 목록 조회
 	public List<Map<String, Object>> getShipmentOrderList(String date_from, String date_to, String state, Integer comp_pk, Integer mat_grp_pk, Integer mat_pk, String keyword) {
-
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("date_from", Date.valueOf(date_from));
 		paramMap.addValue("date_to", Date.valueOf(date_to));
@@ -149,6 +152,7 @@ public class ShipmentOrderService {
 		paramMap.addValue("mat_grp_pk", mat_grp_pk);
 		paramMap.addValue("mat_pk", mat_pk);
 		paramMap.addValue("keyword", keyword);
+		paramMap.addValue("spjangcd", tenantId);
 
 		String sql = """
 				select sh.id
@@ -168,6 +172,7 @@ public class ShipmentOrderService {
                 from shipment_head sh 
                 join company c on c.id = sh."Company_id"   
                 where sh."ShipDate"  between :date_from and :date_to
+                and sh.spjangcd = :spjangcd
 				         """;
 		if (comp_pk != null) {
 			sql += " and sh.\"Company_id\" = :comp_pk ";

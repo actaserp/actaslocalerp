@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.apache.groovy.parser.antlr4.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -17,10 +18,11 @@ public class DefectTypeService {
 	
 	// 부적합 유형 조회 
 	public List<Map<String, Object>> getDefectTypeList(String keyword) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("keyword", keyword);
-		
+		dicParam.addValue("spjangcd", tenantId);
+
 		String sql = """
 			select dt.id
 		    , dt."Code" as defect_type_code
@@ -28,6 +30,7 @@ public class DefectTypeService {
 		    , dt."Description" as description
 	        from defect_type dt
 	        where 1=1
+	        and dt.spjangcd = :spjangcd
 			""";
 		if (StringUtils.isEmpty(keyword)==false) sql+="and upper(dt.\"Name\") like concat('%%',upper(:keyword),'%%')";
 		

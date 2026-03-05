@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class ShipmentDoBService {
 	
 	// 출하지시헤더 조회
 	public List<Map<String, Object>> getShipmentHeaderList(String date_from, String date_to, String state, Integer comp_pk, Integer mat_grp_pk, Integer mat_pk) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();        
 		paramMap.addValue("date_from", Date.valueOf(date_from));
 		paramMap.addValue("date_to", Date.valueOf(date_to));
@@ -28,6 +29,7 @@ public class ShipmentDoBService {
 		paramMap.addValue("comp_pk", CommonUtil.tryIntNull(comp_pk));
 		paramMap.addValue("mat_grp_pk", CommonUtil.tryIntNull(mat_grp_pk));
 		paramMap.addValue("mat_pk", CommonUtil.tryIntNull(mat_pk));
+		paramMap.addValue("spjangcd", tenantId);
 
         String sql = """
 			with SH as
@@ -43,7 +45,8 @@ public class ShipmentDoBService {
 				            , sh."Description" as description
 			                from shipment_head sh
 				            left join company c on c.id = sh."Company_id"
-				            where sh."ShipDate" between :date_from and :date_to		
+				            where sh."ShipDate" between :date_from and :date_to
+				            and sh.spjangcd = :spjangcd		
         		     """;
         
         if (comp_pk != null) {

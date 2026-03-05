@@ -3,6 +3,7 @@ package mes.app.maintenance.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,12 +18,13 @@ public class EquipmentMaintService {
 	SqlRunner sqlRunner;
 	
 	public List<Map<String, Object>> getEquipmentMaintList(String start_date, String end_date, String equip_id) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("start_date", start_date);
 		paramMap.addValue("end_date", end_date);
 		paramMap.addValue("equip_id", equip_id);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
 		String sql = """
         select em.id 
 	    , eg."Name" as equipment_group_name
@@ -43,6 +45,7 @@ public class EquipmentMaintService {
         inner join equ e on e.id = em."Equipment_id" 
         left join equ_grp eg on eg.id = e."EquipmentGroup_id" 
         where cast(em."DataDate" as text) between :start_date and :end_date
+        and em.spjangcd = :spjangcd
         """;
 		
 		if (StringUtils.isEmpty(equip_id)==false) sql += "and e.id = cast(:equip_id as integer) ";

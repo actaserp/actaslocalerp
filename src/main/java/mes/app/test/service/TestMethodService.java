@@ -3,6 +3,7 @@ package mes.app.test.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,10 @@ public class TestMethodService {
 	SqlRunner sqlRunner;
 
 	public List<Map<String, Object>> getTestMethodList(String keyword){
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("keyword", keyword);
+		dicParam.addValue("spjangcd", tenantId);
 
         String sql=""" 
                 select tm.id
@@ -28,6 +31,7 @@ public class TestMethodService {
                 from test_method tm 
                 left join equ_grp eg on eg.id = tm."EquipmentGroup_id"
                 where 1 = 1
+                and tm.spjangcd = :spjangcd
         """;
         if (StringUtils.hasText(keyword)){
              sql += """ 

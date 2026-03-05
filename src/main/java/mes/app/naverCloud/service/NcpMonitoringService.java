@@ -413,9 +413,12 @@ public class NcpMonitoringService {
 
                     int randomValue;
                     if(rna % 2 == 0){
-                        randomValue = (int)(Math.random() * 5001);
-                    }else{
-                        randomValue = (int)(Math.random() * 50);
+                        // (0 ~ 1,500) 사이 랜덤값 + 50,000
+                        randomValue = (int)(Math.random() * 1501) + 18000;
+                        System.out.println("생성된 값: " + randomValue);
+                    } else {
+                        // (0 ~ 1,500) 사이 랜덤값 + 50,000
+                        randomValue = (int)(Math.random() * 1501) + 18000;
                     }
 
                     connection.stringCommands().set(

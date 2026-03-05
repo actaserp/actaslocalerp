@@ -1,5 +1,6 @@
 package mes.app.request.service;
 
+import mes.app.common.TenantContext;
 import mes.domain.entity.TbAs010;
 import mes.domain.entity.User;
 import mes.domain.model.AjaxResult;
@@ -29,14 +30,16 @@ public class RequestService {
     public Map<String, Object> searchUserInfo(
             String compid
     ) {
+        String tenantId = TenantContext.get();
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("compid", compid);
-
+        dicParam.addValue("spjangcd", tenantId);
         String sql = """
                 SELECT
                     *
                 FROM company
                 WHERE "BusinessNumber"=:compid
+                and spjangcd=:spjangcd
         		""";
 
 
@@ -47,14 +50,16 @@ public class RequestService {
 
     // 사용자 거래처 직원 유무 조회
     public Map<String, Object> boolUserInfo(String userid) {
+        String tenantId = TenantContext.get();
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("userid", userid);
-
+        dicParam.addValue("spjangcd", tenantId);
         String sql = """
                 SELECT
                     *
                 FROM user_profile
                 WHERE "User_id"= (select id from auth_user where username = :userid)
+                and spjangcd = :spjangcd
         		""";
 
 

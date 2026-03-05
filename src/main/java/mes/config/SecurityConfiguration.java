@@ -53,6 +53,7 @@ public class SecurityConfiguration {
         http
                 .csrf(csrf -> csrf
                         .ignoringAntMatchers(
+                                "/login", "/postLogin",
                                 "/api/files/upload/**",
                                 "/popbill/webhook",
                                 "/pda/**"

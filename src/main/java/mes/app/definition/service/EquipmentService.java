@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import mes.domain.services.CommonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -20,11 +21,12 @@ public class EquipmentService {
 	
 	// 설비 목록 조회
 	public List<Map<String, Object>> getEquipmentList(Integer group, Integer workcenter, String keyword){
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();        
         dicParam.addValue("group_id", group);
         dicParam.addValue("workcenter_id", workcenter);
         dicParam.addValue("keyword", keyword);
+		dicParam.addValue("spjangcd", tenantId);
         
         String sql = """
 			select e.id
@@ -62,6 +64,7 @@ public class EquipmentService {
             left join work_center wc  on wc.id = e."WorkCenter_id" 
             left join depart d on d.id = e."Depart_id" 
             where 1 = 1
+            and e.spjangcd = :spjangcd
 		    """;
         if (group != null) sql +=" and e.\"EquipmentGroup_id\"= :group_id ";
         if (workcenter != null) sql +=" and e.\"WorkCenter_id\"= :workcenter_id ";

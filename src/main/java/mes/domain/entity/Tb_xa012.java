@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -128,8 +129,8 @@ public class Tb_xa012 {
     @Column(name = "expirationdate", length = 8)
     private String expirationdate;
 
-    @Column(name = "chargeamount", length = 15)
-    private String chargeamount;
+    @Column(name = "chargeamount", precision = 15, scale = 2)
+    private BigDecimal chargeamount;
 
     @Column(name = "subscriptiondate", length = 8)
     private String subscriptiondate;

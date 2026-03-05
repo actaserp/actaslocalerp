@@ -3,6 +3,7 @@ package mes.app.system.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,11 +18,11 @@ public class DasConfigService {
 	
 	// searchMainData
 	public List<Map<String, Object>> getDasConfigList(Integer server_id, Integer equipment_id){
-		
+        String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("server_id", server_id);
         dicParam.addValue("equipment_id", equipment_id);
-        
+        dicParam.addValue("spjangcd", tenantId);
         String sql = """
 			select 
                   dc.id,
@@ -43,6 +44,7 @@ public class DasConfigService {
                     left outer join das_server ds on dc."Server_id" = ds.id 
                     left outer join equ e on e.id = dc."Equipment_id"
                 where 1=1
+                and dc.spjangcd = :spjangcd
 		    """;
         
         if (server_id != null) {
@@ -62,10 +64,10 @@ public class DasConfigService {
 	
 	// // showDetail
 	public Map<String, Object> getDasConfigDetail(Integer id){
-		
+        String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("id", id);
-        
+        dicParam.addValue("spjangcd", tenantId);
         String sql = """
 			select 
                   dc.id,
@@ -87,6 +89,7 @@ public class DasConfigService {
                     left outer join das_server ds on dc."Server_id" = ds.id 
                     left outer join equ e on e.id = dc."Equipment_id"
                 where dc.id = :id
+                and dc.spjangcd = :spjangcd
 		    """;
         
         Map<String, Object> item = this.sqlRunner.getRow(sql, dicParam);

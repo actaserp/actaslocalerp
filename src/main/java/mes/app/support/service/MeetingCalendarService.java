@@ -3,6 +3,7 @@ package mes.app.support.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,12 @@ public class MeetingCalendarService {
 	SqlRunner sqlRunner;
 
 	public List<Map<String, Object>> getMeetingCalendar(String keyword) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		String dateFrom = keyword + "-01";
 		paramMap.addValue("dateFrom", dateFrom);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
 		String sql = """
 				select id::text
                 , "Title" as title
@@ -32,6 +34,7 @@ public class MeetingCalendarService {
                 , "Description" as description
                 from calendar
                 where "DataDate" between cast(:dateFrom as date) and cast(:dateFrom as date) + interval '1 month - 1 day'
+                and spjangcd = :spjangcd
                 union all
                 SELECT 'mo'|| mo.id::text
                 --, true as allDay

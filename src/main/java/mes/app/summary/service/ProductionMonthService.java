@@ -3,6 +3,7 @@ package mes.app.summary.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,12 +18,14 @@ public class ProductionMonthService {
 	SqlRunner sqlRunner;
 
 	public List<Map<String, Object>> getList(String cboYear, String cbomatType, Integer matGrpPk, String cboDataDiv) {
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("cboYear", cboYear);
 		paramMap.addValue("cbomatType", cbomatType);
 		paramMap.addValue("matGrpPk", matGrpPk);
 		paramMap.addValue("cboDataDiv", cboDataDiv);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
 		String data_column = "";
 		
 		String data_year = cboYear;
@@ -57,6 +60,7 @@ public class ProductionMonthService {
             left join unit u on u.id = m."Unit_id"
 	        where jr."ProductionDate" between cast(:date_form as date) and cast(:date_to as date)
             and jr."State" = 'finished'
+            and jr.spjangcd = :spjangcd
 				""";
 		
 		if(cbomatType != null && !cbomatType.trim().isEmpty()) {

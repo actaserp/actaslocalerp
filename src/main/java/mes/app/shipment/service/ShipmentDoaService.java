@@ -3,6 +3,7 @@ package mes.app.shipment.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class ShipmentDoaService {
 	
 	public List<Map<String, Object>> getOrderList(String dateFrom, String dateTo, String notShip, String compPk,
 			String matGrpPk, String matPk, String keyword) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("dateFrom", dateFrom);
 		paramMap.addValue("dateTo", dateTo);
@@ -30,7 +31,8 @@ public class ShipmentDoaService {
 		String state = null;
 		if(notShip.equals("Y")) state = "ordered";
 		paramMap.addValue("state", state);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
         String sql = """
 			    with SH as
 			    (	select sh.id
@@ -45,7 +47,8 @@ public class ShipmentDoaService {
 		            , sh."Description" as description
 	                from shipment_head sh
 		            left join company c on c.id = sh."Company_id"
-    		        where sh."ShipDate"  between cast(:dateFrom as date) and cast(:dateTo as date) 
+    		        where sh."ShipDate"  between cast(:dateFrom as date) and cast(:dateTo as date)
+    		        and sh.spjangcd = :spjangcd 
                 """;
         
         if (StringUtils.isEmpty(compPk)==false)  sql += " and sh.\"Company_id\" = cast(:compPk as Integer) ";

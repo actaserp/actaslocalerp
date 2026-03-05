@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,12 @@ public class TagService {
 	
 	//창고 목록 조회
 	public List<Map<String,Object>> getTagResult(String keyword,String tag_group_id, String equipment_id) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource tgParam = new MapSqlParameterSource();
 		tgParam.addValue("keyword", keyword);
 		tgParam.addValue("tag_group_id",tag_group_id);
 		tgParam.addValue("equipment_id",equipment_id);
+		tgParam.addValue("spjangcd", tenantId);
 		
 		String sql = """
 			 select t.tag_code
@@ -41,6 +43,7 @@ public class TagService {
             left join equ e on e.id = t."Equipment_id"
             left join das_config dc on dc.id=t."DASConfig_id"
             where 1=1
+            and t.spjangcd=:spjangcd
 			""";
 		
 		
@@ -57,10 +60,10 @@ public class TagService {
 	
 	//창고 상세정보 조회
 	public Map<String,Object> getTagpResultDetail(String tag_code){
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("tag_code", tag_code);
-		
+		dicParam.addValue("spjangcd", tenantId);
 		String sql = """
 			select t.tag_code as id
             , t.tag_code
@@ -80,6 +83,7 @@ public class TagService {
             left join das_config dc on dc.id=t."DASConfig_id"
             where 1=1
             and t.tag_code = :tag_code
+            and t.spjangcd=:spjangcd
 			""";
 		
 		Map<String, Object> item = this.sqlRunner.getRow(sql, dicParam);

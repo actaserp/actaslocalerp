@@ -36,6 +36,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         response.getWriter().print(mapper.writeValueAsString(result));
         response.getWriter().flush();		
         
-		this.accountService.saveLoginLog("login", authentication);
+		this.accountService.saveLoginLog("login", authentication, request);
 	}
 }

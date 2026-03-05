@@ -1,11 +1,11 @@
 package mes.domain.services;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -49,18 +49,26 @@ public class AccountService {
 	}
 
 	// 로그인&로그아웃시 login_log 테이블에 이력 저장
-	public void saveLoginLog(String type, Authentication auth) throws UnknownHostException {
+	public void saveLoginLog(String type, Authentication auth, HttpServletRequest request) {
 
 		User user = (User) auth.getPrincipal();
-		
+
+		String clientIp = request.getHeader("X-Forwarded-For");
+		if (clientIp == null || clientIp.isBlank()) {
+			clientIp = request.getRemoteAddr();
+		} else {
+			clientIp = clientIp.split(",")[0].trim();
+		}
+
         MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("type", type);
-		paramMap.addValue("IPAddress", InetAddress.getLocalHost().getHostAddress());
+		paramMap.addValue("IPAddress", clientIp);
 		paramMap.addValue("UserId", user.getId());
+		paramMap.addValue("spjangcd", user.getSpjangcd());
 		
 		String sql = """
-				insert into login_log("Type", "IPAddress", _created, "User_id")
-                VALUES (:type, :IPAddress ::inet, now(),:UserId)
+				insert into login_log("Type", "IPAddress", _created, "User_id", "spjangcd")
+                VALUES (:type, :IPAddress ::inet, now(),:UserId, :spjangcd)
 				""";
 		
 	    this.sqlRunner.execute(sql, paramMap);

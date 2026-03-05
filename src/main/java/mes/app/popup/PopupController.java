@@ -750,10 +750,12 @@ public class PopupController {
 			@RequestParam(value = "compName", required = false) String compName,
 			@RequestParam(value = "business_number", required = false) String business_number){
 
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("compCode", compCode);
 		paramMap.addValue("compName", compName);
 		paramMap.addValue("business_number", business_number);
+		paramMap.addValue("spjangcd", tenantId);
 		AjaxResult result = new AjaxResult();
 
 		String sql = """
@@ -773,6 +775,7 @@ public class PopupController {
             WHERE ("CompanyType" = 'purchase'
             OR "CompanyType" = 'sale-purchase')
             AND ("relyn" = '0' OR "relyn" IS NULL)
+            and spjangcd = :spjangcd
 			""";
 		//relyn = 거래중지 여부
 		

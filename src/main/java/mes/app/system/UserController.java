@@ -135,6 +135,33 @@ public class UserController {
 				
 		// new data일 경우
 		if (id==null) {
+			String limitSql = """
+				select bp.user_limit, count(up."User_id") as current_count
+				from tb_xa012 xa
+				inner join bill_plans bp on bp.id = xa.bill_plans_id
+				left join user_profile up on up.spjangcd = xa.spjangcd and up."User_id" in (
+					select id from auth_user where spjangcd = :spjangcd and is_active = true
+				)
+				where xa.spjangcd = :spjangcd
+				group by bp.user_limit
+			""";
+
+			MapSqlParameterSource limitParam = new MapSqlParameterSource();
+			limitParam.addValue("spjangcd", spjangcd);
+
+			Map<String, Object> limitMap = this.sqlRunner.getRow(limitSql, limitParam);
+
+			if (limitMap != null) {
+				int userLimit = ((Number) limitMap.get("user_limit")).intValue();
+				int currentCount = ((Number) limitMap.get("current_count")).intValue();
+
+				if (currentCount >= userLimit) {
+					result.success = false;
+					result.message = "사용자 수 제한(" + userLimit + "명)에 도달했습니다. 플랜을 업그레이드해주세요.";
+					return result;
+				}
+			}
+
 			if (username_chk == false) {
 				result.success = false;
 				result.message="중복된 사번이 존재합니다.";

@@ -24,9 +24,10 @@ public class MenuLogController {
 			@RequestParam("date_from") String dateFrom,
 			@RequestParam("date_to") String dateTo,
 			@RequestParam("cboMenu") String menuCode,
-			@RequestParam("cboUser") String userPk ){
+			@RequestParam("cboUser") String userPk,
+			@RequestParam("spjangcd") String spjangcd){
 		
-		List<Map<String, Object>> items = this.menuLogService.getLogCount(dateFrom,dateTo,menuCode,userPk);
+		List<Map<String, Object>> items = this.menuLogService.getLogCount(dateFrom,dateTo,menuCode,userPk, spjangcd);
 		
 		AjaxResult result = new AjaxResult();
 		result.data = items;
@@ -39,9 +40,10 @@ public class MenuLogController {
 			@RequestParam("date_from") String dateFrom,
 			@RequestParam("date_to") String dateTo,
 			@RequestParam("cboMenu") String menuCode,
-			@RequestParam("cboUser") String userPk ){
+			@RequestParam("cboUser") String userPk,
+			@RequestParam("spjangcd") String spjangcd){
 		
-		List<Map<String, Object>> items = this.menuLogService.getLogList(dateFrom,dateTo,menuCode,userPk);
+		List<Map<String, Object>> items = this.menuLogService.getLogList(dateFrom,dateTo,menuCode,userPk, spjangcd);
 		
 		AjaxResult result = new AjaxResult();
 		result.data = items;
@@ -51,9 +53,11 @@ public class MenuLogController {
 	
 	// 사용자 목록 조회
 	@GetMapping("/user_list")
-	public AjaxResult getUserList(){
+	public AjaxResult getUserList(
+			@RequestParam("spjangcd") String spjangcd
+	){
 		
-		List<Map<String, Object>> items = this.menuLogService.getUserList();
+		List<Map<String, Object>> items = this.menuLogService.getUserList(spjangcd);
 		
 		AjaxResult result = new AjaxResult();
 		result.data = items;

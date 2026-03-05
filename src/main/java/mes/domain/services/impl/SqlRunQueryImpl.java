@@ -17,6 +17,8 @@ import org.springframework.stereotype.Repository;
 
 import mes.domain.services.LogWriter;
 import mes.domain.services.SqlRunner;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Slf4j
 @Repository
@@ -110,6 +112,24 @@ public class SqlRunQueryImpl implements SqlRunner {
 	private void checkTenantSafety(String sql) {
 		String tenantId = TenantContext.get();
 
+		// URL 화이트리스트
+		String requestUri = null;
+		try {
+			ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+			if (attrs != null) {
+				requestUri = attrs.getRequest().getRequestURI();
+			}
+		} catch (Exception e) {
+			// 배치/스케줄러 등 request context 없는 경우 무시
+		}
+
+		String[] urlWhiteList = {"/combo"};
+		if (requestUri != null) {
+			for (String url : urlWhiteList) {
+				if (requestUri.contains(url)) return;
+			}
+		}
+
 		if (tenantId != null && !"SYSTEM".equals(tenantId)) {
 			String lowSql = sql.toLowerCase();
 
@@ -118,7 +138,8 @@ public class SqlRunQueryImpl implements SqlRunner {
 					{"menu_folder", "label_code_lang"
 							, "bookmark", "menu_item"
 							, "sys_option", "sys_code"
-							, "bill_plans"};
+							, "bill_plans", "mat_comp_uprice"
+							, "seq_maker"};
 
 			for (String table : whiteList) {
 				if (lowSql.contains(table)) return;
@@ -126,12 +147,14 @@ public class SqlRunQueryImpl implements SqlRunner {
 
 			// 2. 보안 가드레일 (차단 대신 로깅)
 			if (lowSql.contains("select") || lowSql.contains("update") || lowSql.contains("delete")) {
-				if (!lowSql.contains("spjangcd") && !lowSql.contains("/* skip_tenant_check */")) {
-					// [변경] 실행은 시켜주되, 나중에 쿼리를 일괄 수정하기 위해 로그를 남깁니다.
-					log.warn("⚠️ [멀티테넌트 보안 권고] spjangcd 누락 감지 (실행 허용됨): {}", sql);
+				// id 단건 delete/update는 skip
+				if (lowSql.matches(".*delete from \\w+ where id=\\?.*") ||
+						lowSql.matches(".*delete from \\w+ where id=:id.*") ||  // named parameter 방식도 추가
+						lowSql.matches(".*update \\w+ set .* where id=\\?.*") ||
+						lowSql.matches(".*update \\w+ set .* where id=:id.*")) return;
 
-					// 심사 전까지는 throw를 막아두고, 로그를 보면서 쿼리를 하나씩 보완하시면 됩니다.
-					// throw new SecurityException("격리 조건 누락");
+				if (!lowSql.contains("spjangcd") && !lowSql.contains("/* skip_tenant_check */")) {
+					log.warn("⚠️ [멀티테넌트 보안 권고] spjangcd 누락 감지 (실행 허용됨): {}", sql);
 				}
 			}
 		}

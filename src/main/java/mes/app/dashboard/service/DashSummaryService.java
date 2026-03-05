@@ -2,6 +2,7 @@ package mes.app.dashboard.service;
 
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import mes.app.common.TenantContext;
 import mes.domain.services.DateUtil;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -406,6 +407,9 @@ public class DashSummaryService {
 
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
 
+        String tenantId = TenantContext.get();
+        dicParam.addValue("spjangcd", tenantId);
+
         StringBuilder sql = new StringBuilder("""
                 SELECT
                     tb204.*,
@@ -419,6 +423,7 @@ public class DashSummaryService {
                     TO_DATE(tb204.frdate, 'YYYYMMDD') BETWEEN
                         TO_DATE((EXTRACT(YEAR FROM CURRENT_DATE) - 1)::text || '0101', 'YYYYMMDD')
                         AND TO_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::text || '1231', 'YYYYMMDD')
+                        and tb204.spjangcd = :spjangcd
                 """);
         // 정렬 조건 추가
         sql.append(" ORDER BY tb204.frdate ASC");
@@ -659,13 +664,14 @@ public class DashSummaryService {
     public List<Map<String, Object>> getBoardList(String board_group, String keyword, String srchStartDt, String srchEndDt) {
 
         String today = DateUtil.getTodayString();
-
+        String tenantId = TenantContext.get();
         MapSqlParameterSource paramMap = new MapSqlParameterSource();
         paramMap.addValue("board_group", board_group);
         paramMap.addValue("srchStartDt", Timestamp.valueOf(srchStartDt));
         paramMap.addValue("srchEndDt", Timestamp.valueOf(srchEndDt));
         paramMap.addValue("keyword", keyword);
         paramMap.addValue("today", Date.valueOf(today));
+        paramMap.addValue("spjangcd", tenantId);
 
         String sql = """
         		with A as (
@@ -678,6 +684,7 @@ public class DashSummaryService {
 	                where "BoardGroup" = :board_group
                     and "NoticeYN" = 'Y'
 	                and "NoticeEndDate" >= :today
+	                and spjangcd = :spjangcd
                 ), B as (
                     select B.id, B."Title" as title
                     , to_char(B."WriteDateTime", 'yyyy-mm-dd hh24:mi:ss') as write_date_time
@@ -689,6 +696,7 @@ public class DashSummaryService {
                     where B."BoardGroup" = :board_group
                     and B."WriteDateTime" between :srchStartDt and :srchEndDt
                     and A.id is null
+                    and B.spjangcd = :spjangcd
         		     """;
 
         if (StringUtils.isEmpty(keyword) == false) {

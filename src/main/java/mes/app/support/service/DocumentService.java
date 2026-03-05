@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -23,11 +24,12 @@ public class DocumentService {
 	SqlRunner sqlRunner;
 	// 문서 목록조회
 	public List<Map<String, Object>> getDocumentList(String formId, String keyword) throws JSONException {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("form_id", formId);
 		paramMap.addValue("keyword", keyword);
-		
+		paramMap.addValue("spjangcd", tenantId);
+
 		String sql = """
                     select dr.id as id
                     , f."FormName" as form_name
@@ -42,6 +44,7 @@ public class DocumentService {
 	                from doc_result dr 
 	                inner join doc_form f on f.id = dr."DocumentForm_id"
 	                where f."FormType" = 'file'
+	                and f.spjangcd = :spjangcd
             """;
 		
 		if (StringUtils.isEmpty(keyword)==false) sql +="and upper(dr.\"DocumentName\") like concat('%%', upper(:keyword), '%%')";

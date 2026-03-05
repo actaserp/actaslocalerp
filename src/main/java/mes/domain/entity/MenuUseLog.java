@@ -27,4 +27,7 @@ public class MenuUseLog extends AbstractAuditModel {
 
 	@Column(name = "\"User_id\"")
 	Integer userId;
+
+	@Column(name = "\"spjangcd\"")
+	String spjangcd;
 }

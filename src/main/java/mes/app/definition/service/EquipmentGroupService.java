@@ -3,6 +3,7 @@ package mes.app.definition.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,10 @@ public class EquipmentGroupService {
 	SqlRunner sqlRunner;
 	
 	public List<Map<String, Object>> getEquipGroupList( String keyword) {
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();        
         dicParam.addValue("keyword", keyword);
-        
+		dicParam.addValue("spjangcd", tenantId);
         String sql = """
 			select eg.id
             , eg."Name" as equipment_group_name
@@ -27,6 +29,7 @@ public class EquipmentGroupService {
             , fn_code_name('equipment_type', eg."EquipmentType"::text) as equipment_type
             from equ_grp eg 
             where 1=1
+            and eg.spjangcd = :spjangcd
             """;
         if (StringUtils.isEmpty(keyword)==false) sql +="and upper(eg.\"Name\") like concat('%%',upper(:keyword),'%%')";
         

@@ -7,10 +7,7 @@ import mes.domain.model.AjaxResult;
 import mes.domain.services.SqlRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +32,44 @@ public class CustomerCurrentController {
         List<Map<String, Object>> items = this.customerCurrentService.getCustomerList(srchStartDt, srchEndDt, keyword);
 
         result.data = items;
+
+        return result;
+    }
+
+    @PostMapping("/batchApprove")
+    public AjaxResult batchApprove(@RequestBody Map<String, Object> param) {
+        AjaxResult result = new AjaxResult();
+
+        List<String> ids = (List<String>) param.get("ids");
+
+        if (ids == null || ids.isEmpty()) {
+            result.success = false;
+            result.message = "승인할 사업체를 선택해주세요.";
+            return result;
+        }
+
+        this.customerCurrentService.batchApprove(ids);
+        result.success = true;
+        result.message = "승인 처리가 완료되었습니다.";
+
+        return result;
+    }
+
+    @PostMapping("/btnStop")
+    public AjaxResult btnStop(@RequestBody Map<String, Object> param) {
+        AjaxResult result = new AjaxResult();
+
+        List<String> ids = (List<String>) param.get("ids");
+
+        if (ids == null || ids.isEmpty()) {
+            result.success = false;
+            result.message = "중지할 사업체를 선택해주세요.";
+            return result;
+        }
+
+        this.customerCurrentService.btnStop(ids);
+        result.success = true;
+        result.message = "중지 처리가 완료되었습니다.";
 
         return result;
     }

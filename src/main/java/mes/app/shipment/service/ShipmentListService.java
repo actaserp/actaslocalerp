@@ -3,6 +3,7 @@ package mes.app.shipment.service;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class ShipmentListService {
 	SqlRunner sqlRunner;
 
 	public List<Map<String, Object>> getShipmentHeadList(String dateFrom, String dateTo, String compPk, String matGrpPk, String matPk, String keyword, String state) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();
 		paramMap.addValue("dateFrom", dateFrom);
 		paramMap.addValue("dateTo", dateTo);
@@ -27,6 +28,7 @@ public class ShipmentListService {
 		paramMap.addValue("keyword", keyword);
 		//String state = "shipped";
 		paramMap.addValue("state", state);
+		paramMap.addValue("spjangcd", tenantId);
 		
 		String sql = """
 				select sh.id
@@ -46,6 +48,7 @@ public class ShipmentListService {
                 from shipment_head sh 
                 join company c on c.id = sh."Company_id"   
                 where sh."ShipDate"  between cast(:dateFrom as date) and cast(:dateTo as date)
+                and sh.spjangcd = :spjangcd
 				""";
 		
 		if (StringUtils.isEmpty(compPk)==false)  sql += " and sh.\"Company_id\" = cast(:compPk as Integer) ";

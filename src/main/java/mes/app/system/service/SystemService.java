@@ -147,7 +147,7 @@ public class SystemService {
 	 * @param folderId
 	 * @return
 	 */
-	public List<Map<String, Object>> getUserGroupMenuList(Integer userGroupId, Integer folderId) {
+	public List<Map<String, Object>> getUserGroupMenuList(Integer userGroupId, Integer folderId, String loginId) {
 
 		String sql = """
                 with recursive tree as (  
@@ -167,6 +167,11 @@ public class SystemService {
                             where a."Parent_id" is null
                              and a."FrontFolder_id" is not null
                 """;
+
+		if (!"admin".equals(loginId)) {
+			sql += " and a.\"FrontFolder_id\" != 15";
+		}
+
 		if (folderId != null) {
 			sql += " and a.id = :folder_id";
 		}
@@ -212,6 +217,7 @@ public class SystemService {
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("folder_id", folderId);
 		dicParam.addValue("group_id", userGroupId);
+		dicParam.addValue("loginId", loginId);
 		return this.sqlRunner.getRows(sql, dicParam);
 	}
 

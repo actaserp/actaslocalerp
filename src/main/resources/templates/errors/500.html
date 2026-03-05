@@ -75,7 +75,7 @@
     
     <div class="error-wrap">
         <div class="error-box">
-            <img src="/img/error_500.png" alt="에러이미지"/>
+            <img th:src="@{/img/error_500.png}" alt="에러이미지"/>
         </div>
         <div class="error-title">
             <h1 th:text="${'status: ' + status}"></h1>
@@ -101,7 +101,7 @@
         </div>
     </div>
     
-    <div class="error-bottom-img"><img src="/img/error_bottom_img.png" alt="하단 조리도구 이미지" /></div>
+    <div class="error-bottom-img"><img th:src="@{/img/error_bottom_img.png}" alt="하단 조리도구 이미지" /></div>
     <div class="error-bottom"></div>
 </div>
 

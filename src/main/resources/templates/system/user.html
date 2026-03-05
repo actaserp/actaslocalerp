@@ -909,6 +909,7 @@
            })*/
 
         function user_group_grid(user_id) {
+            if (!user_id) return;
             let data2 = [];
 
             $.ajax({

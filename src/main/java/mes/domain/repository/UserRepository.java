@@ -31,4 +31,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 	@Query(value = "update auth_user set password = :pw WHERE username = :userid", nativeQuery = true)
 	void PasswordChange(@Param("pw") String pw, @Param("userid") String userid);
 
+	Optional<User> findBySpjangcd(String spjangcd);
+
 }

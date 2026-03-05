@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -117,9 +118,11 @@ public class LotStockTakeService {
 	
 	
 	public List<Map<String, Object>> getMaterialLotList(Integer materialId, Integer storehouseId){
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource paramMap = new MapSqlParameterSource();  
 		paramMap.addValue("material_id", materialId);
 		paramMap.addValue("storehouse_id", storehouseId);
+		paramMap.addValue("spjangcd", tenantId);
 
 		String sql = """
 		with A as (
@@ -138,6 +141,7 @@ public class LotStockTakeService {
 		inner join unit u on u.id = m."Unit_id" 
 		where 1=1
         and ml."Material_id" = :material_id
+        and ml.spjangcd = :spjangcd
         """;
 		
 		if(storehouseId!=null) {

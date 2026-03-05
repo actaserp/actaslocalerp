@@ -47,7 +47,10 @@ public class WebMvcConfig implements WebMvcConfigurer{
     public void addCorsMappings(CorsRegistry registry){
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "http://localhost:8030", "http://actascld.co.kr:8030/", "http://mes.actascld.co.kr", "https://mes.actascld.co.kr", "https://act.actascld.co.kr")
+                        "http://localhost:8030", "http://actascld.co.kr:8030/", "http://mes.actascld.co.kr", "https://mes.actascld.co.kr", "https://act.actascld.co.kr",
+                        "https://actascld.co.kr", "http://actascld.co.kr",
+                        "https://actas-ai.co.kr", "http://actas-ai.co.kr"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD")
                 .allowedHeaders("*")
                 .allowCredentials(true);

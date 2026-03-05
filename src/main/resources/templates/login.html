@@ -1351,7 +1351,6 @@
             var submitData = $(form).serialize() + '&isChangeLang=' + isChangeLang;
             $.post(withCtx('/login'), submitData, function (result) {
                 let code = result.data.code;
-                console.log('result.data', result.data);
                 if (code == 'NOUSER') {
 
                     Alert.alert('', '아이디 또는 비밀번호가 일치하지 않습니다.');
@@ -1381,40 +1380,12 @@
                     Alert.alert('', '사용 불가능한 사용자입니다.', clearFields);
                 } else if (code == 'null') {
                     Alert.alert('', '이용절차 확인중인 사용자입니다.', clearFields);
+                }  else if (code == 'STOPPED') {
+                    Alert.alert('', '이용이 중지된 사업체입니다. 관리자에게 문의하세요.', clearFields);
+                } else if (code == 'OK') {
+                    location.href = withCtx("/");
                 } else {
-                    if (code == 'OK') {
-                        location.href = withCtx("/");
-                        // let lang_cd = sessionStorage.getItem('lang_code');
-                        // let url = '/api/common/labels';
-                        // let pData = {lang_code: lang_cd};
-                        // let fnsuccess = function (result) {
-                        //     dic = {};
-                        //     $.each(result, function (idx, item) {
-                        //         let storageKey = lang_cd + '_' + item.gui_code + '_' + item.template_key;
-                        //         let data = [];
-                        //         if (dic.hasOwnProperty(storageKey)) {
-                        //             data = dic[storageKey];
-                        //         } else {
-                        //             dic[storageKey] = data;
-                        //         }
-                        //         data.push({'label_code': item.label_code, 'text': item.text, 'desc': item.descr});
-                        //     });
-                        //
-                        //     $.each(dic, function (k, v) {
-                        //         let sessionData = JSON.stringify(v);
-                        //         sessionStorage.setItem(k, sessionData);
-                        //     });
-                        //     location.href = withCtx("/");
-                        // };
-                        //
-                        // let fnfailure = function () {
-                        //     location.href = withCtx("/login");
-                        // };
-                        // AjaxUtil.getAsyncData(url, pData, fnsuccess, fnfailure);
-                        //location.href = "/";
-                    } else {
-                        location.href = withCtx("/");
-                    }
+                    location.href = withCtx('/');
                 }
             }).fail(function (e) {
                 Alert.alert('', JSON.parse(e.responseText).message);

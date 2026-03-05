@@ -89,17 +89,30 @@ public class GuiController {
 			boolean read_flag = false; 
 			boolean write_flag = false;
 
+			boolean isAdmin = "admin".equals(user.getUsername());
+
 			if (map != null) {
 				active = map.get("AuthCode").toString();
 
-				// 포함 여부로 권한 판별 (RWA, RA, WA 모두 대응 가능)
-				read_flag = active.contains("R");
-				write_flag = active.contains("W");
-
-			} else {
-				// 기본값 설정
+				// AuthCode가 빈값이면 권한 없는 것으로 처리
+				if (active.isEmpty()) {
+					if (isAdmin) {
+						read_flag = true;
+						write_flag = true;
+					} else {
+						mv.setViewName("errors/403");
+						return mv;
+					}
+				} else {
+					read_flag = active.contains("R");
+					write_flag = active.contains("W");
+				}
+			} else if (isAdmin) {
 				read_flag = true;
-				write_flag = false;
+				write_flag = true;
+			} else {
+				mv.setViewName("errors/403");
+				return mv;
 			}
 			
 			// 권한 셋팅
@@ -113,6 +126,7 @@ public class GuiController {
     	        	menuUseLog.setMenuCode(gui);
     	        	menuUseLog.setUserId(user.getId());
     	        	menuUseLog.set_audit(user);
+					menuUseLog.setSpjangcd(tenantId);
     	        	
     	            this.menuUseLogRepository.save(menuUseLog);
             	} catch(Exception ex) {

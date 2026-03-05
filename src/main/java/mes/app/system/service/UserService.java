@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -117,10 +118,10 @@ public class UserService {
 	
 	// 사용자 그룹 조회
 	public List<Map<String, Object>> getUserGrpList(Integer id) {
-		
+		String tenantId = TenantContext.get();
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("id", id);
-        
+		dicParam.addValue("spjangcd", tenantId);
         String sql = """
         		select ug.id as grp_id
 	            , ug."Name" as grp_name
@@ -130,6 +131,7 @@ public class UserService {
 	            and "RelationName" = 'auth_user-user_group' 
 	            and rd."DataPk1" = :id
 	            where coalesce(ug."Code",'') <> 'dev'
+	            and ug.spjangcd = :spjangcd
         		""";
         
         List<Map<String, Object>> items = this.sqlRunner.getRows(sql, dicParam);
