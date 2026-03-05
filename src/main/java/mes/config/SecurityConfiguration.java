@@ -47,6 +47,14 @@ public class SecurityConfiguration {
         http
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
+                        .contentTypeOptions(ct -> {})
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                        )
+                        .referrerPolicy(referrer -> referrer
+                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                        )
                 );
 
         // 2. CSRF 예외 경로 (기존 pda 및 기타 추가)
