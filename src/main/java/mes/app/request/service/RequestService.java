@@ -115,6 +115,7 @@ public class RequestService {
                     a."endperid",
                     a."endpernm",
                     f."as_file" as "fix_file",
+                    f."remark",
                     TO_CHAR(TO_DATE(a."enddate", 'YYYYMMDD'), 'YYYY-MM-DD') AS enddate,
                     TO_CHAR(a."inputdate", 'YYYY-MM-DD HH24:MI') AS inputdate
                 FROM "tb_as010" a
