@@ -87,7 +87,6 @@ public class CustomerCurrentService {
                 "wm_user_group_menu",
                 "wm_storyboard_config",
                 "wm_prop_master",
-                "wm_system_log",
                 "wm_login_log",
                 "wm_menu_log"
         );

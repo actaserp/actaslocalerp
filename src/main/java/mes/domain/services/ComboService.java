@@ -485,7 +485,7 @@ public class ComboService {
 	};
 	
 	ComboDataFunction menu_folder=(String cond1, String cond2, String cond3)-> { 
-		String sql = "select id as value, \"FolderName\" as text from menu_folder mf order by \"_order\" ";		
+		String sql = "select id as value, \"FolderName\" as text from menu_folder mf  where mf.id != 55 order by \"_order\" ";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("cond1", cond1);
 		dicParam.addValue("cond2", cond2);
@@ -497,7 +497,9 @@ public class ComboService {
 		String sql = """
 			select mi."MenuCode" as value, 
 			format('%s(%s)',mi."MenuName", mf."FolderName") as text 
-			from menu_item mi inner join menu_folder mf on mf.id = mi."MenuFolder_id"  
+			from menu_item mi inner join menu_folder mf on mf.id = mi."MenuFolder_id"
+			where mi."MenuFolder_id" != 55
+			order by mi."MenuFolder_id";  
 			""";
 		MapSqlParameterSource dicParam = new MapSqlParameterSource();
 		dicParam.addValue("cond1", cond1);

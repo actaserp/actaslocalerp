@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -36,13 +37,13 @@ public class UserGroupController{
 	
 	@GetMapping("/read")
 	public AjaxResult getUserGroupList(
-			@RequestParam(value ="spjangcd") String spjangcd,
 			HttpServletRequest request,
 			Authentication auth) {
 		
 		User user = (User)auth.getPrincipal();
 		Boolean super_user = user.getSuperUser();
-		
+		String spjangcd = TenantContext.get();
+
 		if (super_user == false ) {
 			super_user = Objects.equals(user.getUserProfile().getUserGroup().getCode(), "dev");
 		}			

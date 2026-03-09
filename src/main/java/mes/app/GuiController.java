@@ -69,8 +69,13 @@ public class GuiController {
     		// 메뉴별 권한 조회
     		Map<String,Object> map = new HashMap<String,Object>();
 
-			String tenantId = TenantContext.get();
-    		
+			// /gui/ 요청은 SpjangSecurityInterceptor가 TenantContext를 세팅하지 않으므로
+			// 인증된 User 객체에서 직접 spjangcd를 가져온다 (세션 의존 제거)
+			String tenantId = user.getSpjangcd();
+			if (tenantId == null) {
+				tenantId = TenantContext.get(); // fallback
+			}
+
 			MapSqlParameterSource dicParam = new MapSqlParameterSource();			
 			dicParam.addValue("MenuCode", gui);
 			dicParam.addValue("spjangcd", tenantId);
