@@ -1,5 +1,6 @@
 package mes.domain.services.impl;
 
+import mes.app.common.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,8 @@ public class LogWriterImpl implements LogWriter {
 	SystemLogRepository systemLogRepository;
 	
 	public void addDbLog(String logType, String source, Exception ex) {
-		
+
+		String spjangcd = TenantContext.get();
 		String message = null;
 		if (ex !=null) {
 			message = ex.toString();
@@ -24,6 +26,7 @@ public class LogWriterImpl implements LogWriter {
 		systemLog.setType(logType);
 		systemLog.setSource(source);
 		systemLog.setMessage(message);
+		systemLog.setSpjangcd(spjangcd);
 		
 		this.systemLogRepository.save(systemLog);
 	}

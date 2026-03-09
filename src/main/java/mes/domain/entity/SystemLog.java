@@ -39,5 +39,8 @@ public class SystemLog {
 	@Column(name = "_created")
 	Timestamp _created;
 
+	@Column(name = "spjangcd")
+	String spjangcd;
+
 	
 }

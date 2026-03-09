@@ -240,6 +240,7 @@ public class AccountController {
 		return result;
 	}
 
+	@Transactional
     @PostMapping("/account/myinfo/password_change")
     public AjaxResult userPasswordChange(
     		@RequestParam("name") final String name,
@@ -250,6 +251,7 @@ public class AccountController {
 
     	User user = (User)auth.getPrincipal();
         AjaxResult result = new AjaxResult();
+
 
         if (StringUtils.hasText(loginPwd)==false | StringUtils.hasText(loginPwd2)==false) {
         	result.success=false;
@@ -263,19 +265,26 @@ public class AccountController {
         	return result;
         }
 
-        user.setPassword(Pbkdf2Sha256.encode(loginPwd2));
-        //user.getUserProfile().setName(name);
-        this.userRepository.save(user);
+		String pwSql = """
+			UPDATE auth_user SET password=:password 
+			WHERE id=:id AND spjangcd=:spjangcd
+		""";
+		MapSqlParameterSource pwParam = new MapSqlParameterSource();
+		pwParam.addValue("password", Pbkdf2Sha256.encode(loginPwd2));
+		pwParam.addValue("id", user.getId());
+		pwParam.addValue("spjangcd", user.getSpjangcd());
+		this.sqlRunner.execute(pwSql, pwParam);
 
         String sql = """
         	update user_profile set 
         	"Name"=:name, _modified = now(), _modifier_id=:id 
-        	where id=:id 
+        	WHERE "User_id"=:userId AND spjangcd=:spjangcd
         """;
 
         MapSqlParameterSource dicParam = new MapSqlParameterSource();
         dicParam.addValue("name", name);
-        dicParam.addValue("id", user.getId());
+        dicParam.addValue("userId", user.getId());
+		dicParam.addValue("spjangcd", user.getSpjangcd());
         this.sqlRunner.execute(sql, dicParam);
 
 
