@@ -596,7 +596,7 @@
 
             theGrid.rowHeaders.columns.splice(0, 1);
             user_group_grid();
-            getspjangcd();
+            // getspjangcd();
         }
 
 
@@ -1108,7 +1108,6 @@
                     'X-CSRF-TOKEN': csrfToken
                 },
                 success: function (response) {
-                    console.log(response.data);
                     let select = $('#spjangcd');
                     select.empty(); // 기존 옵션 제거
 
@@ -1349,13 +1348,11 @@
                 }
                 const selectedItem = items[0];
                 if (selectedItem) {
-                    console.log('selectedItem : ', selectedItem)
                     $('#login_id').val(selectedItem.BusinessNumber); // 로그인 아이디 바인드
                     $('#Name').val(selectedItem.Name); // 이름
                     $('#tel').val(selectedItem.TelNumber); // 전화번호
                     $('#email').val(selectedItem.Email); // 이메일
                     $('#UserGroup_id').val('10'); // 사용자그룹 거래처 바인드
-                    $('#spjangcd').val('ZZ'); // 사업장 엑타스 바인드
                     popContainer.close();
                 }
                 popContainer.close();

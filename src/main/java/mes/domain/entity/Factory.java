@@ -29,6 +29,9 @@ public class Factory extends AbstractAuditModel  {
 	
 	@Column(name = "\"Name\"")
 	String name;
+
+	@Column(name = "\"spjangcd\"")
+	String spjangcd;
 	
 	
 }
