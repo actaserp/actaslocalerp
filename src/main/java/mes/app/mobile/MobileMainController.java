@@ -373,7 +373,7 @@ public class MobileMainController {
         AjaxResult result = new AjaxResult();
 
         try {
-            String apiKey = "672F3CC6-711E-3390-87DC-77190302557E";
+            String apiKey = "782DA4E1-4DC4-3B19-8519-2E2AE8EB2926"; // 공백 주의
             String apiUrl = "https://api.vworld.kr/req/address?service=address&request=getAddress" +
                     "&key=" + apiKey +
                     "&format=json&type=both&crs=epsg:4326&point=" + lon + "," + lat;
@@ -381,6 +381,7 @@ public class MobileMainController {
 
             RestTemplate restTemplate = new RestTemplate();
             String response = restTemplate.getForObject(apiUrl, String.class);
+            //System.out.println("VWorld response: " + response);
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(response);
