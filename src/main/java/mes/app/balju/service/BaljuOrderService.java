@@ -3,7 +3,7 @@ package mes.app.balju.service;
 import lombok.extern.slf4j.Slf4j;
 import mes.domain.services.CommonUtil;
 import mes.domain.services.SqlRunner;
-import org.apache.commons.collections.MapUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
