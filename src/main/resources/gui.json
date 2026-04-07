@@ -3,7 +3,6 @@
 
   "wm_monitoring_dashboard": {  "name": "대쉬보드", "templates": { "default": "dashboard/monitoring_dashboard.html" } },
 
-
   "wm_dashboard_summary": { "name": "공정진행현황", "templates": { "default": "dashboard/dash_summary_main.html" }},
   "wm_custom_order": { "name": "수주진행현황", "templates": { "default": "dashboard/dash_custom_order.html" } },
 

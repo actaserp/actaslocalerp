@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mes.app.Scheduler.SchedulerService.AccountSyncService;
 import mes.app.Scheduler.SchedulerService.ApiUsageService;
+import mes.app.Scheduler.SchedulerService.NginxTrafficService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class ScheduledTaskRunner {
 
     private final AccountSyncService accountSyncService;
     private final ApiUsageService apiUsageService;
+    private final NginxTrafficService nginxTrafficService;
 
     //@Scheduled(cron = "0 5 * * * *")
     @Scheduled(cron = "0 0 * * * *") //5분주기
@@ -29,9 +31,15 @@ public class ScheduledTaskRunner {
 
         //log.info("[스케줄러 시작] 계좌수집 작업 시작 - Thread: {}", Thread.currentThread().getName());
 
-        schedulerExecutor.execute(() -> safeRun(accountSyncService::run, "계좌수집"));
+        //schedulerExecutor.execute(() -> safeRun(accountSyncService::run, "계좌수집"));
         //schedulerExecutor.execute(() -> safeRun(apiTimeLogCollectService::run, "API경과시간"));
     }
+
+    @Scheduled(cron = "0 0 3 * * *") // 매일 00:30
+    public void runDailyTrafficCollect() {
+        schedulerExecutor.execute(() -> safeRun(nginxTrafficService::collectYesterdayTraffic, "nginx트래픽집계"));
+    }
+
 
     /**
      * [SaaS 인증용] 매달 전달의 Redis API 호출 내역을 DB로 이관

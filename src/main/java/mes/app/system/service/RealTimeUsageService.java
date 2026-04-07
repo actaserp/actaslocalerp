@@ -1,6 +1,8 @@
 package mes.app.system.service;
 
 import mes.domain.services.SqlRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Service;
@@ -11,10 +13,13 @@ import java.util.Map;
 @Service
 public class RealTimeUsageService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RealTimeUsageService.class);
+
     @Autowired
     SqlRunner sqlRunner;
 
     public List<Map<String, Object>> getUsageList(String spjangcd){
+        long startTime = System.currentTimeMillis();
 
         MapSqlParameterSource param = new MapSqlParameterSource();
 
@@ -35,6 +40,9 @@ public class RealTimeUsageService {
                 """;
 
         List<Map<String, Object>> items = this.sqlRunner.getRows(sql, param);
+
+        long endTime = System.currentTimeMillis();
+        logger.info("RealTimeUsageService.getUsageList [spjangcd: {}] execution time: {} ms", spjangcd, (endTime - startTime));
 
         return items;
     }

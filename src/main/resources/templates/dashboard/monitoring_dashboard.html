@@ -253,7 +253,7 @@
                             </div>
                         </div> -->
 
-                        <div class="card">
+                        <!-- <div class="card">
                             <div class="card-header">
                                 <strong>월별 가입현황</strong>
                                 <input type="month" id="monthPicker" ...>
@@ -270,9 +270,43 @@
                                     <button id="btnLast"   onclick="page.goToPage(page.totalPages)">▶▶</button>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
-                        
+                        <div class="card">
+                            <div class="card-header"><strong>Nginx 로그 업로드</strong></div>
+                            <div class="card-body" style="flex-direction: column; gap: 12px; overflow-y: auto;">
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label style="font-size: 13px; font-weight: 600; color: #495057;">서비스</label>
+                                    <select id="logService" style="border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
+                                        <option value="mes">MES</option>
+                                        <option value="sport">SPORT</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label style="font-size: 13px; font-weight: 600; color: #495057;">날짜</label>
+                                    <input type="date" id="logDate"
+                                           style="padding: 7px 10px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label style="font-size: 13px; font-weight: 600; color: #495057;">로그 파일</label>
+                                    <input type="file" id="logFile" accept=".log,.log-*,*"
+                                           style="border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px; background: #fff;">
+                                </div>
+
+                                <button id="btnUploadLog"
+                                        style="margin-top: 4px; padding: 9px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                                    업로드
+                                </button>
+
+                                <!-- 결과 영역 -->
+                                <div id="uploadResult" style="display:none; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 13px; line-height: 1.8;">
+                                </div>
+
+                            </div>
+                        </div>
 
                         <!-- <div class="card">
                             <div class="card-header"><strong>요청사항</strong></div>
@@ -305,6 +339,29 @@
                             </div>
                         </div>
                     </div>
+
+
+                    <div class="row" style="margin-top: 20px;">
+    <div class="card" style="height: auto; min-height: 400px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa;">
+            <strong>트래픽 수집 현황</strong>
+            <div class="header-tools" style="display: flex; gap: 8px; align-items: center;">
+                <input type="date" id="trafficStartDate" style="padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                <span>~</span>
+                <input type="date" id="trafficEndDate" style="padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer;">
+                    <input type="checkbox" id="chkGroupByService"> 서비스별 그룹화
+                </label>
+                <button id="btnSearchTraffic" style="padding: 5px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                    조회
+                </button>
+            </div>
+        </div>
+        <div class="card-body grid-padding" style="flex-direction: column;">
+            <div id="trafficDailyGrid" class="grid-host" style="min-height: 350px;"></div>
+        </div>
+    </div>
+</div>
 
 
                 </div>
@@ -343,6 +400,9 @@
 
                 this.adminUsageGrid = null;
                 this.adminUsageGrid_viewData = new wijmo.collections.CollectionView();
+
+                this.trafficDailyGrid = null;
+                this.trafficDailyGrid_viewData = new wijmo.collections.CollectionView();
 
                 this.url = '/api/monitoring';
 
@@ -390,15 +450,15 @@
                             }
 
                             // 월별 가입현황
-                            if (resData.monthly) {
+                            // if (resData.monthly) {
                                 
-                                const totalCount = resData.monthly.length > 0 ? parseInt(resData.monthly[0].total_count) : 0;
-                                _this.totalCount = totalCount;
-                                _this.montly_viewData.sourceCollection = resData.monthly;
-                                _this.montly_viewData.refresh();
+                            //     const totalCount = resData.monthly.length > 0 ? parseInt(resData.monthly[0].total_count) : 0;
+                            //     _this.totalCount = totalCount;
+                            //     _this.montly_viewData.sourceCollection = resData.monthly;
+                            //     _this.montly_viewData.refresh();
 
-                                _this.updatePagerUI();
-                            }
+                            //     _this.updatePagerUI();
+                            // }
 
                             // API 콜 횟수
                             if (resData.apiCntList) {
@@ -410,6 +470,13 @@
                                _this.adminUsageGrid_viewData.refresh();
                                _this.updateUsagePagerUI();  
                                // _this.apiCall_viewData.sourceCollection = resData.apiCntList;
+                            }
+
+
+                            // 트래픽 수집 현황
+                            if(resData.trafficDaily){
+                                _this.trafficDailyGrid_viewData.sourceCollection = resData.trafficDaily;
+                                _this.trafficDailyGrid_viewData.refresh();
                             }
                         }else {
                             Alert.alert('', result.message);
@@ -474,20 +541,41 @@
                 });
             }
 
+            searchTrafficData() {
+                let _this = this;
+                const isGrouped = $('#chkGroupByService').is(':checked');
+
+                let params = {
+                    'startDate':      $('#trafficStartDate').val(),
+                    'endDate':        $('#trafficEndDate').val(),
+                    'groupByService': isGrouped
+                };
+
+                AjaxUtil.getAsyncData('/api/traffic/range', params, function (result) {
+                    if (result.success) {
+                        _this.trafficDailyGrid_viewData.sourceCollection = result.data;
+                        _this.trafficDailyGrid_viewData.refresh();
+                        _this.updateTrafficColumns(isGrouped);
+                    } else {
+                        Alert.alert('', result.message);
+                    }
+                });
+            }            
+
             initGrids() {
 
-                this.monthlySignupGrid = new wijmo.grid.FlexGrid('#monthlySignupGrid', {
-                    autoGenerateColumns: false,
-                    headersVisibility: wijmo.grid.HeadersVisibility.Column,
-                    isReadOnly: true,
-                    itemsSource: this.montly_viewData,
-                    // ... (기존 설정 유지)
-                    columns: [
-                        { header: '고객사명', binding: 'spjangnm', width: '*', align: 'left' },
-                        { header: '승인여부', binding: 'state_text', width: 80, align: 'center' },
-                        { header: '가입일시', binding: 'subscriptiondate', width: 120, align: 'left', format: 'n0' }
-                    ]
-                });
+                // this.monthlySignupGrid = new wijmo.grid.FlexGrid('#monthlySignupGrid', {
+                //     autoGenerateColumns: false,
+                //     headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                //     isReadOnly: true,
+                //     itemsSource: this.montly_viewData,
+                //     // ... (기존 설정 유지)
+                //     columns: [
+                //         { header: '고객사명', binding: 'spjangnm', width: '*', align: 'left' },
+                //         { header: '승인여부', binding: 'state_text', width: 80, align: 'center' },
+                //         { header: '가입일시', binding: 'subscriptiondate', width: 120, align: 'left', format: 'n0' }
+                //     ]
+                // });
 
 
                 // this.requestGrid = new wijmo.grid.FlexGrid('#requestGrid', {
@@ -545,6 +633,42 @@
                                 }
                             }
                         }
+                        });
+
+                        this.trafficDailyGrid = new wijmo.grid.FlexGrid('#trafficDailyGrid', {
+                            autoGenerateColumns: false,
+                            headersVisibility: wijmo.grid.HeadersVisibility.Column,
+                            isReadOnly: true,
+                            allowSorting: true,
+                            itemsSource: this.trafficDailyGrid_viewData,
+                            columns: [
+                                { header: '서비스',         binding: 'service',      width: 100,  align: 'center' },
+                                { header: '날짜',           binding: 'date',         width: 120,  align: 'center' },
+                                { header: '요청수',         binding: 'requestCount', width: '*',  align: 'right'  },
+                                { header: '총용량(MB)',     binding: 'totalMb',      width: '*',  align: 'right'  },
+                                { header: '총용량(GB)',     binding: 'totalGb',      width: '*',  align: 'right'  },
+                                { header: '트래픽 비율(%)', binding: 'trafficRatio', width: 120,  align: 'right'  },
+                            ],
+                            formatItem: (s, e) => {
+                                if (e.panel === s.cells) {
+                                    const col = s.columns[e.col].binding;
+                                    const item = s.rows[e.row].dataItem;
+
+                                    // 비율 높을수록 강조
+                                    if (col === 'trafficRatio') {
+                                        const ratio = parseFloat(item.trafficRatio) || 0;
+                                        if (ratio >= 70) {
+                                            e.cell.style.color = '#e74c3c';
+                                            e.cell.style.fontWeight = 'bold';
+                                        } else if (ratio >= 40) {
+                                            e.cell.style.color = '#f39c12';
+                                        } else {
+                                            e.cell.style.color = '#27ae60';
+                                        }
+                                        e.cell.innerText = ratio + '%';
+                                    }
+                                }
+                            }
                         });
             }
 
@@ -688,8 +812,52 @@
         let page = null;
         $(document).ready(function (e) {
             page = new MonitoringDashBoardPage();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            document.getElementById('logDate').value = yesterday.toISOString().slice(0, 10);
+            document.getElementById('trafficStartDate').value = firstDay.toISOString().slice(0, 10);
+            document.getElementById('trafficEndDate').value = today.toISOString().slice(0, 10);
             
-            document.getElementById('monthPicker').value = new Date().toISOString().slice(0,7);
+            $('#btnUploadLog').on('click', function(){
+                const file = document.getElementById('logFile').files[0];
+                const service = $('#logService').val();
+                const date = $('#logDate').val();
+
+                if (!file)    { Alert.alert('', '파일을 선택해주세요.'); return false; }
+                if (!service) { Alert.alert('', '서비스를 선택해주세요.'); return false; }
+                if (!date)    { Alert.alert('', '날짜를 선택해주세요.'); return false; }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('service', service);
+                formData.append('date', date);
+                formData.append('spjangcd', sessionStorage.getItem('spjangcd'));
+
+                let fnSuccess = function(result){
+                    if(result.success){
+                        const d = result.data;
+                                    $('#uploadResult').html(`
+                                        <div style="color: #28a745; font-weight: 700; margin-bottom: 6px;">✔ ${d.message}</div>
+                                        <div>서비스: <strong>${d.service}</strong></div>
+                                        <div>날짜: <strong>${d.date}</strong></div>
+                                        <div>요청 수: <strong>${d.requestCount.toLocaleString()}건</strong></div>
+                                        <div>총 용량: <strong>${d.totalMb} MB (${d.totalGb} GB)</strong></div>
+                                    `).show();                        
+                    } else {
+                        Alert.alert('업로드 실패', result.message);
+                       console.error('업로드 실패:', result.message);
+                    }
+                }
+                AjaxUtil.postFileAsyncData('/api/traffic/upload', formData, fnSuccess);
+            
+            });
+
+
+            //document.getElementById('monthPicker').value = new Date().toISOString().slice(0,7);
             document.getElementById('monthPicker2').value = new Date().toISOString().slice(0,7);
 
             page.searchMainData();
@@ -697,16 +865,16 @@
             //page.searchUsageData(1);
            
             //날짜 바꾸면 다시 조회
-            $('#monthPicker').on('change', function(){
-                let _this = page;
-                const selectedDate = $(this).val();
+            // $('#monthPicker').on('change', function(){
+            //     let _this = page;
+            //     const selectedDate = $(this).val();
 
-                if(selectedDate){
-                    // 1페이지부터 다시 조회
-                    _this.currentPage = 1;
-                    _this.searchMonthlyData(1);
-                }
-            });
+            //     if(selectedDate){
+            //         // 1페이지부터 다시 조회
+            //         _this.currentPage = 1;
+            //         _this.searchMonthlyData(1);
+            //     }
+            // });
 
 
             //날짜 바꾸면 다시 조회
@@ -719,6 +887,10 @@
                     _this.searchUsageData(1);
                 }
             });
+
+            $('#btnSearchTraffic').on('click', function(){
+                page.searchTrafficData();
+            })
             
         });
     </script>

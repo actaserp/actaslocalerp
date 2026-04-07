@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property name="LOG_HOME" value="${LOG_HOME:-logs}" />
+
+    <springProfile name="ncp">
+        <property name="LOG_HOME" value="/opt/logs/mes" />
+    </springProfile>
+    <springProfile name="local">
+        <property name="LOG_HOME" value="logs" />
+    </springProfile>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -8,47 +14,39 @@
         </encoder>
     </appender>
 
-
     <appender name="INFO_WARN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/info/info_warn.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_HOME}/info/info_warn.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>15</maxHistory>
         </rollingPolicy>
-
-        <!-- INFO 필터 -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>NEUTRAL</onMismatch>
         </filter>
-
-        <!-- WARN 필터 -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>WARN</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
-
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!--로그는 비동기로 출력하도록 -->
     <appender name="ASYNC_INFO_WARN" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="INFO_WARN_FILE"/>
-        <queueSize>1024</queueSize> <!-- 필요 시 조정 -->
-        <discardingThreshold>0</discardingThreshold> <!-- 로그 유실 방지 -->
-        <neverBlock>true</neverBlock> <!-- 큐가 가득 차도 블로킹 없이 무시 -->
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
     </appender>
-
 
     <appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/debug/debug.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_HOME}/debug/debug.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>15</maxHistory><!-- 15일 뒤에 자동 삭제 -->
+            <maxHistory>15</maxHistory>
         </rollingPolicy>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>DEBUG</level>
@@ -79,12 +77,9 @@
     <appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="ERROR_FILE" />
         <queueSize>1000</queueSize>
-        <discardingThreshold>0</discardingThreshold> <!-- 절대 버리지 않음 -->
+        <discardingThreshold>0</discardingThreshold>
     </appender>
 
-
-
-    <!--api 경과시간 전용 로그 -->
     <appender name="API_TIME_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/api-time/api_time.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -103,51 +98,33 @@
 
     <appender name="ASYNC_API_TIME_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="API_TIME_FILE"/>
-        <queueSize>1024</queueSize> <!-- 필요 시 조정 -->
-        <discardingThreshold>0</discardingThreshold> <!-- 로그 유실 방지 -->
-        <neverBlock>true</neverBlock> <!-- 큐가 가득 차도 블로킹 없이 무시 -->
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
     </appender>
 
-
-    <!--<logger name="API_EXEC_TIME_LOGGER" level="INFO" additivity="false">
-        <appender-ref ref="ASYNC_API_TIME_FILE" />
-        <appender-ref ref="CONSOLE" />
-    </logger>-->
-
-    <!-- 나머지 로그는 여전히 파일+콘솔로 처리 -->
-    <!-- 개발환경 (dev): 콘솔만 -->
-
+    <!-- 기본 root -->
     <root level="DEBUG">
         <appender-ref ref="CONSOLE" />
     </root>
 
-    <springProfile name="local">
-        <root level="DEBUG">
-            <appender-ref ref="CONSOLE" />
-            <appender-ref ref="ASYNC_INFO_WARN" />
-            <appender-ref ref="ERROR_FILE" />
-            <!--<appender-ref ref="DEBUG_FILE" />-->
-        </root>
+    <!-- API 로그는 항상 콘솔 -->
+    <logger name="API_EXEC_TIME_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
 
-        <logger name="API_EXEC_TIME_LOGGER" level="INFO" additivity="false">
-            <appender-ref ref="ASYNC_API_TIME_FILE" />
-            <appender-ref ref="CONSOLE" />
-        </logger>
-    </springProfile>
-
-    <!-- 운영환경 (prod): 파일만 -->
-    <springProfile name="prod">
+    <!-- 운영환경 추가 파일 출력 -->
+    <springProfile name="ncp">
         <root level="INFO">
             <appender-ref ref="CONSOLE" />
             <appender-ref ref="ASYNC_INFO_WARN" />
             <appender-ref ref="ASYNC_ERROR_FILE" />
         </root>
+        <!-- ncp에서는 파일에도 추가 -->
         <logger name="API_EXEC_TIME_LOGGER" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE" />
             <appender-ref ref="ASYNC_API_TIME_FILE" />
         </logger>
-
     </springProfile>
-
-
 
 </configuration>

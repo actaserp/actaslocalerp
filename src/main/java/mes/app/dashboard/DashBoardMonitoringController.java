@@ -7,16 +7,20 @@ import mes.app.naverCloud.dto.NetworkChartDto;
 import mes.app.naverCloud.service.NcpMonitoringService;
 import mes.app.naverCloud.strategy.MonthlyRange;
 import mes.app.naverCloud.strategy.RealTimeRange;
+import mes.app.traffic.TrafficService;
+import mes.app.traffic.dto.TrafficDailyResponse;
 import mes.domain.model.AjaxResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,10 +39,15 @@ public class DashBoardMonitoringController {
     @Qualifier("asyncExecutor")
     ThreadPoolTaskExecutor asyncExecutors;
 
+    @Autowired
+    TrafficService trafficService;
+
 
     @GetMapping("/read")
-    public AjaxResult GetDataList(@RequestParam String monthlyStartDate,
+    public AjaxResult GetDataList(//@RequestParam String monthlyStartDate,
                                   @RequestParam String monthlyStartDate2,
+                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate trafficStartDate,
+                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate trafficEndDate,
                                   @RequestParam(defaultValue = "1") int pageNumber,
                                   @RequestParam(defaultValue = "10") int pageSize
                                   ){
@@ -60,12 +69,14 @@ public class DashBoardMonitoringController {
                 ), asyncExecutors
         );
 
+
+
         //월별 가입현황 대시보드 데이터
 
-        CompletableFuture<List<Map<String, Object>>> montlyList = CompletableFuture.supplyAsync(() ->
+        /*CompletableFuture<List<Map<String, Object>>> montlyList = CompletableFuture.supplyAsync(() ->
                 ncpMonitoringService.getMontlyRegisterList(monthlyStartDate, pageNumber, pageSize)
                 ,asyncExecutors
-        );
+        );*/
 
         //CompletableFuture<List<Map<String, Object>>> montlyList = null
 
@@ -76,14 +87,24 @@ public class DashBoardMonitoringController {
                 ,asyncExecutors
         );
 
+        // 트래픽 수집 데이터 (날짜 범위 없으면 당월 기본값)
+        LocalDate start = trafficStartDate != null ? trafficStartDate : LocalDate.now().withDayOfMonth(1);
+        LocalDate end   = trafficEndDate   != null ? trafficEndDate   : LocalDate.now();
+
+        CompletableFuture<List<TrafficDailyResponse>> trafficDailyList = CompletableFuture.supplyAsync(() ->
+                trafficService.getTrafficByDateRange(start, end), asyncExecutors
+        );
+
+
         Map<String, Object> dataList = new HashMap<>();
         try{
             //dataList.put("resource", null);
             dataList.put("resource", resourceSummary.join());
             //dataList.put("traffic", null);
             dataList.put("traffic", trafficHistory.join());
-            dataList.put("monthly", montlyList.join());
+            //dataList.put("monthly", montlyList.join());
             dataList.put("apiCntList", apiCntListBySpjangcd.join());
+            dataList.put("trafficDaily", trafficDailyList.join());
         }catch (Exception e){
             log.error("데이터 조립 중 에러 발생", e);
         }
@@ -117,6 +138,9 @@ public class DashBoardMonitoringController {
 
         return AjaxResult.success(null, data);
     }
+
+
+
 
     @GetMapping("/local_cache/save")
     public AjaxResult localCacheSetRDB(){
