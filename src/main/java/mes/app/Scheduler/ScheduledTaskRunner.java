@@ -35,7 +35,7 @@ public class ScheduledTaskRunner {
         //schedulerExecutor.execute(() -> safeRun(apiTimeLogCollectService::run, "API경과시간"));
     }
 
-    @Scheduled(cron = "0 0 3 * * *") // 매일 00:30
+    @Scheduled(cron = "0 0 3 * * *") // 매일 새벽 3시
     public void runDailyTrafficCollect() {
         schedulerExecutor.execute(() -> safeRun(nginxTrafficService::collectYesterdayTraffic, "nginx트래픽집계"));
     }
@@ -46,16 +46,16 @@ public class ScheduledTaskRunner {
      * TODO: migrateDailyApiUsage에서 시간수정, 여기서 스케줄러 시간수정 필
      * todo: 만약 해당 스케줄러 작업이 실패했을 경우에 대한 대비책도 강구해야함.
      */
-    @Scheduled(cron = "0 0 3 1 * *", zone = "Asia/Seoul") /// 매월 1일 새벽 3시
-    //@Scheduled(cron = "0 07 14 * * *", zone = "Asia/Seoul")
-    public void runApiUsageMigration(){
-
-        // 스케줄러가 인식하는 현재 시간 로그 출력
-        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        log.info("[스케줄러 감지] 현재 서버 시간: {} | 작업명: api 콜 집계", currentTime);
-
-        schedulerExecutor.execute(() -> safeRun(apiUsageService::migrateMonthlyApiUsage, "api 콜 집계"));
-    }
+//    @Scheduled(cron = "0 0 3 1 * *", zone = "Asia/Seoul") /// 매월 1일 새벽 3시
+//    //@Scheduled(cron = "0 07 14 * * *", zone = "Asia/Seoul")
+//    public void runApiUsageMigration(){
+//
+//        // 스케줄러가 인식하는 현재 시간 로그 출력
+//        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//        log.info("[스케줄러 감지] 현재 서버 시간: {} | 작업명: api 콜 집계", currentTime);
+//
+//        schedulerExecutor.execute(() -> safeRun(apiUsageService::migrateMonthlyApiUsage, "api 콜 집계"));
+//    }
 
 
     private void safeRun(Runnable task, String taskName){

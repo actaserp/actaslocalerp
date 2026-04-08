@@ -16,33 +16,37 @@ public class NginxLogParser {
             "\\S+ - - \\[[^]]+] \"\\S+ (\\S+) \\S+\" (\\d+) (\\d+)"
     );
 
+    // 기존 유지
     public static TrafficResult parseFile(File file) {
-        long totalBytes = 0L;
-        long requestCount = 0L;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                Long bytes = parseLine(line);
-                if (bytes != null) { totalBytes += bytes; requestCount++; }
-            }
-        } catch (IOException e) {
+        try {
+            return parseStream(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
             throw new RuntimeException("로그 파일 읽기 실패: " + file.getPath(), e);
         }
-        return new TrafficResult(totalBytes, requestCount);
     }
 
+    // 기존 유지 (수동 업로드용)
     public static TrafficResult parseStream(MultipartFile file) {
+        try {
+            return parseStream(file.getInputStream());
+        } catch (IOException e) {
+            throw new RuntimeException("로그 스트림 읽기 실패: " + file.getOriginalFilename(), e);
+        }
+    }
+
+    // 신규 추가 - 스케줄러(gz 포함)용
+    public static TrafficResult parseStream(InputStream inputStream) {
         long totalBytes = 0L;
         long requestCount = 0L;
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Long bytes = parseLine(line);
                 if (bytes != null) { totalBytes += bytes; requestCount++; }
             }
         } catch (IOException e) {
-            throw new RuntimeException("로그 스트림 읽기 실패: " + file.getOriginalFilename(), e);
+            throw new RuntimeException("로그 스트림 읽기 실패", e);
         }
         return new TrafficResult(totalBytes, requestCount);
     }
