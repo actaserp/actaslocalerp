@@ -36,6 +36,9 @@
                 <li>
                     <a href="#tab2" title="월별">월별</a>
                 </li>
+                <li>
+                    <a href="#tab3" title="사원별 근태현황">사원별 일별현황</a>
+                </li>
             </ul>
 
             <div class="tab-contents">
@@ -212,6 +215,59 @@
                     </div>
 
                 </section>
+
+                <section class="tab-item" id="tab3" >
+                    <div class="section-top">
+                        <div class="search-wrap">
+                            <dl>
+                                <dt>
+                                    <label>년월</label>
+                                </dt>
+                                <dd>
+                                    <div class="srch-box">
+                                        <input type="month" class="form-control2" id="startdate3" name="startdate3">
+                                    </div>
+                                </dd>
+                            </dl>
+
+                            <dl>
+                                <dt>
+                                    <label>사원명</label>
+                                </dt>
+                                <dd>
+                                    <select style="width: 150px;" id="person_name3" name="person_name3"></select>
+                                </dd>
+                            </dl>
+
+                            <!--                            <dl>-->
+                            <!--                                <dt>-->
+                            <!--                                    <label for="depart2">부서</label>-->
+                            <!--                                </dt>-->
+                            <!--                                <dd>-->
+                            <!--                                    <select style="width: 150px;" id="depart3" name="depart3"></select>-->
+                            <!--                                </dd>-->
+                            <!--                            </dl>-->
+
+                            <dl>
+                                <dt><span class="eq"></span></dt>
+                                <dd>
+                                    <li>
+                                        <a class="btn btn-delete" title="검색" id="btnSearch3">
+                                            <img th:src="@{/images/icon/btn-srch.svg}" alt="검색 아이콘">
+                                            검색
+                                        </a>
+                                    </li>
+                                </dd>
+                            </dl>
+
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <!--                        <p id="selectedItem"></p>-->
+                        <div id="monthly-grid3" style="height: 650px; max-height: 650px;"></div>
+                    </div>
+
+                </section>
             </div>
         </div>
     </div> <!--//layout-contents end -->
@@ -229,9 +285,11 @@
                 this.viewData = new wijmo.collections.CollectionView();
                 this.viewData2 = new wijmo.collections.CollectionView();
                 this.viewData3 = new wijmo.collections.CollectionView();
+                this.viewData4 = new wijmo.collections.CollectionView();// 사원별 월단위 일일근태 그리드
                 this.grid = null;
                 this.grid2 = null;
                 this.grid3 = null;
+                this.grid4 = null;
                 this.workList = [];
                 this.init();
             }
@@ -273,7 +331,10 @@
                         {binding: 'jik_id', header: '직위', width: 100, align: 'center' },
                         {binding: 'starttime', header: '출근', width: 100, align: 'center' },
                         {binding: 'endtime', header: '퇴근', width: 100, align: 'center'},
-                        /*{binding: 'worknm', header: '구분', width: 100, align: 'center'},*/
+                        {
+                            binding: 'workcd',
+                            visible: false
+                        },
                         {
                             binding: 'worknm',
                             header: '구분',
@@ -473,6 +534,39 @@
 
                 new FlexGridContextMenu(this.grid3);
                 this.grid3.downloadFileName = '월별근태현황';
+
+
+                // 사원별 월단위 일일근태 그리드
+                this.grid4 = new wijmo.grid.FlexGrid('#monthly-grid3', {
+                    selectionMode: wijmo.grid.SelectionMode.Row,
+                    headersVisibility: wijmo.grid.HeadersVisibility.All,
+                    autoGenerateColumns:false,
+                    isReadOnly:true,
+                    columns:[
+                        { binding:'workymd', header:'일자', width:120 },
+                        { binding:'weekday', header:'요일', width:80 },
+                        { binding:'starttime', header:'출근', width:90 },
+                        { binding:'endtime', header:'퇴근', width:90 },
+                        { binding:'nomaltime', header:'정상', width:80 },
+                        { binding:'overtime', header:'연장', width:80 },
+                        { binding:'nighttime', header:'야간', width:80 },
+                        { binding:'jitime', header:'지각', width:80 },
+                        { binding:'abtime', header:'결근', width:80 },
+                        { binding:'holitime', header:'특근', width:80 },
+                        { binding:'total_time', header:'합계', width:90 },
+                        { binding:'worknm', header:'근무유형', width:120 }
+                    ],
+                    itemsSource:this.viewData4,
+                    formatItem:(s,e)=>{
+                        if(e.panel.cellType===1){
+                            let item = s.rows[e.row].dataItem;
+                            if(item.workymd==='주간근무시간'){
+                                e.cell.style.fontWeight='bold';
+                                e.cell.style.background='#f5f7fa';
+                            }
+                        }
+                    }
+                });
 
             }
 
@@ -943,7 +1037,19 @@
                 AjaxUtil.postJsonData(url, data, fnSuccess);
             }
 
-
+            searchMainData3(){
+                let _this = this;
+                let url = '/api/clock/DayMonthly/personMonthDaily';
+                let data = {
+                    startdate: $('#startdate3').val(),
+                    personid: $('#person_name3').val(),
+                    spjangcd: sessionStorage.getItem('spjangcd')
+                };
+                let result = AjaxUtil.getSyncData(url, data);
+                if(result && result.data){
+                    _this.viewData4.sourceCollection = result.data;
+                }
+            }
         }
 
 
@@ -960,9 +1066,10 @@
             page = new DayMonthlyPage();
 
             $('#startdate2').val(CommonUtil.getYYYYMMDD().substring(0, 7));
+            $('#startdate3').val(CommonUtil.getYYYYMMDD().substring(0, 7));
             AjaxUtil.fillSelectOptions($('#work_division'), 'system_code', 'choose', '', 'work_division');
             AjaxUtil.fillSelectOptions($('#person_name'), 'person', 'choose', false);
-            AjaxUtil.fillSelectOptions($('#depart').add('#depart2'), 'depart', 'choose', false);
+            AjaxUtil.fillSelectOptions($('#person_name3'), 'person', 'choose', false);
 
             page.searchMainData();
 
@@ -1037,12 +1144,13 @@
                 );
             });
 
-
-
-
             $('#work_division, #depart').change(function () {
                 // 값이 변경되었을 때 searchData 함수를 호출
                 page.searchMainData();
+            });
+
+            $('#btnSearch3').click(()=>{
+                page.searchMainData3();
             });
 
         });

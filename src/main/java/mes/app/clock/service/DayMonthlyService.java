@@ -254,4 +254,99 @@ public class DayMonthlyService {
         return items;
     }
 
+    // 사원별 월단위 일일근태기록 조회
+    public List<Map<String,Object>> getPersonMonthDaily(
+            String startdate,
+            Integer personid,
+            String spjangcd
+    ){
+        MapSqlParameterSource param = new MapSqlParameterSource();
+
+        param.addValue("startdate", startdate);
+        param.addValue("personid", personid);
+        param.addValue("spjangcd", spjangcd);
+
+        String sql = """ 
+                WITH d AS (
+                    SELECT
+                        dt,
+                        to_char(dt,'YYYYMM') workym,
+                        to_char(dt,'DD') workday,
+                        to_char(dt,'YY/MM/DD') workymd,
+                        extract(isodow from dt) worknum,
+                        extract(week from dt) week_no,
+                        CASE extract(isodow from dt)
+                            WHEN 1 THEN '월'
+                            WHEN 2 THEN '화'
+                            WHEN 3 THEN '수'
+                            WHEN 4 THEN '목'
+                            WHEN 5 THEN '금'
+                            WHEN 6 THEN '토'
+                            WHEN 7 THEN '일'
+                        END weekday
+                    FROM generate_series(
+                        to_date(:startdate,'YYYYMM'),
+                        to_date(:startdate,'YYYYMM') + interval '1 month - 1 day',
+                        interval '1 day'
+                    ) dt
+                ),
+                base AS (
+                    SELECT
+                        d.week_no,
+                        d.dt,
+                        d.workymd,
+                        d.weekday,
+                        d.worknum,
+                        coalesce(t.nomaltime,0) nomaltime,
+                        coalesce(t.overtime,0) overtime,
+                        coalesce(t.holitime,0) holitime,
+                        coalesce(t.nomaltime,0)
+                        + coalesce(t.overtime,0)
+                        + coalesce(t.holitime,0) total_time,
+                        t.starttime,
+                        t.endtime,
+                        tp210.worknm,
+                        t.remark,
+                        t.fixflag,
+                        1 sort_order
+                    FROM d
+                    LEFT JOIN tb_pb201 t
+                        ON t.workym = d.workym
+                        AND t.workday = d.workday
+                        AND t.personid = :personid::int
+                        AND t.spjangcd = :spjangcd
+                    LEFT JOIN tb_pb210 tp210
+                        ON tp210.workcd = t.workcd
+                ),
+                week_sum AS (
+                    SELECT
+                    week_no,
+                    NULL::timestamp dt,
+                    '주간근무시간' workymd,
+                    NULL::varchar weekday,
+                    NULL::int worknum,
+                    NULL::numeric nomaltime,
+                    NULL::numeric overtime,
+                    NULL::numeric holitime,
+                    SUM(total_time) total_time,
+                    NULL::varchar starttime,
+                    NULL::varchar endtime,
+                    NULL::varchar worknm,
+                    NULL::varchar remark,
+                    NULL::varchar fixflag,
+                    2 sort_order
+                    FROM base
+                    GROUP BY week_no
+                )
+                SELECT *
+                FROM (
+                    SELECT * FROM base
+                    UNION ALL
+                    SELECT * FROM week_sum
+                ) x
+                ORDER BY week_no, dt NULLS LAST, sort_order;
+                """;
+        return sqlRunner.getRows(sql, param);
+    }
+
 }

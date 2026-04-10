@@ -82,7 +82,7 @@ public class DayMonthlyController {
             String workday = workymd.substring(8, 10); // 28
 
             Integer id = ((Number) item.get("id")).intValue();
-            String workcd = (String) item.get("worknm");
+            String workcd = (String) item.get("workcd");
 
             String starttimeStr = (String) item.get("starttime"); // "09:30"
             String endtimeStr = (String) item.get("endtime");
@@ -821,6 +821,27 @@ public class DayMonthlyController {
         return result;
     }
 
+    // =========================================================
+    // 사원별 월단위 일일근태 현황 조회
+    // =========================================================
+    @GetMapping("/personMonthDaily")
+    public AjaxResult personMonthDaily(
+            @RequestParam(value = "startdate",      required = false) String startdate,
+            @RequestParam(value = "personid",        required = false) Integer personid,
+            @RequestParam(value = "spjangcd")                        String spjangcd,
+            HttpServletRequest request,
+            Authentication auth) {
 
+        AjaxResult result = new AjaxResult();
+
+        if (startdate != null && startdate.contains("-")) {
+            startdate = startdate.replaceAll("-", "");
+        }
+
+        // ✅ Service에서 idx별 전체 레코드 반환 (일반 + 추가근무 모두 포함)
+        List<Map<String, Object>> items = this.dayMonthlyService.getPersonMonthDaily(startdate, personid, spjangcd);
+        result.data = items;
+        return result;
+    }
 
 }
