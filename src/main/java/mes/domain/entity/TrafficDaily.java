@@ -1,5 +1,6 @@
 package mes.domain.entity;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
     uniqueConstraints = @UniqueConstraint(columnNames = {"service", "date"})
 )
 @Getter @Setter
+@Builder
 public class TrafficDaily {
 
     @Id

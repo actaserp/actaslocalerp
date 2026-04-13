@@ -104,10 +104,12 @@ public class TrafficService {
     public void saveTraffic(String service, NginxLogParser.TrafficResult result, LocalDate date) {
         TrafficDaily entity = trafficRepo
                 .findByServiceAndDate(service, date)
-                .orElse(new TrafficDaily());
+                .orElseGet(() -> TrafficDaily.builder()
+                        .service(service)
+                        .date(date)
+                        .build()
+                );
 
-        entity.setService(service);
-        entity.setDate(date);
         entity.setTotalBytes(result.totalBytes);
         entity.setTotalGb(toGb(result.totalBytes));
         entity.setRequestCount(result.requestCount);

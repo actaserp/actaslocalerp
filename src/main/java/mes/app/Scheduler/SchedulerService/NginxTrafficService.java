@@ -32,6 +32,7 @@ public class NginxTrafficService {
 
     private static final String LOG_ROOT = "/var/log/nginx";
 
+    //todo: service가 많아지면 배치저장이 유리
     public void collectYesterdayTraffic() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         String dateSuffix = yesterday.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -46,30 +47,38 @@ public class NginxTrafficService {
             return;
         }
 
-        for (File serviceDir : serviceDirs) {
+        int successCount = 0;
+        int failCount = 0;
+
+        for(File serviceDir : serviceDirs){
             String service = serviceDir.getName();
+            File logFile = resolveLogFile(serviceDir, dateSuffix);
 
-            File logFile = new File(serviceDir, "access.log-" + dateSuffix);
-
-            if(logFile == null){
-                log.warn("[트래픽 집계] 파일 없음 (gz/일반 모두): {}/access.log-{}", serviceDir.getPath(), dateSuffix);
+            if(logFile == null) {
+                log.warn("[트래픽 집계] 파일 없음 - 서비스: {}, 패턴: access.log-{}", service, dateSuffix);
+                failCount++;
                 continue;
             }
 
-            log.info("[트래픽 집계] 파일 발견: {}", logFile.getPath());
+            try{
+                log.info("[트래픽 집계] 파싱 시작 - 서비스: {}, 파일: {}", service, logFile.getName());
 
-            try {
                 NginxLogParser.TrafficResult result = parseLogFile(logFile);
+
                 trafficService.saveTraffic(service, result, yesterday);
 
-                log.info("[트래픽 집계] {} → 요청: {}건 / {}MB ({}GB)",
-                        service, result.requestCount, toMb(result.totalBytes), toGb(result.totalBytes));
+                log.info("[트래픽 집계] 완료 - 서비스: {}, 요청수: {}, 트래픽: {} bytes",
+                        service, result.requestCount, result.totalBytes);
+                successCount++;
 
-            } catch (IOException e) {
-                log.error("[트래픽 집계] {} 파일 읽기 실패: {}", service, logFile.getPath(), e);
+            }catch(IOException e){
+                log.error("[트래픽 집계] 파싱 실패 - 서비스: {}, 파일: {}, 오류: {}",
+                        service, logFile.getName(), e.getMessage(), e);
+                failCount++;
+
             }
         }
-        log.info("[트래픽 집계] 완료");
+        log.info("[트래픽 집계] 종료 - 성공: {}, 실패: {}", successCount, failCount);
     }
 
     /**
@@ -89,13 +98,12 @@ public class NginxTrafficService {
      * gz 여부에 따라 적절한 InputStream으로 파싱
      */
     private NginxLogParser.TrafficResult parseLogFile(File logFile) throws IOException {
-        InputStream is = new FileInputStream(logFile);
-
-        if (logFile.getName().endsWith(".gz")) {
-            is = new GZIPInputStream(is);
+        try (InputStream fis = new FileInputStream(logFile);
+             InputStream is = logFile.getName().endsWith(".gz")
+                     ? new GZIPInputStream(fis)
+                     : fis) {
+            return NginxLogParser.parseStream(is);
         }
-
-        return NginxLogParser.parseStream(is);
     }
 
 
