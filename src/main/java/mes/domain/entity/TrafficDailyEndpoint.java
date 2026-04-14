@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.annotation.Id;
+import javax.persistence.Id;
 
 
 import javax.persistence.*;
