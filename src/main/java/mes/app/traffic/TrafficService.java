@@ -11,6 +11,7 @@ import mes.domain.repository.TrafficDailyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -101,6 +102,7 @@ public class TrafficService {
     /**
      * DB upsert
      */
+    @Transactional
     public void saveTraffic(String service, NginxLogParser.TrafficResult result, LocalDate date) {
         TrafficDaily entity = trafficRepo
                 .findByServiceAndDate(service, date)

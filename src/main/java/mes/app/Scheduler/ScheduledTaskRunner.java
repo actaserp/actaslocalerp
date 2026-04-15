@@ -42,8 +42,6 @@ public class ScheduledTaskRunner {
 
 
     /**
-     * [SaaS 인증용] 매달 전달의 Redis API 호출 내역을 DB로 이관
-     * TODO: migrateDailyApiUsage에서 시간수정, 여기서 스케줄러 시간수정 필
      * todo: 만약 해당 스케줄러 작업이 실패했을 경우에 대한 대비책도 강구해야함.
      */
 //    @Scheduled(cron = "0 0 3 1 * *", zone = "Asia/Seoul") /// 매월 1일 새벽 3시

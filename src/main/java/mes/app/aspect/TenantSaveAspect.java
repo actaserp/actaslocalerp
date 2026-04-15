@@ -23,6 +23,12 @@ public class TenantSaveAspect {
 
         // 2. 인증 정보가 없으면 실행 자체를 차단 (Fail-Fast)
         if (tenantId == null) {
+
+            //웹 요청 컨텍스트가 있는지 확인
+            if(RequestContextHolder.getRequestAttributes() == null){
+                return; // // 스케줄러 등 웹 요청이 아닌 경우 → 그냥 통과
+            }
+
             ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
             HttpSession session = attr.getRequest().getSession(false);
             if (session != null) {
