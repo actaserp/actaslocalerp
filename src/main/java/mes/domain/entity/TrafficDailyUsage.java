@@ -1,9 +1,6 @@
 package mes.domain.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
@@ -15,6 +12,7 @@ import java.time.LocalDateTime;
     uniqueConstraints = @UniqueConstraint(columnNames = {"service", "company", "date"})
 )
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -49,5 +47,10 @@ public class TrafficDailyUsage {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-
+    public void updateStats(Long totalCount, Long totalBytes, Double totalMb, Double totalGb) {
+        this.totalCount = totalCount;
+        this.totalBytes = totalBytes;
+        this.totalMb = totalMb;
+        this.totalGb = totalGb;
+    }
 }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import mes.app.Scheduler.SchedulerService.AccountSyncService;
 import mes.app.Scheduler.SchedulerService.ApiUsageService;
 import mes.app.Scheduler.SchedulerService.NginxTrafficService;
+import mes.app.Scheduler.SchedulerService.TrafficCollectService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +21,10 @@ public class ScheduledTaskRunner {
 
     private final Executor schedulerExecutor;
 
-    private final AccountSyncService accountSyncService;
-    private final ApiUsageService apiUsageService;
+
     private final NginxTrafficService nginxTrafficService;
+
+    private final TrafficCollectService trafficCollectService;
 
     //@Scheduled(cron = "0 5 * * * *")
     @Scheduled(cron = "0 0 * * * *") //5분주기
@@ -38,6 +40,7 @@ public class ScheduledTaskRunner {
     @Scheduled(cron = "0 0 3 * * *") // 매일 새벽 3시
     public void runDailyTrafficCollect() {
         schedulerExecutor.execute(() -> safeRun(nginxTrafficService::collectYesterdayTraffic, "nginx트래픽집계"));
+        schedulerExecutor.execute(() -> safeRun(trafficCollectService::collectYesterdayTrafficByRedis, "개별서비스트래픽집계"));
     }
 
 

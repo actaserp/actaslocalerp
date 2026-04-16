@@ -1,9 +1,6 @@
 package mes.domain.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.Id;
 
@@ -19,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Setter
 public class TrafficDailyEndpoint {
 
 
@@ -50,4 +48,10 @@ public class TrafficDailyEndpoint {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public void updateStats(Long count, Long bytes, Long elapsed) {
+        this.count = count;
+        this.bytes = bytes;
+        this.elapsed = elapsed;
+    }
 }
