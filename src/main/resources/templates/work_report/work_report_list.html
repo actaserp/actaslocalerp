@@ -595,8 +595,9 @@
                         {binding: 'fixpernm', header: '사원명', width: 120, align: 'center'},
                         {binding: 'cltnm', header: '업체명', width: 150, align: 'center'},
                         {binding: 'asmenu', header: '화면명', width: 200, align: 'left'},
-                        {binding: 'rptremark', header: '업무내용', width: '*', align: 'left'},
+                        {binding: 'rptremark', header: '업무내용', width: 300, align: 'left'},
                         {binding: 'recyn_nm', header: '진행상태', width: 100, align: 'center'},
+                        {binding: 'remark', header: '지시사항', width: 300, align: 'left'},
                         {binding: 'asdv_nm', header: '근무구분', width: 100, align: 'center'},
                         {binding: 'inputdate', header: '입력일자', width: 150, align: 'center'},
                     ],
@@ -992,7 +993,7 @@
 
             page = new WorkReportPage();
 
-            $('#srchStartDt').val(CommonUtil.getYYYYMMDD(-7));
+            $('#srchStartDt').val(new Date().getFullYear() + '-01-01');
             // 이번주 일요일 구하는 함수
             function getThisSunday() {
                 const today = new Date();
