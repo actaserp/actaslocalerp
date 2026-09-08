@@ -142,6 +142,8 @@
   "wm_purchase_invoice": {  "name": "매입 계산서 관리", "templates": { "default": "transaction/purchase_invoice.html" } },
   "wm_expense_account_setup": {  "name": "비용항목등록", "templates": { "default": "transaction/expense_account_setup.html" } },
 
+  "wm_payslip": {  "name": "급여명세서", "templates": { "default": "payroll/payslip.html" } },
+
   "wm_project_registration": {  "name": "프로젝트 등록", "templates": { "default": "transaction/project_registration.html" } },
   "wm_project_status": {  "name": "프로젝트 현황", "templates": { "default": "transaction/project_status.html" } },
 

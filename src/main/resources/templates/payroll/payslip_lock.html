@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>급여명세서</title>
+  <style>
+      /* 레이아웃(layout_page)을 쓰지 않는 독립 페이지다.
+         레이아웃을 거치면 그 안의 system_js 조각이 userinfo 를 요구해
+         잠금 화면에서만 500 이 난다.
+
+         메뉴 탭은 iframe 이라 이 화면도 탭 안에 그대로 뜬다.
+         그래서 메뉴가 사라지지 않고, 해제하면 그 자리에서 급여 화면으로 바뀐다. */
+
+      * { box-sizing: border-box; }
+
+      body {
+          margin: 0;
+          min-height: 100vh;
+          display: flex; align-items: center; justify-content: center;
+          background: #F2F5F7;
+          font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+          color: #1B2430;
+      }
+
+      .lk-box { width: 340px; padding: 30px 28px; background: #fff; border: 1px solid #C0CAD3; }
+      .lk-title { font-size: 17px; font-weight: 600; letter-spacing: 1px; }
+      .lk-desc  { margin-top: 10px; font-size: 12.5px; color: #45566A; line-height: 1.65; }
+
+      .lk-box input[type="password"] {
+          width: 100%; height: 38px; margin-top: 20px; padding: 0 10px;
+          border: 1px solid #C0CAD3; border-radius: 2px;
+          font-family: inherit; font-size: 14px;
+      }
+      .lk-box input[type="password"]:focus-visible { outline: 2px solid #1D4E9C; outline-offset: 2px; }
+
+      .lk-btn {
+          width: 100%; height: 38px; margin-top: 12px;
+          border: none; background: #1D4E9C; color: #fff;
+          font-family: inherit; font-size: 14px; cursor: pointer;
+      }
+      .lk-btn:hover:enabled { background: #17304F; }
+      .lk-btn:disabled { background: #8A99A8; cursor: default; }
+
+      /* 색만으로 오류를 알리지 않는다 */
+      .lk-msg { margin-top: 10px; font-size: 12.5px; color: #B02418; min-height: 18px; }
+  </style>
+</head>
+<body>
+
+<div class="lk-box">
+  <div class="lk-title">급여명세서</div>
+  <div class="lk-desc">
+    급여 자료를 열람하려면 비밀번호를 입력하세요.<br/>
+    일정 시간 사용하지 않으면 다시 잠깁니다.
+  </div>
+
+  <!-- 브라우저 비밀번호 저장 팝업이 뜨지 않게 한다 -->
+  <input type="password" id="lkPw" autocomplete="off"
+         placeholder="비밀번호" aria-label="급여명세서 잠금 비밀번호"/>
+  <button type="button" class="lk-btn" id="lkBtn">확인</button>
+  <div class="lk-msg" id="lkMsg" role="alert"></div>
+</div>
+
+<!-- 레이아웃을 쓰지 않으므로 CSRF 토큰을 여기서 직접 들고 있어야 한다. -->
+<input type="hidden" name="_csrf" th:value="${_csrf != null} ? ${_csrf.token} : ''"/>
+
+<script type="text/javascript">
+ (function () {
+  const $pw  = document.getElementById('lkPw');
+  const $btn = document.getElementById('lkBtn');
+  const $msg = document.getElementById('lkMsg');
+
+  // context-path(/mes)를 현재 주소에서 그대로 떼어낸다.
+  // 하드코딩하면 배포 경로가 바뀔 때 조용히 깨진다.
+  const CTX = (function () {
+   const p = window.location.pathname;
+   const i = p.indexOf('/payslip/lock');
+   return i < 0 ? '' : p.substring(0, i);
+  })();
+
+  async function unlock() {
+   const pw = $pw.value;
+   if (!pw) { $msg.textContent = '비밀번호를 입력하세요.'; $pw.focus(); return; }
+
+   $btn.disabled = true;
+   $msg.textContent = '';
+
+   try {
+    const res = await fetch(CTX + '/payslip/unlock', {
+     method: 'POST',
+     headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name=_csrf]').value
+     },
+     body: JSON.stringify({password: pw})
+    });
+    const data = await res.json();
+
+    if (data.success) {
+     // 서버가 알려준 원래 탭 주소로 돌아간다. context-path 를 뺀 상대 주소다.
+     // 이 화면이 탭(iframe) 안이므로 메뉴와 탭이 그대로 유지된다.
+     const back = (data.data && data.data.returnUrl) || '/payslip/payslip';
+     location.href = CTX + back;
+     return;
+    }
+
+    $msg.textContent = data.message || '비밀번호가 올바르지 않습니다.';
+    $pw.value = '';
+    $pw.focus();
+
+   } catch (e) {
+    $msg.textContent = '확인 중 오류가 발생했습니다.';
+   } finally {
+    $btn.disabled = false;
+   }
+  }
+
+  $btn.addEventListener('click', unlock);
+  $pw.addEventListener('keydown', function (e) {
+   if (e.key === 'Enter') { e.preventDefault(); unlock(); }
+  });
+  $pw.focus();
+ })();
+</script>
+
+</body>
+</html>

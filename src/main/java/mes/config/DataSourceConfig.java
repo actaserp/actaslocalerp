@@ -103,7 +103,8 @@ public class DataSourceConfig {
 	}
 	
 	@ConfigurationProperties(prefix="spring.datasource.hikari")
-	@Bean(name="dataSource")	
+	@Bean(name="dataSource")
+	@Primary
 	DataSource dataSource() {
 		return DataSourceBuilder.create().build();
 	}	
@@ -125,7 +126,21 @@ public class DataSourceConfig {
 		//properties.put("hibernate.storage_engine", property.getStorage_engine());
 		emf.setJpaPropertyMap(properties);	
 		return emf;
-    } 
+    }
+
+	// ──────────────────────────────────────────────────────────
+	// 급여명세서 전용 DataSource (외부 MSSQL – ERP_ACTAS)
+	//
+	// 기본 DB(PostgreSQL)와 풀도 트랜잭션도 완전히 분리된다.
+	// 급여명세서 SQL 은 전부 T-SQL 이라 기본 DataSource 로 나가면 문법부터 깨진다.
+	// 러너는 mes.app.payslip.Service.PayslipSqlRunner 가 이 빈을 직접 받아 만든다.
+	// ──────────────────────────────────────────────────────────
+
+	@Bean("payslipDataSource")
+	@ConfigurationProperties(prefix = "payslip.datasource")
+	DataSource payslipDataSource() {
+		return DataSourceBuilder.create().build();
+	}
 	
 	@Bean
 	@Primary
